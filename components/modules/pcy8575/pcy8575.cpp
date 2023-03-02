@@ -2,28 +2,40 @@
 
 const char* TAG_PCY8575 = "PCY8575";
 
-pcy8575::pcy8575(void) {
+// void pcy8575::init(void) {
 
-}
-void pcy8575::init(void) {
+// }
+// void pcy8575::handle_message(void) {
 
-	i2c_init(PCY8575_ADDR, 100000);
-	i2c_enable_interrupt();
-	i2c_set_ack();
-	// i2c_set_nostretch();
+// 	if(i2c_has_data_tx) {
+// 		i2c_has_data_tx = 0;
 
-	i2c_read_CR1_reg();
-	i2c_read_CR2_reg();
-	i2c_read_OAR1_reg();
+// 		if(i2c_data_tx_size) {
+// 			printf("\ni2c_data_tx_size: %d, reg_addr:0x%02x\n", i2c_data_tx_size, reg_addr_);
+// 			reg_addr_ = 0x00;
+// 			for(int i=0; i<i2c_data_tx_size-1; i++) {
+// 				printf("data_tx[%d]: 0x%02x\n", i, data_tx[i]);
+// 				data_tx[i]++;
+// 			}
+// 		}
+// 	}
 
-	i2c_print_CR2_reg();
-	i2c_print_CR1_reg();
-	i2c_print_addr1();
-	// printf("I2C State: 0x%02x\n",HAL_I2C_GetState(&hi2c2));
+// 	if(i2c_has_data_rx) {
+// 		i2c_has_data_rx = 0;
 
-	// I2C to GPIO system
-	// declare pin status registers
-}
-void pcy8575::handle_message(void) {
-
-}
+// 		if(i2c_data_rx_size > 1) {
+// 			printf("\ni2c_data_rx_size: %d\n", i2c_data_rx_size);
+// 			for(int i=0; i<i2c_data_rx_size-1; i++) {
+// 				printf("data_rx[%d]: 0x%02x\n", i, data_rx[i]);
+// 			}
+// 		}
+// 		else if(i2c_data_rx_size) {
+// 			// this takes the reg_add sent by master into write before read.
+// 			reg_addr_ = data_rx[0];
+// 		}
+// 	}
+// }
+// void pcy8575::test(void) {
+// 	pin_[15].toggle();
+// 	delay_ms(500);
+// }

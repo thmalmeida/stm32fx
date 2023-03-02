@@ -5,7 +5,7 @@
 #include "aht10.hpp"
 #include "pcy8575.hpp"
 
-#include "gpio.h"
+#include "gpio.hpp"
 #include "i2c.h"
 
 enum class states {
@@ -15,20 +15,32 @@ enum class states {
 
 states state_fsm = states::receiver;
 
+// IMplement class vector for GPIO into pcy8575
+
 void i2c_slave_FSM(void) {
 
-	// init pins
-	MX_GPIO_Init();
+	// GPIO_driver pin0[] = {
+	// 	GPIO_driver{3, 1}, GPIO_driver{4, 1}, GPIO_driver{5, 1}, GPIO_driver{6, 1},
+	// 	GPIO_driver{7, 1}, GPIO_driver{8, 1}, GPIO_driver{9, 1}, GPIO_driver{10,1},
+	// 	GPIO_driver{11,1}, GPIO_driver{12,1}, GPIO_driver{13,1}, GPIO_driver{14,1},
+	// 	GPIO_driver{15,1}, GPIO_driver{16,1}, GPIO_driver{17,1}};
 
 	pcy8575 extender0;
 	extender0.init();
 
+	// uint16_t value = (1<<11);
 	while(1) {
 
 		extender0.handle_message();
 
-		HAL_Delay(1000);
-		printf("Ola!\n");
+		// extender0.put(value);
+		// // extender0.test_up();
+		// HAL_Delay(500);
+
+		// extender0.put(~value);
+		// // extender0.test_down();
+		// HAL_Delay(500);
+		// printf("Ola!\n");
 	}
 }
 void aht10_test(void) {

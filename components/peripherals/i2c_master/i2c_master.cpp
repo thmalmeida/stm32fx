@@ -3,9 +3,9 @@
 //#define I2C_WRITE_FLAG	0
 //#define I2C_READ_FLAG		1
 
-static const char *TAG_I2C = "I2C";
+// static const char *TAG_I2C = "I2C";
 
-I2C_Master::I2C_Master(int port, int scl, int sda, uint32_t freq, bool pull_up /* = false */) : i2c_master_port_(port) {
+// I2C_Master::I2C_Master(int port, int scl, int sda, uint32_t freq, bool pull_up /* = false */) : i2c_master_port_(port) {
 	// // Configuration
 	// i2c_config_t conf = {};
 	// conf.mode = I2C_MODE_MASTER;
@@ -27,9 +27,10 @@ I2C_Master::I2C_Master(int port, int scl, int sda, uint32_t freq, bool pull_up /
 	// if(err != ESP_OK) { 
 	// 	ESP_LOGE(TAG_I2C, "I2C install error [%d/%s]\n", err, esp_err_to_name(err));
 	// }
-}
+// }
 void I2C_Master::init(uint32_t freq) {
 	freq_ = freq;
+	i2c_master_port_ = 1;
 	// Initialize the I2C low level resources by implementing the @ref HAL_I2C_MspInit()
 
 	// I2C_HandleTypeDef* i2cHandle;
@@ -46,7 +47,7 @@ void I2C_Master::init(uint32_t freq) {
 	hi2c2_.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
 	hi2c2_.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
 
-	GPIO_InitTypeDef GPIO_InitStruct = {0};
+	GPIO_InitTypeDef GPIO_InitStruct;
 	// if(i2cHandle->Instance==I2C2)
 	// {
 		/* I2C1 GPIO Configuration
@@ -105,7 +106,7 @@ void I2C_Master::log_show(void) {
 	error_ = HAL_I2C_GetError(&hi2c2_);
 	mode_ = HAL_I2C_GetMode(&hi2c2_);
 
-	printf("i2c-- state: 0x%02x, mode: 0x%02x, error: 0x%04x\n", static_cast<int>(state_), static_cast<int>(mode_), error_);
+	printf("i2c-- state: 0x%02x, mode: 0x%02x, error: 0x%04lx\n", static_cast<uint8_t>(state_), static_cast<uint8_t>(mode_), error_);
 }
 int I2C_Master::write(uint8_t slave_addr, uint8_t reg, uint8_t data, bool ack_check /* = true */){
 	return write(slave_addr, reg, &data, 1, ack_check);

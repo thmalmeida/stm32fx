@@ -35,8 +35,8 @@ extern "C" {
 extern I2C_HandleTypeDef hi2c2;
 extern volatile int i2c_transfer_direction;
 extern volatile uint8_t transferDirection, transferRequested;
-extern uint8_t data_rx[10];
-extern uint8_t data_tx[10];
+extern uint8_t i2c_data_rx[10];
+extern uint8_t i2c_data_tx[10];
 
 // CR2 reg
 extern uint16_t CR2_reg;
@@ -86,6 +86,12 @@ extern uint8_t TRA_bit;		// bit 2 - TRA:0 write, TRA:1 read request
 extern uint8_t BUSY_bit;	// bit 1
 extern uint8_t MSL_bit;		// bit 0
 
+// state machine variables
+extern volatile uint8_t i2c_has_data_rx;
+extern volatile uint8_t i2c_has_data_tx;
+extern volatile uint8_t i2c_data_rx_size;
+extern volatile uint8_t i2c_data_tx_size;
+
 void i2c_init(uint32_t addr1, uint32_t freq);
 void i2c_read_SR1_reg(void);
 void i2c_print_SR1_reg(void);
@@ -103,7 +109,8 @@ void i2c_reset_ack(void);
 void i2c_set_nostretch(void);
 void i2c_set_engc(void);
 void i2c_enable_interrupt(void);
-void i2c_interrupt_handle(void);
+void i2c_interrupt_ev_handle(void);
+void i2c_interrupt_er_handle(void);
 
 #ifdef __cplusplus
 }

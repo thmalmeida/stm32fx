@@ -1,9 +1,9 @@
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file    gpio.h
-  * @brief   This file contains all the function prototypes for
-  *          the gpio.c file
+  * @file    iwdg.c
+  * @brief   This file provides code for the configuration
+  *          of the IWDG instances.
   ******************************************************************************
   * @attention
   *
@@ -17,33 +17,19 @@
   ******************************************************************************
   */
 /* USER CODE END Header */
-/* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __GPIO_H__
-#define __GPIO_H__
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
+#include "iwdg.h"
 
-/* USER CODE BEGIN Includes */
+IWDG_HandleTypeDef hiwdg;
 
-/* USER CODE END Includes */
-
-/* USER CODE BEGIN Private defines */
-
-/* USER CODE END Private defines */
-
-void MX_GPIO_Init(void);
-
-/* USER CODE BEGIN Prototypes */
-
-/* USER CODE END Prototypes */
-
-#ifdef __cplusplus
+/* IWDG init function */
+void MX_IWDG_Init(void)
+{
+	hiwdg.Instance = IWDG;
+	hiwdg.Init.Prescaler = IWDG_PRESCALER_4;
+	hiwdg.Init.Reload = 4095;
+	if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
+	{
+		Error_Handler();
+	}
 }
-#endif
-#endif /*__ GPIO_H__ */
-

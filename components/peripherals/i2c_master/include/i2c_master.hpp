@@ -39,9 +39,9 @@
 
 class I2C_Master{
 	public:
-		// I2C_Master(i2c_port_t port, int scl, int sda, uint32_t freq, bool pull_up = false);
-		I2C_Master(int port, int scl, int sda, uint32_t freq, bool pull_up /* = false */);
-		I2C_Master() {};
+		// I2C_Master(int port, int scl, int sda, uint32_t freq, bool pull_up = false);
+		I2C_Master(int port, uint32_t freq) : i2c_master_port_(port), freq_(freq)  {};
+		I2C_Master(void) {};
 		~I2C_Master() {};
 
 		// void init(int intr_alloc_flags = 0);
@@ -73,6 +73,15 @@ class I2C_Master{
 		void listen(void);
 		void log_show(void);
 
+		void reset(void) {
+			// declared into stm32f101xb.h
+			I2C1 -> CR1 |= I2C_CR1_SWRST;//(1<<15);
+			I2C1 -> CR1 &= ~I2C_CR1_SWRST;//(1<<15);
+			// or
+			// __HAL_RCC_I2C2_FORCE_RESET();
+			// __HAL_RCC_I2C2_RELEASE_RESET();
+		}
+
 		I2C_HandleTypeDef hi2c2_;
 
 	protected:
@@ -82,17 +91,6 @@ class I2C_Master{
 		HAL_I2C_ModeTypeDef mode_;
 		uint32_t error_;
 		uint32_t freq_;
-
-		void reset(void) {
-			// declared into stm32f101xb.h
-			I2C1 -> CR1 |= I2C_CR1_SWRST;//(1<<15);
-			I2C1 -> CR1 &= ~I2C_CR1_SWRST;//(1<<15);
-
-			// or
-
-			// __HAL_RCC_I2C2_FORCE_RESET();
-			// __HAL_RCC_I2C2_RELEASE_RESET();
-		}
 };
 
 #endif /* I2C_MASTER_HPP__ */

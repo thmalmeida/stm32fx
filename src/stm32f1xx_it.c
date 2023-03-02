@@ -222,7 +222,7 @@ void SysTick_Handler(void)
 void I2C2_EV_IRQHandler(void)
 {
 	// HAL_I2C_EV_IRQHandler(&hi2c2);
-	i2c_interrupt_handle();
+	i2c_interrupt_ev_handle();
 }
 
 /**
@@ -231,21 +231,8 @@ void I2C2_EV_IRQHandler(void)
 void I2C2_ER_IRQHandler(void)
 {
 	// HAL_I2C_ER_IRQHandler(&hi2c2);
-	printf("ER_IRQ ");
-	i2c_read_SR1_reg();
-	i2c_print_SR1_reg();
+	i2c_interrupt_er_handle();
 
-	if(AF_bit) {
-		I2C2->SR1 &= ~(1<<10);
-	}
-
-	if(BERR_bit) {
-		I2C2->SR1 &= ~(1<<8);
-	}
-
-	if(OVR_bit) {
-		I2C2->SR1 &= ~(1<<11);
-	}
 }
 
 /* USER CODE BEGIN 1 */

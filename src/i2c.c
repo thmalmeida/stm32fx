@@ -22,8 +22,8 @@
 
 I2C_HandleTypeDef hi2c2;
 volatile int i2c_it_flag = 0;
-uint8_t data_rx[10] = {0};
-uint8_t data_tx[10] = {0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e};
+uint8_t i2c_data_rx[10] = {0};
+uint8_t i2c_data_tx[10] = {0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e};
 volatile uint8_t transferDirection, transferRequested;
 
 // CR2 reg
@@ -70,18 +70,25 @@ uint8_t SB_bit = 0;			// bit 0
 
 // SR2 reg (read only)
 uint16_t SR2_reg = 0;
-uint8_t TRA_bit;			// bit 2 - TRA:0 write, TRA:1 read request
-uint8_t BUSY_bit;			// bit 1
-uint8_t MSL_bit;			// bit 0
+uint8_t TRA_bit = 0;		// bit 2 - TRA:0 write, TRA:1 read request
+uint8_t BUSY_bit = 0;		// bit 1
+uint8_t MSL_bit = 0;		// bit 0
 
 // state machine variables
-
+volatile uint8_t i2c_has_data_rx = 0;
+volatile uint8_t i2c_has_data_tx = 0;
+volatile uint8_t i2c_data_rx_size = 0;
+volatile uint8_t i2c_data_tx_size = 0;
+// enum class state_mode {
+// 	receiver = 0,
+// 	transmitter
+// };
 
 void i2c_init(uint32_t addr1, uint32_t freq) {
 	hi2c2.Instance = I2C2;
 	hi2c2.Init.ClockSpeed = freq;
 	hi2c2.Init.DutyCycle = I2C_DUTYCYCLE_2;
-	hi2c2.Init.OwnAddress1 = addr1;
+	hi2c2.Init.OwnAddress1 = addr1 << 1;
 	hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
 	hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
 	hi2c2.Init.OwnAddress2 = 0;
@@ -93,8 +100,7 @@ void i2c_init(uint32_t addr1, uint32_t freq) {
 		printf("Error I2C init!\n");
 		Error_Handler();
 	}
-
-	// // Enable I2C peripheral
+	// Enable I2C peripheral
 	// I2C2->CR1 |= (1 << 0);
 }
 void HAL_I2C_MspInit(I2C_HandleTypeDef* i2cHandle) {
@@ -255,7 +261,7 @@ void i2c_enable_interrupt(void) {
 	// I2C2->CR2 |= (1 << 9);	// ITEVTEN
 	// I2C2->CR2 |= (1 << 8);	// ITERREN
 }
-void i2c_interrupt_handle(void) {
+void i2c_interrupt_ev_handle(void) {
 	// Slave transmitter
 	// EV1: ADDR=1, cleared by reading SR1 followed by reading SR2
 	// EV3-1: TxE=1, shift register empty, data register empty, write Data1 in DR.
@@ -269,7 +275,7 @@ void i2c_interrupt_handle(void) {
 
 	i2c_read_SR1_reg();
 
-	int n = 0, timeout = 100000;
+	int timeout = 100000;
 	if(ADDR_bit || RxNE_bit || TxE_bit) {
 
 		// EV1: ADDR=1, cleared by reading SR1 followed by reading SR2 (Slave Transmitter/Receiver)
@@ -279,6 +285,7 @@ void i2c_interrupt_handle(void) {
 		// EV3-1: TxE=1, shift register empty, data register empty, write Data1 in DR.
 		// EV3: TxE=1, shift register not empty, data register empty, cleared by writing DR
 		// EV3-2: AF=1; AF is cleared by writing ‘0’ in AF bit of SR1 register.
+			i2c_data_tx_size = 0;
 			do {
 				do {
 					i2c_read_SR1_reg();
@@ -298,8 +305,8 @@ void i2c_interrupt_handle(void) {
 				} while(!TxE_bit && !AF_bit);
 
 				if(!AF_bit) {
-					I2C2->DR = data_tx[n];
-					n++;
+					I2C2->DR = i2c_data_tx[i2c_data_tx_size];
+					i2c_data_tx_size++;
 				}
 
 			} while(!AF_bit);
@@ -308,16 +315,19 @@ void i2c_interrupt_handle(void) {
 			if(AF_bit) {
 			// Clear AF bit into SR1
 				I2C2->SR1 &= ~(1<<10);
+
+				i2c_has_data_tx = 1;
 			}
 
-			printf("n: %d\n", n);
-			for(int i=0; i<n-1; i++) {
-				// printf("data_tx[%d]: 0x%02x\n", i, data_tx[i]);
-				data_tx[i]++;
-			}
+			// printf("n: %d\n", n);
+			// for(int i=0; i<i2c_data_tx_size-1; i++) {
+			// 	// printf("i2c_data_tx[%d]: 0x%02x\n", i, i2c_data_tx[i]);
+			// 	i2c_data_tx[i]++;
+			// }
 		}
 		else {			// Slave receive - Master transmit
 			// Must implement flag timeout!
+			i2c_data_rx_size = 0;
 			do { // EV4: STOPF=1, cleared by reading SR1 register followed by writing to the CR1 register
 				do { // EV2: RxNE=1 cleared by reading DR register.
 					i2c_read_SR1_reg();
@@ -330,9 +340,9 @@ void i2c_interrupt_handle(void) {
 				} while(!RxNE_bit && !STOPF_bit);
 
 				if(!STOPF_bit) {
-					data_rx[n] = I2C2->DR;
+					i2c_data_rx[i2c_data_rx_size] = I2C2->DR;
 					//Read data from DR: *data++ = I2C2->DR;  defined as char* data;
-					n++;
+					i2c_data_rx_size++;
 				}
 			} while(!STOPF_bit);
 
@@ -340,8 +350,10 @@ void i2c_interrupt_handle(void) {
 			// Set ACK bit
 			I2C2->CR1 |= (1<<10);
 
+			i2c_has_data_rx = 1;
+
 			// for(int i=0; i<n-1; i++) {
-			// 	printf("data_rx[%d]: 0x%02x\n", i, data_rx[i]);
+			// 	printf("i2c_data_rx[%d]: 0x%02x\n", i, i2c_data_rx[i]);
 			// }
 		}
 	}
@@ -355,4 +367,23 @@ void i2c_interrupt_handle(void) {
 
 	// i2c_read_SR1_reg();
 	// i2c_print_SR1_reg();
+}
+void i2c_interrupt_er_handle(void) {
+
+	// printf("\nI2C error ev!\n");
+
+	i2c_read_SR1_reg();
+	// i2c_print_SR1_reg();
+
+	if(AF_bit) {
+		I2C2->SR1 &= ~(1<<10);
+	}
+
+	if(BERR_bit) {
+		I2C2->SR1 &= ~(1<<8);
+	}
+
+	if(OVR_bit) {
+		I2C2->SR1 &= ~(1<<11);
+	}
 }

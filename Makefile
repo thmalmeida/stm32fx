@@ -44,7 +44,6 @@ INC_DIR = src/include
 
 C_SOURCES =  \
 $(SRC_DIR)/system_main.c \
-$(SRC_DIR)/gpio.c \
 $(SRC_DIR)/i2c.c \
 $(SRC_DIR)/stm32_log.c \
 $(SRC_DIR)/stm32f1xx_hal_msp.c \
@@ -79,6 +78,7 @@ $(SRC_DIR)/usart.cpp \
 components/helper/delay.cpp \
 components/modules/aht10/aht10.cpp \
 components/modules/pcy8575/pcy8575.cpp \
+components/peripherals/gpio/gpio.cpp \
 components/peripherals/i2c_master/i2c_master.cpp
 
 # ASM sources
@@ -158,9 +158,8 @@ CXX_INCLUDES = \
 -Icomponents/helper/include \
 -Icomponents/modules/aht10/include \
 -Icomponents/modules/pcy8575/include \
+-Icomponents/peripherals/gpio/include \
 -Icomponents/peripherals/i2c_master/include
-# -Icomponents/modules/pcy8575/include \
-# -I/home/thmalmeida/st/arm-gnu-toolchain-12.2.mpacbti-bet1-x86_64-arm-none-eabi/arm-none-eabi/include
 
 # compile gcc flags
 C_EXTRAFLAGS = -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -ffreestanding -fno-move-loop-invariants -Wall -Wextra -g3

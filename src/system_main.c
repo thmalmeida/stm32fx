@@ -122,10 +122,8 @@ void init_system(void) {
 
 	/* Configure the system clock */
 	SystemClock_Config();
+	// MX_IWDG_Init();
 	// SystemClock_Config_72MHz();
-
-	/* Initialize all configured peripherals */
-	MX_GPIO_Init();
 }
 
 #ifdef  USE_FULL_ASSERT
