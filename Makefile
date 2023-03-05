@@ -24,7 +24,9 @@ TARGET = i2c_to_gpio
 # debug build?
 DEBUG = 0
 # optimization
-OPT = -Oz
+# Os - Performs optimizations to reduce the code size at the expense of a possible increase in execution time. This option aims for a balanced code size reduction and fast performance.
+# Oz - Optimizes for smaller code size.
+OPT = -Oz 
 
 #######################################
 # paths
@@ -45,25 +47,30 @@ INC_DIR = src/include
 C_SOURCES =  \
 $(SRC_DIR)/system_main.c \
 $(SRC_DIR)/i2c.c \
+$(SRC_DIR)/tim.c \
+$(SRC_DIR)/iwdg.c \
 $(SRC_DIR)/stm32_log.c \
 $(SRC_DIR)/stm32f1xx_hal_msp.c \
 $(SRC_DIR)/stm32f1xx_it.c \
 $(SRC_DIR)/system_stm32f1xx.c \
-$(DRIVER_DIR)/stm32f1xx_hal_gpio_ex.c \
 $(DRIVER_DIR)/stm32f1xx_hal_i2c.c \
 $(DRIVER_DIR)/stm32f1xx_hal.c \
 $(DRIVER_DIR)/stm32f1xx_hal_rcc.c \
 $(DRIVER_DIR)/stm32f1xx_hal_rcc_ex.c \
 $(DRIVER_DIR)/stm32f1xx_hal_gpio.c \
-$(DRIVER_DIR)/stm32f1xx_hal_dma.c \
 $(DRIVER_DIR)/stm32f1xx_hal_cortex.c \
 $(DRIVER_DIR)/stm32f1xx_hal_pwr.c \
-$(DRIVER_DIR)/stm32f1xx_hal_flash.c \
-$(DRIVER_DIR)/stm32f1xx_hal_flash_ex.c \
 $(DRIVER_DIR)/stm32f1xx_hal_exti.c \
 $(DRIVER_DIR)/stm32f1xx_hal_tim.c \
+$(DRIVER_DIR)/stm32f1xx_hal_iwdg.c \
 $(DRIVER_DIR)/stm32f1xx_hal_tim_ex.c \
-$(DRIVER_DIR)/stm32f1xx_hal_uart.c
+$(DRIVER_DIR)/stm32f1xx_hal_dma.c
+
+# $(DRIVER_DIR)/stm32f1xx_hal_gpio_ex.c \
+# $(DRIVER_DIR)/stm32f1xx_hal_flash.c \
+# $(DRIVER_DIR)/stm32f1xx_hal_flash_ex.c \
+# $(DRIVER_DIR)/stm32f1xx_hal_uart.c \
+
 
 C_SOURCES2=$(shell find -L $(SRC_DIR) -name '*.c')
 C_SOURCES2+=$(shell find -L $(DRIVER_DIR) -name '*.c')
@@ -74,12 +81,12 @@ CXX_SOURCES2=$(shell find -L $(SRC_DIR) -name '*.cpp')
 # CPP sources
 CXX_SOURCES = \
 $(SRC_DIR)/main.cpp \
-$(SRC_DIR)/usart.cpp \
 components/helper/delay.cpp \
-components/modules/aht10/aht10.cpp \
 components/modules/pcy8575/pcy8575.cpp \
 components/peripherals/gpio/gpio.cpp \
+components/modules/aht10/aht10.cpp \
 components/peripherals/i2c_master/i2c_master.cpp
+# $(SRC_DIR)/usart.cpp \
 
 # ASM sources
 ASM_SOURCES =  \
@@ -121,7 +128,9 @@ CPU = -mcpu=cortex-m3
 
 
 # mcu
-MCU = $(CPU) -mthumb $(FPU) $(FLOAT-ABI) -specs=nosys.specs -specs=nano.specs -u _printf_float
+MCU = $(CPU) -mthumb $(FPU) $(FLOAT-ABI) -specs=nosys.specs -specs=nano.specs
+# add this flag to print float: -u _printf_float
+
 # MCU = $(CPU) -mthumb -fmessage-length=0 -fsigned-char -Wall -Wextra -ffunction-sections -fdata-sections#$(FPU) $(FLOAT-ABI)
 # macros for gcc
 # AS defines
@@ -156,14 +165,19 @@ CXX_INCLUDES = \
 -IDrivers/CMSIS/Device/ST/STM32F1xx/Include \
 -IDrivers/CMSIS/Include \
 -Icomponents/helper/include \
--Icomponents/modules/aht10/include \
 -Icomponents/modules/pcy8575/include \
 -Icomponents/peripherals/gpio/include \
+-Icomponents/modules/aht10/include \
 -Icomponents/peripherals/i2c_master/include
 
 # compile gcc flags
-C_EXTRAFLAGS = -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -ffreestanding -fno-move-loop-invariants -Wall -Wextra -g3
-CXX_EXTRAFLAGS = -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -ffreestanding -fno-move-loop-invariants -Wall -Wextra -g3
+#-fno-exceptions: C++ only. Disables the generation of code that is needed to support C++ exceptions.
+#-fno-rtti: C++ only. Disables the generation of code that is needed to support Run Time Type Information (RTTI) features.
+#-flto: Enables Link Time Optimization (LTO), which enables the linker to make additional optimizations across multiple source files.
+# Reference: https://developer.arm.com/documentation/100748/0612/writing-optimized-code/optimizing-for-code-size-or-performance
+# Reference: https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html
+C_EXTRAFLAGS = -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -ffreestanding -fno-move-loop-invariants -Wall -Wextra -g3 -flto
+CXX_EXTRAFLAGS = -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -ffreestanding -fno-move-loop-invariants -Wall -Wextra -g3 -flto
 
 C_EXTRAFLAGS2 = -std=c99 -Wno-unused-parameter -Wno-conversion -Wno-sign-conversion -Wno-bad-function-cast -Wno-unused-variable -Wno-implicit-function-declaration #-std=gnu11
 CXX_EXTRAFLAGS2 = -std=c++17 -fabi-version=0 -fno-exceptions -fno-rtti -fno-use-cxa-atexit -fno-threadsafe-statics #-std=gnu++11
@@ -204,7 +218,7 @@ LDSCRIPT = STM32F103C8Tx_FLASH.ld
 # libraries
 LIBS = -lc -lm -lnosys #-lstdc++ #-lgcc #-fno-common#-lrdimon #--data-sections
 LIBDIR = 
-LDFLAGS = $(MCU) -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref -Wl,--gc-sections
+LDFLAGS = $(MCU) -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref -Wl,--gc-sections --lto_level
 
 # -T mem.ld -T libs.ld -T sections.ld -nostartfiles -Xlinker --gc-sections -L"../ldscripts"
 LDFLAGS2 = $(MCU) $(OPT) $(C_EXTRAFLAGS) -T$(LDSCRIPT) $(LIBDIR) -I$(CXX_INCLUDES)-Wl,-Map=$(BUILD_DIR)/$(TARGET).map

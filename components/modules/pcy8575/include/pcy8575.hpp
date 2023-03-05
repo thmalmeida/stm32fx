@@ -2,6 +2,7 @@
 #define _PCY8575_HPP__
 
 #include "i2c.h"
+#include "tim.h"
 #include "gpio.hpp"
 #include "stm32_log.h"
 
@@ -17,6 +18,8 @@
 #define PCY8575_REG_PUT					0x03
 #define PCY8575_REG_GET					0x04
 #define PCY8575_REG_TEMPERATURE			0x05
+#define PCY8575_REG_UPTIME				0x06
+#define PCY8575_REG_IRMS				0x07
 
 /* PCY8575 protocol will works always in a slave mode. 
 The master uC has the control over the SCL clock.
@@ -39,11 +42,16 @@ opcode:
 	- PUT:	 		0x03
 	- GET:			0x04
 	- TEMP:			0x05
+	- UPTIME:		0x06
+	- IRMS:			0x07
 
 protocol example
 
 PROBE:		write													read
 Start | ADDR - R/W = 0 | PROBE | Stop | ... delay ... | Start | ADDR - R/W = 1 | read byte 1 |
+
+SOFT RESET:	write
+Start | ADDR - R/W = 0 | RESET | Stop |
 
 CONFIG:		write				  P07-P00   P15-P00
 Start | ADDR - R/W = 0 | CONFIG	| byte 0  | byte 1  | Stop |
@@ -54,23 +62,25 @@ Start | ADDR - R/W = 0 | CONFIG | Stop | ... delay ... | Start | ADDR - R/W = 1 
 GET:		write												 Read			  P07-P00   P15-P00
 Start | ADDR - R/W = 0 | GET    | Stop | ... delay ... | Start | ADDR - R/W = 1 | byte 0  | byte 1 |
 
-GET TEMP:	write												 Read			      16 bits
+GET TEMP:	write												 Read					16 bits
 Start | ADDR - R/W = 0 | TEMP   | Stop | ... delay ... | Start | ADDR - R/W = 1 | byte L  | byte H |
 
-SOFT RESET:	write
-Start | ADDR - R/W = 0 | RESET | Stop |
+UPTIME:		write												 Read			     	32 bits
+Start | ADDR - R/W = 0 | UPTIME | Stop | ... delay ... | Start | ADDR - R/W = 1 | byte L  | byte L | byte H | byte H |
 
+IRMS:		write																		16 bits
+Start | ADDR - R/W = 0 | UPTIME | Stop | ... delay ... | Start | ADDR - R/W = 1 | byte L  | byte H |
 */
 
 class pcy8575 {
 
 	public:
 
+	static const int num_pins = 16;
+
 	pcy8575(void) : pin_{
 							{16, 1}, {17, 1}, {18, 1}, {19, 1}, {20, 1}, {21, 1}, {22, 1}, {25 , 1},
 							{26, 1}, {27, 1}, {28, 1}, {1 , 1}, {31, 1}, {32, 1}, {12, 1}, {13, 1}} {}
-	// pcy8575::pcy8575(void) : pin_{
-	// 								{1 , 1}, {2 , 1}} {}
 
 	~pcy8575(void) {}
 
@@ -84,9 +94,9 @@ class pcy8575 {
 		i2c_read_CR2_reg();
 		i2c_read_OAR1_reg();
 
-		i2c_print_CR2_reg();
-		i2c_print_CR1_reg();
-		i2c_print_addr1();
+		// i2c_print_CR2_reg();
+		// i2c_print_CR1_reg();
+		// i2c_print_addr1();
 		// printf("I2C State: 0x%02x\n",HAL_I2C_GetState(&hi2c2));
 
 		// I2C to GPIO system
@@ -114,46 +124,61 @@ class pcy8575 {
 			i2c_has_data_rx = 0;
 
 			switch (i2c_data_rx[0]) {
-				case 0x00: 	// PROBE ok
+				case PCY8575_REG_PROBE: { // PROBE ok
 					printf("opcode: probe!: 0x%04x\n", output_);
 				break;
-
-				case 0x01:	// Soft RESET
+				}
+				case PCY8575_REG_SOFT_RESET: { // Soft RESET
 					printf("opcode: restarting...\n\n");
 					HAL_Delay(5);
 					soft_reset();
 				break;
-
-				case 0x02:	// CONFIG
+				}
+				case PCY8575_REG_CONFIG: { // CONFIG
 					// printf("opcode: port config\n");
 					port_config_ = (i2c_data_rx[2] << 8) | i2c_data_rx[1];
 					config(port_config_);		
 				break;
-
-				case 0x03:	// PUT
+				}
+				case PCY8575_REG_PUT: { // PUT
 					output_ = (i2c_data_rx[2] << 8) | i2c_data_rx[1];
 					put(output_);
 					// printf("opcode: put received 0x%04x, 0x%02x, 0x%02x\n", output_, i2c_data_rx[2], i2c_data_rx[1]);
-				break;
-
-				case 0x04:	// GET
+					break;
+				}
+				case PCY8575_REG_GET: { // GET
 					// Master read has write first. Print functions cause delay errors.
 					output_ = get();
 					i2c_data_tx[0] = output_ & 0xFF;
 					i2c_data_tx[1] = (output_ >> 8) & 0xFF;
 					// printf("opcode: get received, output:0x%04x\n", output_);
-				break;
-
-				case 0x05:	// TEMP
+					break;
+				}
+				case PCY8575_REG_TEMPERATURE: { // TEMP
 					// printf("get temp\n");
-					temp_ = get_temp();
+					temp_ = temp();
 					i2c_data_tx[0] = static_cast<uint8_t>(temp_);
 					i2c_data_tx[1] = static_cast<uint8_t>(temp_ >> 8);
-				break;
+					break;
+				}
+				case PCY8575_REG_UPTIME: { // UPTIME
+					uptime_temp_ = uptime();
+					i2c_data_tx[0] = static_cast<uint8_t>(uptime_temp_);
+					i2c_data_tx[1] = static_cast<uint8_t>(uptime_temp_ >> 8);
+					i2c_data_tx[2] = static_cast<uint8_t>(uptime_temp_ >> 16);
+					i2c_data_tx[3] = static_cast<uint8_t>(uptime_temp_ >> 24);
+					break;
+				}
+				case PCY8575_REG_IRMS: {
+					irms_ = irms();	// this conversion located here will depends the time calculation because the i2c transfer time
+					i2c_data_tx[0] = static_cast<uint8_t>(irms_);
+					i2c_data_tx[1] = static_cast<uint8_t>(irms_ >> 8);
+					break;
+				}
 
 				default:
 					printf("default handle msg\n");
-				break;
+					break;
 			}
 
 			// if(i2c_data_rx_size > 1) {
@@ -169,7 +194,7 @@ class pcy8575 {
 		}
 	}
 	void config(uint16_t port_config) {
-		for(int i=0; i<16; i++) {
+		for(int i=0; i<num_pins; i++) {
 			pin_[i].mode((port_config >> i) & 0x01);
 		}
 	}
@@ -191,32 +216,41 @@ class pcy8575 {
 		// return output;
 		return output;
 	}
-	uint16_t get_temp(void) {
+	uint16_t temp(void) {
 		uint16_t temp = static_cast<uint16_t>(0x1243);
 
 		return temp;
 	}
+	uint32_t uptime(void) {
+		return tim3_uptime;
+	}
+	uint16_t irms(void) {
+		return 0x2468;
+	}
 	void soft_reset(void) {
 		HAL_NVIC_SystemReset();
 	}
+
 	void test_up(void) {
 		// uint16_t value = (1 << (pino - 1));
 		// put(1<<11);
 		pin_[11].write(1);
 	}
-
 	void test_down(void) {
 		// uint16_t value = ~(1 << (pino - 1));
 		// put(value);
 		pin_[11].write(0);
 	}
+	
 	private:
 
 	uint8_t reg_addr_ = 0;							// register to read
-	GPIO_driver pin_[16];
+	GPIO_driver pin_[num_pins];
 	uint16_t output_ = 0;
 	uint16_t port_config_ = 0xFFFF;
 	uint16_t temp_ = 0;
+	uint16_t uptime_temp_ = 0;
+	uint16_t irms_ = 0;
 
 	// const std::size_t pin_count_ = sizeof(pin_) / sizeof(pin_[0]);
 

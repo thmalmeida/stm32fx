@@ -60,6 +60,7 @@ class GPIO_driver{
 	private:
 		uint16_t gpio_pin_mask_;
 		int level_ = 0;
+		int direction_ = 0;
 
 		GPIO_TypeDef *port_;
 };

@@ -1,4 +1,4 @@
-#include <stdio.h>
+// #include <stdio.h>
 #include "system_main.h"
 
 #include "i2c_master.hpp"
@@ -7,6 +7,8 @@
 
 #include "gpio.hpp"
 #include "i2c.h"
+#include "tim.h"
+#include "iwdg.h"
 
 enum class states {
 	receiver = 0,
@@ -25,6 +27,9 @@ void i2c_slave_FSM(void) {
 	// 	GPIO_driver{11,1}, GPIO_driver{12,1}, GPIO_driver{13,1}, GPIO_driver{14,1},
 	// 	GPIO_driver{15,1}, GPIO_driver{16,1}, GPIO_driver{17,1}};
 
+
+	tim3_init();
+	iwdg_init();
 	pcy8575 extender0;
 	extender0.init();
 
@@ -32,6 +37,12 @@ void i2c_slave_FSM(void) {
 	while(1) {
 
 		extender0.handle_message();
+
+		if(tim3_flag_1sec) {
+			tim3_flag_1sec = 0;
+			// printf("TIM3:%ld\n", tim3_uptime);
+			iwdg_refresh();
+		}
 
 		// extender0.put(value);
 		// // extender0.test_up();

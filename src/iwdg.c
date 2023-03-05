@@ -22,14 +22,48 @@
 
 IWDG_HandleTypeDef hiwdg;
 
+/* Reload formula
+
+RL =	time(ms) * 40000	- 1
+		4 * (PR) * 1000
+
+f =		40000
+		(nclks*PR)
+
+time(ms) = 	1 * RL * PRESCALE * 1000
+				40000
+
+RL = 	time (ms) * 40000
+		1 * PRESCALE * 1000
+
+
+RL: 12 bit value = max of 4095
+*/
+
 /* IWDG init function */
-void MX_IWDG_Init(void)
+void iwdg_init(void)
 {
 	hiwdg.Instance = IWDG;
-	hiwdg.Init.Prescaler = IWDG_PRESCALER_4;
-	hiwdg.Init.Reload = 4095;
+	hiwdg.Init.Prescaler = IWDG_PRESCALER_16;
+	hiwdg.Init.Reload = 2550;
+
+	int time_value = hiwdg.Init.Reload*16*1000/4000;
 	if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
 	{
 		Error_Handler();
 	}
+	else {
+		printf("IWDG initialized with t= %d ms!\n", time_value);
+	}
+
+
+	// uint16_t RL_reg = (IWDG->RLR & 0x0FFF);
+	// printf("RL_reg: %u\n", RL_reg);
+
+	// IWDG->RLR = 505;
+	// RL_reg = (IWDG->RLR & 0x0FFF);
+	// printf("RL_reg: %u\n", RL_reg);
+}
+void iwdg_refresh(void) {
+	HAL_IWDG_Refresh(&hiwdg);
 }

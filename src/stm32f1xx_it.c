@@ -22,6 +22,7 @@
 #include "stm32f1xx_it.h"
 #include "stm32_log.h"
 #include "i2c.h"
+#include "tim.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* USER CODE END Includes */
@@ -233,6 +234,21 @@ void I2C2_ER_IRQHandler(void)
 	// HAL_I2C_ER_IRQHandler(&hi2c2);
 	i2c_interrupt_er_handle();
 
+}
+
+void TIM3_IRQHandler(void)
+{
+	/* USER CODE BEGIN TIM3_IRQn 0 */
+
+	/* USER CODE END TIM3_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim3);
+
+	tim3_uptime++;
+	tim3_flag_1sec = 1;
+		
+	/* USER CODE BEGIN TIM3_IRQn 1 */
+
+	/* USER CODE END TIM3_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

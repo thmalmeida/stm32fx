@@ -1,13 +1,13 @@
 #include "gpio.hpp"
 
-GPIO_driver::GPIO_driver(int pin_number, int direction) {
+GPIO_driver::GPIO_driver(int pin_number, int direction) : direction_(direction){
 	
 	GPIO_InitTypeDef GPIO_InitStruct;// = {0};
 	/* GPIO Ports Clock Enable */
 	// __HAL_RCC_GPIOA_CLK_ENABLE();
 	// __HAL_RCC_GPIOB_CLK_ENABLE();
 
-	if(direction)
+	if(direction_)
 	{
 		// GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;	// Push pull
 //		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;	// open drain
@@ -261,6 +261,10 @@ GPIO_driver::GPIO_driver(int pin_number, int direction) {
 	}
 	HAL_GPIO_Init(port_, &GPIO_InitStruct);
 
+	if(direction_) {
+		write(0);
+	}
+
 	// this->num = num;
 	// gpio_set_direction(num,mode);
 }
@@ -291,12 +295,19 @@ void GPIO_driver::mode(int direction) {
 int GPIO_driver::read(void) {
 
 	// GPIO_PinState HAL_GPIO_ReadPin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
-	// level_ = static_cast<GPIO_PinState>(HAL_GPIO_ReadPin(port_, gpio_pin_mask_));
-	// level_ = static_cast<int>(HAL_GPIO_ReadPin(port_, gpio_pin_mask_));
-	
-	return static_cast<int>(HAL_GPIO_ReadPin(port_, gpio_pin_mask_));
+	if(!direction_) {
+		// read the IDR input register
+		level_ = static_cast<int>(HAL_GPIO_ReadPin(port_, gpio_pin_mask_));
+	} else{
+		// read the ODR output register
+		if(port_->ODR & gpio_pin_mask_)
+			level_ = 1;
+		else
+			level_ = 0;
+	}
+
 	// level = gpio_get_level(num);
-	// return level_;
+	return level_;
 }
 void GPIO_driver::write(int level) {
 	/*Configure GPIO pin Output Level into STM32*/
