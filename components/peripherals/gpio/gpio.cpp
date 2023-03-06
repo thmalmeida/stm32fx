@@ -249,6 +249,7 @@ GPIO_driver::GPIO_driver(int pin_number, int direction) : direction_(direction){
 			break;
 
 		default:
+			printf("GPIO: pin not found!\n");
 			break;
 
 
