@@ -111,12 +111,11 @@ class pcy8575 {
 			i2c_has_data_tx = 0;
 
 			if(i2c_data_tx_size) {
-				reg_addr_ = i2c_data_rx[0];
-
-				// printf("\ni2c_data_tx_size: %d, reg_addr:0x%02x\n", i2c_data_tx_size, reg_addr_);
-				// for(int i=0; i<i2c_data_tx_size; i++) {
-				// 	printf("i2c_data_tx[%d]: 0x%02x\n", i, i2c_data_tx[i]);
-				// }
+				// reg_addr_ = i2c_data_rx[0];
+				printf("opcode:0x%02x, output:0x%04x, i2c_data_tx_size: %d\n", reg_addr_, output_, i2c_data_tx_size);
+				for(int i=0; i<i2c_data_tx_size; i++) {
+					printf("i2c_data_tx[%d]: 0x%02x\n", i, i2c_data_tx[i]);
+				}
 				// printf("output_: 0x%04x\n", output_);
 			}
 		}
@@ -124,28 +123,41 @@ class pcy8575 {
 		// master write - slave receiver
 		if(i2c_has_data_rx) {
 			i2c_has_data_rx = 0;
+			reg_addr_ = i2c_data_rx[0];
 
-			switch (i2c_data_rx[0]) {
+			switch (reg_addr_) {
 				case PCY8575_REG_PROBE: { // PROBE ok
-					printf("opcode: probe!: 0x%04x\n", output_);
-				break;
+					printf("opcode:0x%02x probe\n", reg_addr_);
+					for(int i=0; i<i2c_data_rx_size; i++) {
+						printf("i2c_data_rx[%d]: 0x%02x\n", i, i2c_data_rx[i]);
+					}
+					break;
 				}
 				case PCY8575_REG_SOFT_RESET: { // Soft RESET
-					printf("opcode: restarting...\n\n");
+					printf("opcode:0x%02x restarting...\n\n", reg_addr_);
+					for(int i=0; i<i2c_data_rx_size; i++) {
+						printf("i2c_data_rx[%d]: 0x%02x\n", i, i2c_data_rx[i]);
+					}
 					HAL_Delay(5);
 					soft_reset();
 				break;
 				}
 				case PCY8575_REG_CONFIG: { // CONFIG
-					// printf("opcode: port config\n");
+					printf("opcode:0x%02x config\n", reg_addr_);
+					for(int i=0; i<i2c_data_rx_size; i++) {
+						printf("i2c_data_rx[%d]: 0x%02x\n", i, i2c_data_rx[i]);
+					}
 					port_config_ = (i2c_data_rx[2] << 8) | i2c_data_rx[1];
 					config(port_config_);		
 				break;
 				}
 				case PCY8575_REG_PUT: { // PUT
+					printf("opcode:0x%02x put\n", reg_addr_);
+					for(int i=0; i<i2c_data_rx_size; i++) {
+						printf("i2c_data_rx[%d]: 0x%02x\n", i, i2c_data_rx[i]);
+					}
 					output_ = (i2c_data_rx[2] << 8) | i2c_data_rx[1];
 					put(output_);
-					// printf("opcode: put received 0x%04x, 0x%02x, 0x%02x\n", output_, i2c_data_rx[2], i2c_data_rx[1]);
 					break;
 				}
 				case PCY8575_REG_GET: { // GET
@@ -153,11 +165,9 @@ class pcy8575 {
 					output_ = get();
 					i2c_data_tx[0] = output_ & 0xFF;
 					i2c_data_tx[1] = (output_ >> 8) & 0xFF;
-					// printf("opcode: get received, output:0x%04x\n", output_);
 					break;
 				}
 				case PCY8575_REG_TEMPERATURE: { // TEMP
-					// printf("get temp\n");
 					temp_ = temp();
 					i2c_data_tx[0] = static_cast<uint8_t>(temp_);
 					i2c_data_tx[1] = static_cast<uint8_t>(temp_ >> 8);

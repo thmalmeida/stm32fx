@@ -27,7 +27,7 @@ void i2c_slave_FSM(void) {
 	// 	GPIO_driver{11,1}, GPIO_driver{12,1}, GPIO_driver{13,1}, GPIO_driver{14,1},
 	// 	GPIO_driver{15,1}, GPIO_driver{16,1}, GPIO_driver{17,1}};
 
-
+	printf("\nPCY8575 initializing...\n");
 	tim3_init();
 	iwdg_init();
 	pcy8575 extender0;

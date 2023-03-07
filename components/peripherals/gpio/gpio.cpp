@@ -297,14 +297,14 @@ int GPIO_driver::read(void) {
 
 	// GPIO_PinState HAL_GPIO_ReadPin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
 	if(!direction_) {
-		// read the IDR input register
-		level_ = static_cast<int>(HAL_GPIO_ReadPin(port_, gpio_pin_mask_));
-	} else{
 		// read the ODR output register
 		if(port_->ODR & gpio_pin_mask_)
 			level_ = 1;
 		else
 			level_ = 0;
+	} else{
+		// read the IDR input register
+		level_ = static_cast<int>(HAL_GPIO_ReadPin(port_, gpio_pin_mask_));
 	}
 
 	// level = gpio_get_level(num);

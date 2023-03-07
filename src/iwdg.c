@@ -47,7 +47,7 @@ void iwdg_init(void)
 	hiwdg.Init.Prescaler = IWDG_PRESCALER_16;
 	hiwdg.Init.Reload = 2550;
 
-	int time_value = hiwdg.Init.Reload*16*1000/4000;
+	int time_value = hiwdg.Init.Reload*16*1000/40000;
 	if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
 	{
 		Error_Handler();
