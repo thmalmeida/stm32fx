@@ -51,8 +51,9 @@ void tim3_init(void)
 	{
 		printf("tim3 error 0\n");
 		Error_Handler();
+	} else {
+		printf("TIM3 initalized ok\n");
 	}
-
 	// sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
 	// if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
 	// {

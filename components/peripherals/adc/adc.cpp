@@ -5,7 +5,7 @@
  *      Author: titi
  */
 
-#include "adc.h"
+#include "adc.hpp"
 
 void ADC::adc_begin()
 {

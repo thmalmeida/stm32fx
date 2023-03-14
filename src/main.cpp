@@ -1,31 +1,37 @@
-// #include <stdio.h>
 #include "system_main.h"
 
+// includes for aht10 sensor
 #include "i2c_master.hpp"
 #include "aht10.hpp"
-#include "pcy8575.hpp"
 
-#include "gpio.hpp"
-#include "i2c.h"
+
+// includes for pcy8575
+#include "pcy8575.hpp"
 #include "tim.h"
 #include "iwdg.h"
 
-enum class states {
-	receiver = 0,
-	transmitter
-};
+void aht10_test(void);
+void i2c_slave_pcy8575(void);
 
-states state_fsm = states::receiver;
+int main(void)
+{
+	init_system();
 
-// IMplement class vector for GPIO into pcy8575
+	// aht10_test();
+	i2c_slave_pcy8575();
 
-void i2c_slave_FSM(void) {
+    return 0;
+}
 
-	// GPIO_driver pin0[] = {
-	// 	GPIO_driver{3, 1}, GPIO_driver{4, 1}, GPIO_driver{5, 1}, GPIO_driver{6, 1},
-	// 	GPIO_driver{7, 1}, GPIO_driver{8, 1}, GPIO_driver{9, 1}, GPIO_driver{10,1},
-	// 	GPIO_driver{11,1}, GPIO_driver{12,1}, GPIO_driver{13,1}, GPIO_driver{14,1},
-	// 	GPIO_driver{15,1}, GPIO_driver{16,1}, GPIO_driver{17,1}};
+// Example to declare an array of GPIO_driver class
+// #include "gpio"
+// GPIO_driver pin0[] = {
+// 	GPIO_driver{3, 1}, GPIO_driver{4, 1}, GPIO_driver{5, 1}, GPIO_driver{6, 1},
+// 	GPIO_driver{7, 1}, GPIO_driver{8, 1}, GPIO_driver{9, 1}, GPIO_driver{10,1},
+// 	GPIO_driver{11,1}, GPIO_driver{12,1}, GPIO_driver{13,1}, GPIO_driver{14,1},
+// 	GPIO_driver{15,1}, GPIO_driver{16,1}, GPIO_driver{17,1}};
+
+void i2c_slave_pcy8575(void) {
 
 	printf("\nPCY8575 initializing...\n");
 	tim3_init();
@@ -33,25 +39,15 @@ void i2c_slave_FSM(void) {
 	pcy8575 extender0;
 	extender0.init();
 
-	// uint16_t value = (1<<11);
 	while(1) {
 
 		extender0.handle_message();
 
+		// 1 second flag to refresh watchdog timer
 		if(tim3_flag_1sec) {
 			tim3_flag_1sec = 0;
-			// printf("TIM3:%ld\n", tim3_uptime);
 			iwdg_refresh();
 		}
-
-		// extender0.put(value);
-		// // extender0.test_up();
-		// HAL_Delay(500);
-
-		// extender0.put(~value);
-		// // extender0.test_down();
-		// HAL_Delay(500);
-		// printf("Ola!\n");
 	}
 }
 void aht10_test(void) {
@@ -86,18 +82,6 @@ void aht10_test(void) {
 		HAL_Delay(30000);
 	}
 }
-
-int main(void)
-{
-	init_system();
-
-	// aht10_test();
-	i2c_slave_FSM();
-
-    return 0;
-}
-
-
 
 
 

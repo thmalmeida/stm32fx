@@ -50,10 +50,11 @@ void iwdg_init(void)
 	int time_value = hiwdg.Init.Reload*16*1000/40000;
 	if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
 	{
-		Error_Handler();
+		// Error_Handler();
+		printf("IWDG init error\n");
 	}
 	else {
-		printf("IWDG initialized with t= %d ms!\n", time_value);
+		printf("IWDG initialized ok with t= %d ms!\n", time_value);
 	}
 
 

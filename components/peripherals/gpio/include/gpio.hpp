@@ -3,6 +3,7 @@
  *
  *  Created on: 22 de fev de 2017
  *      Author: titi
+ * modified on: 2023-03-01
  */
 
 #ifndef GPIO_HPP__
@@ -14,7 +15,6 @@
 #include <stdbool.h>
 
 #include "delay.h"
-
 
 // STM32----------------------
 #include "stm32_log.h"
@@ -76,6 +76,21 @@ class GPIO_driver{
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// OLD things bellow
 
 // class GPIO_dri {
 // public:
