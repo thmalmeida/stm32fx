@@ -97,7 +97,7 @@ void tim2_init(void) {
 void tim3_init(void) {
 
 	htim3.Instance = TIM3;
-	htim3.Init.Prescaler = 16000;
+	htim3.Init.Prescaler = 8000;
 	htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
 	htim3.Init.Period = 1000-1;
 	htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -201,19 +201,33 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
 }
 void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 {
+	if(tim_baseHandle->Instance==TIM2)
+	{
+		/* USER CODE BEGIN TIM2_MspDeInit 0 */
 
-  if(tim_baseHandle->Instance==TIM3)
-  {
-  /* USER CODE BEGIN TIM3_MspDeInit 0 */
+		/* USER CODE END TIM2_MspDeInit 0 */
+		/* Peripheral clock disable */
+		__HAL_RCC_TIM2_CLK_DISABLE();
 
-  /* USER CODE END TIM3_MspDeInit 0 */
-    /* Peripheral clock disable */
-    __HAL_RCC_TIM3_CLK_DISABLE();
+		/* TIM3 interrupt Deinit */
+		HAL_NVIC_DisableIRQ(TIM2_IRQn);
+		/* USER CODE BEGIN TIM2_MspDeInit 1 */
 
-    /* TIM3 interrupt Deinit */
-    HAL_NVIC_DisableIRQ(TIM3_IRQn);
-  /* USER CODE BEGIN TIM3_MspDeInit 1 */
+		/* USER CODE END TIM2_MspDeInit 1 */
+	}
 
-  /* USER CODE END TIM3_MspDeInit 1 */
-  }
+	if(tim_baseHandle->Instance==TIM3)
+	{
+		/* USER CODE BEGIN TIM3_MspDeInit 0 */
+
+		/* USER CODE END TIM3_MspDeInit 0 */
+		/* Peripheral clock disable */
+		__HAL_RCC_TIM3_CLK_DISABLE();
+
+		/* TIM3 interrupt Deinit */
+		HAL_NVIC_DisableIRQ(TIM3_IRQn);
+		/* USER CODE BEGIN TIM3_MspDeInit 1 */
+
+		/* USER CODE END TIM3_MspDeInit 1 */
+	}
 }

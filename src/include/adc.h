@@ -37,7 +37,10 @@ void adc_read_CR1_reg(void);
 void adc_print_CR1_reg(void);
 void adc_read_CR2_reg(void);
 void adc_print_CR2_reg(void);
+uint8_t adc_read_SR_EOC_bit(void);
 void adc_set_CR2_EXTSEL_bits(uint8_t value);
+void adc_set_CR2_DMA_bit(void);
+void adc_dma_init(void);
 
 #ifdef __cplusplus
 }

@@ -2,9 +2,10 @@
 #include "stdlib.h"
 // includes for aht10 sensor
 #include "i2c_master.hpp"
-#include "adc_driver.hpp"
 #include "aht10.hpp"
 
+// includes for adc test
+#include "adc_driver.hpp"
 
 // includes for pcy8575
 #include "pcy8575.hpp"
@@ -22,7 +23,8 @@ int main(void)
 	printf("\nSystem reset...\n");
 
 	// aht10_test();
-	i2c_slave_pcy8575();
+	// i2c_slave_pcy8575();
+	adc_test();
 
     return 0;
 }
@@ -36,7 +38,7 @@ int main(void)
 // 	GPIO_driver{15,1}, GPIO_driver{16,1}, GPIO_driver{17,1}};
 
 #define ADC_BUFLEN 10
-uint8_t adc_dma_flag = 0;
+volatile uint8_t adc_dma_flag = 0;
 
 // extern "C" {
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
@@ -50,39 +52,52 @@ void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc) {
 void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc) {
 	printf("ADC: callback dma error\n");
 }
-// }
 void adc_test(void) {
 	ADC_driver adc0;
 	adc0.init();
+
+	adc_dma_init();
+	
 	uint32_t adc_raw_data[6];
 
 	tim3_init();
-	tim2_init();
+	// tim2_init();
 
-	char buffer[128];     //AO!
-	uint32_t adcBuf[ADC_BUFLEN];   //For ADC samples.
-	HAL_ADC_Start_DMA(&hadc1, &adcBuf[0], ADC_BUFLEN); //Link DMA to ADC1
+	// adc_set_CR2_EXTSEL_bits(0x04);
+	// adc_set_CR2_DMA_bit();
 
+	adc_read_SR_reg();
+	adc_print_SR_reg();
+	adc_read_CR1_reg();
+	adc_print_CR1_reg();
 	adc_read_CR2_reg();
 	adc_print_CR2_reg();
 
-	adc_read_CR1_reg();
-	adc_print_CR1_reg();
+	uint32_t adc_buffer[ADC_BUFLEN];   //For ADC samples.
+	memset(adc_buffer, 0, sizeof(adc_buffer));
+	for(int j=0; j<ADC_BUFLEN; j++) {
+		printf("ADC[%d]= %lu\n", j, adc_buffer[j]);
+	}
+	HAL_ADC_Start_DMA(&hadc1, &adc_buffer[0], ADC_BUFLEN); //Link DMA to ADC1
+	// adc0.read_stream(&adc_buffer[0], ADC_BUFLEN);
 
-	adc_set_CR2_EXTSEL_bits(0x04);
-
-	volatile int i = 0;
+	// volatile int i = 0;
 	while(1) {
 
 		// 1 second flag to refresh watchdog timer
 		if(tim3_flag_1sec) {
 			tim3_flag_1sec = 0;
-			printf("TIM3\n");
+			// printf("TIM3\n");
+			adc_read_SR_reg();
+			adc_print_SR_reg();
+			adc_read_CR1_reg();
+			adc_print_CR1_reg();
 			adc_read_CR2_reg();
 			adc_print_CR2_reg();
 
-			adc_read_CR1_reg();
-			adc_print_CR1_reg();
+			if(adc_read_SR_EOC_bit()) {
+				printf("ADC1->DR: %lu\n", ADC1->DR);
+			}
 			// HAL_ADC_Start(&hadc1);
 			// printf("read value: %u\n", adc0.read(0));
 			// printf("read stream:\n");
@@ -92,15 +107,18 @@ void adc_test(void) {
 			// }
 		}
 
-		if(tim2_flag) {
-			tim2_flag = 0;
-			printf("TIM2!\n");
-		}
+		// if(tim2_flag) {
+		// 	tim2_flag = 0;
+		// 	printf("TIM2!\n");
+		// }
 
 		if (adc_dma_flag) {
-			i++;
-			printf("ADC1=%d, ADC2=%d\n", (int)adcBuf[i], (int)adcBuf[i+1]);
 			adc_dma_flag = 0;
+			// i++;
+			for(int j=0; j<ADC_BUFLEN; j++) {
+				printf("ADC[%d]= %lu\n", j, adc_buffer[j]);
+			}
+
 		}
 	}
 }
