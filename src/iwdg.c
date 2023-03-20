@@ -45,13 +45,13 @@ void iwdg_init(void)
 {
 	hiwdg.Instance = IWDG;
 	hiwdg.Init.Prescaler = IWDG_PRESCALER_16;
-	hiwdg.Init.Reload = 2550;
+	hiwdg.Init.Reload = 2600; // 2500 is for 1000 ms. Reload is mas 4095
 
 	int time_value = hiwdg.Init.Reload*16*1000/40000;
 	if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
 	{
-		// Error_Handler();
 		printf("IWDG init error\n");
+		Error_Handler();
 	}
 	else {
 		printf("IWDG initialized ok with t= %d ms!\n", time_value);

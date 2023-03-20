@@ -107,7 +107,7 @@ void Error_Handler(void)
 	/* User can add his own implementation to report the HAL error return state */
 	__disable_irq();
 
-	printf("Error ocurred!");
+	printf("Error ocurred!\n");
 	
 	while (1)
 	{
@@ -122,7 +122,6 @@ void init_system(void) {
 
 	/* Configure the system clock */
 	SystemClock_Config();
-	// MX_IWDG_Init();
 	// SystemClock_Config_72MHz();
 }
 

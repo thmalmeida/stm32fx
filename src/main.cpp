@@ -1,7 +1,8 @@
 #include "system_main.h"
-
+#include "stdlib.h"
 // includes for aht10 sensor
 #include "i2c_master.hpp"
+#include "adc_driver.hpp"
 #include "aht10.hpp"
 
 
@@ -10,12 +11,15 @@
 #include "tim.h"
 #include "iwdg.h"
 
+
 void aht10_test(void);
 void i2c_slave_pcy8575(void);
+void adc_test(void);
 
 int main(void)
 {
 	init_system();
+	printf("\nSystem reset...\n");
 
 	// aht10_test();
 	i2c_slave_pcy8575();
@@ -31,22 +35,90 @@ int main(void)
 // 	GPIO_driver{11,1}, GPIO_driver{12,1}, GPIO_driver{13,1}, GPIO_driver{14,1},
 // 	GPIO_driver{15,1}, GPIO_driver{16,1}, GPIO_driver{17,1}};
 
-void i2c_slave_pcy8575(void) {
+#define ADC_BUFLEN 10
+uint8_t adc_dma_flag = 0;
 
-	printf("\nPCY8575 initializing...\n");
+// extern "C" {
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
+	printf("ADC cplt!\n");
+	adc_dma_flag = 1;
+}
+void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc) {
+	printf("ADC half!\n");
+	adc_dma_flag = 1;
+}
+void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc) {
+	printf("ADC: callback dma error\n");
+}
+// }
+void adc_test(void) {
+	ADC_driver adc0;
+	adc0.init();
+	uint32_t adc_raw_data[6];
+
 	tim3_init();
-	iwdg_init();
-	pcy8575 extender0;
-	extender0.init();
+	tim2_init();
 
+	char buffer[128];     //AO!
+	uint32_t adcBuf[ADC_BUFLEN];   //For ADC samples.
+	HAL_ADC_Start_DMA(&hadc1, &adcBuf[0], ADC_BUFLEN); //Link DMA to ADC1
+
+	adc_read_CR2_reg();
+	adc_print_CR2_reg();
+
+	adc_read_CR1_reg();
+	adc_print_CR1_reg();
+
+	adc_set_CR2_EXTSEL_bits(0x04);
+
+	volatile int i = 0;
 	while(1) {
-
-		extender0.handle_message();
 
 		// 1 second flag to refresh watchdog timer
 		if(tim3_flag_1sec) {
 			tim3_flag_1sec = 0;
-			iwdg_refresh();
+			printf("TIM3\n");
+			adc_read_CR2_reg();
+			adc_print_CR2_reg();
+
+			adc_read_CR1_reg();
+			adc_print_CR1_reg();
+			// HAL_ADC_Start(&hadc1);
+			// printf("read value: %u\n", adc0.read(0));
+			// printf("read stream:\n");
+			// adc0.read_stream(&adc_raw_data[0], 3);
+			// for(int i=0; i<3; i++) {
+			// 	printf("%lu, ", adc_raw_data[i]);
+			// }
+		}
+
+		if(tim2_flag) {
+			tim2_flag = 0;
+			printf("TIM2!\n");
+		}
+
+		if (adc_dma_flag) {
+			i++;
+			printf("ADC1=%d, ADC2=%d\n", (int)adcBuf[i], (int)adcBuf[i+1]);
+			adc_dma_flag = 0;
+		}
+	}
+}
+void i2c_slave_pcy8575(void) {
+	pcy8575 extender0;
+	extender0.init();
+
+	tim3_init();
+	iwdg_init();
+
+	while(1) {
+
+		extender0.handle_message();
+	
+		// 1 second flag to refresh watchdog timer
+		if(tim3_flag_1sec) {
+			tim3_flag_1sec = 0;
+			// printf("TIM3\n");
 		}
 	}
 }

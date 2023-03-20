@@ -23,6 +23,7 @@
 #include "stm32_log.h"
 #include "i2c.h"
 #include "tim.h"
+#include "adc.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* USER CODE END Includes */
@@ -250,7 +251,27 @@ void TIM3_IRQHandler(void)
 
 	/* USER CODE END TIM3_IRQn 1 */
 }
+void TIM2_IRQHandler(void) {
 
+	HAL_TIM_IRQHandler(&htim2);
+	tim2_uptime++;
+	tim2_flag = 1;
+}
+void DMA1_Channel1_IRQHandler(void)
+{
+	/* USER CODE BEGIN DMA1_Channel1_IRQn 0 */
+
+	/* USER CODE END DMA1_Channel1_IRQn 0 */
+	HAL_DMA_IRQHandler(&hdma_adc1);
+	printf("dma1 IRQ\n");
+	/* USER CODE BEGIN DMA1_Channel1_IRQn 1 */
+
+	/* USER CODE END DMA1_Channel1_IRQn 1 */
+}
+// void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc) {
+// 	printf("ADC half!\n");
+
+// }
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */

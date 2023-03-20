@@ -11,7 +11,7 @@
 
 // STM32----------------------
 #include "stm32_log.h"
-#include "stm32f1xx_hal.h"
+#include "system_main.h"
 // ---------------------------
 
 // ESP32 ---------------------

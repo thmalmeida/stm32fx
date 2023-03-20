@@ -9,10 +9,10 @@
 /* list of I2C addresses */
 #define PCY8575_ADDR			0x53	// device address: 0b0010 0011 >> 0b0001 0001 = 0x11
 #define PCY8575_NORMAL_SPEED	100000  // i2c normal speed [Hz]
-#define PCY8575_FASTL_SPEED		400000  // i2c fast speed [Hz]
+#define PCY8575_FAST_SPEED		400000  // i2c fast speed [Hz]
 
 
-/* list of command registers */
+/* list of command registers - opcodes */
 #define PCY8575_REG_PROBE		0x00
 #define PCY8575_REG_SOFT_RESET	0x01
 #define PCY8575_REG_CONFIG		0x02
@@ -22,17 +22,10 @@
 #define PCY8575_REG_UPTIME		0x06
 #define PCY8575_REG_IRMS		0x07
 
-// #define PCY8575_DEBUG_PRINT		1
+#define PCY8575_DEBUG_PRINT		1
 
 /* PCY8575 protocol will works always in a slave mode. 
 The master uC has the control over the SCL clock.
-
-When master write
-
-when master read
-
-
-write mode
 
 There are 16 controlled pins
 ____________.________.________.

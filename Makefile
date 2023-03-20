@@ -22,11 +22,11 @@ TARGET = i2c_to_gpio
 # building variables
 ######################################
 # debug build?
-DEBUG = 0
+DEBUG = 1
 # optimization
 # Os - Performs optimizations to reduce the code size at the expense of a possible increase in execution time. This option aims for a balanced code size reduction and fast performance.
 # Oz - Optimizes for smaller code size.
-OPT = -Oz 
+OPT = -O1
 
 #######################################
 # paths
@@ -46,6 +46,7 @@ INC_DIR = src/include
 
 C_SOURCES =  \
 $(SRC_DIR)/system_main.c \
+$(SRC_DIR)/adc.c \
 $(SRC_DIR)/i2c.c \
 $(SRC_DIR)/tim.c \
 $(SRC_DIR)/iwdg.c \
@@ -53,6 +54,7 @@ $(SRC_DIR)/stm32_log.c \
 $(SRC_DIR)/stm32f1xx_hal_msp.c \
 $(SRC_DIR)/stm32f1xx_it.c \
 $(SRC_DIR)/system_stm32f1xx.c \
+$(DRIVER_DIR)/stm32f1xx_hal_adc.c \
 $(DRIVER_DIR)/stm32f1xx_hal_i2c.c \
 $(DRIVER_DIR)/stm32f1xx_hal.c \
 $(DRIVER_DIR)/stm32f1xx_hal_rcc.c \
@@ -83,10 +85,11 @@ CXX_SOURCES = \
 $(SRC_DIR)/main.cpp \
 components/helper/delay.cpp \
 components/modules/pcy8575/pcy8575.cpp \
-components/peripherals/gpio/gpio.cpp \
 components/modules/aht10/aht10.cpp \
+components/peripherals/adc/adc_driver.cpp \
+components/peripherals/gpio/gpio.cpp \
 components/peripherals/i2c_master/i2c_master.cpp
-# $(SRC_DIR)/usart.cpp \
+# $(SRC_DIR)/usart.cpp
 
 # ASM sources
 ASM_SOURCES =  \
@@ -124,12 +127,11 @@ CPU = -mcpu=cortex-m3
 # fpu
 # NONE for Cortex-M0/M0+/M3
 
-# float-abi
-
+# add this flag to print float: -u _printf_float
+#FLOAT-PRINT = -u _printf_float
 
 # mcu
-MCU = $(CPU) -mthumb $(FPU) $(FLOAT-ABI) -specs=nosys.specs -specs=nano.specs
-# add this flag to print float: -u _printf_float
+MCU = $(CPU) -mthumb $(FPU) $(FLOAT-ABI) $(FLOAT-PRINT) -specs=nosys.specs -specs=nano.specs
 
 # MCU = $(CPU) -mthumb -fmessage-length=0 -fsigned-char -Wall -Wextra -ffunction-sections -fdata-sections#$(FPU) $(FLOAT-ABI)
 # macros for gcc
@@ -165,9 +167,10 @@ CXX_INCLUDES = \
 -IDrivers/CMSIS/Device/ST/STM32F1xx/Include \
 -IDrivers/CMSIS/Include \
 -Icomponents/helper/include \
--Icomponents/modules/pcy8575/include \
--Icomponents/peripherals/gpio/include \
 -Icomponents/modules/aht10/include \
+-Icomponents/modules/pcy8575/include \
+-Icomponents/peripherals/adc/include \
+-Icomponents/peripherals/gpio/include \
 -Icomponents/peripherals/i2c_master/include
 
 # compile gcc flags
@@ -276,6 +279,7 @@ clean:
 flash: all
 	st-flash --reset --format ihex write $(BUILD_DIR)/$(TARGET).hex
 
+# --clock= 8 means 8 MHz of main clock source
 monitor: flash
 	st-trace --clock=8
 

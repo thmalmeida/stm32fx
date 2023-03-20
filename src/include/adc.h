@@ -18,35 +18,30 @@
   */
 /* USER CODE END Header */
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __ADC_H__
-#define __ADC_H__
+#ifndef ADC_H__
+#define ADC_H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
-
-/* USER CODE BEGIN Includes */
-
-/* USER CODE END Includes */
+#include "system_main.h"
 
 extern ADC_HandleTypeDef hadc1;
+extern DMA_HandleTypeDef hdma_adc1;
 
-/* USER CODE BEGIN Private defines */
-
-/* USER CODE END Private defines */
-
-void MX_ADC1_Init(void);
-
-/* USER CODE BEGIN Prototypes */
-
-/* USER CODE END Prototypes */
+void adc_read_SR_reg(void);
+void adc_print_SR_reg(void);
+void adc_read_CR1_reg(void);
+void adc_print_CR1_reg(void);
+void adc_read_CR2_reg(void);
+void adc_print_CR2_reg(void);
+void adc_set_CR2_EXTSEL_bits(uint8_t value);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __ADC_H__ */
+#endif /* ADC_H__ */
 

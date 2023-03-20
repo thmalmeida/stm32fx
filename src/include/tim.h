@@ -28,23 +28,16 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "system_main.h"
 
-/* USER CODE BEGIN Includes */
-
-/* USER CODE END Includes */
+extern TIM_HandleTypeDef htim2;
+extern uint32_t tim2_uptime;
+extern uint8_t tim2_flag;
 
 extern TIM_HandleTypeDef htim3;
 extern uint32_t tim3_uptime;
 extern uint8_t tim3_flag_1sec;
 
-/* USER CODE BEGIN Private defines */
-
-/* USER CODE END Private defines */
-
+void tim2_init(void);
 void tim3_init(void);
-
-/* USER CODE BEGIN Prototypes */
-
-/* USER CODE END Prototypes */
 
 #ifdef __cplusplus
 }
