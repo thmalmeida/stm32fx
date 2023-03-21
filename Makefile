@@ -128,7 +128,7 @@ CPU = -mcpu=cortex-m3
 # NONE for Cortex-M0/M0+/M3
 
 # add this flag to print float: -u _printf_float
-#FLOAT-PRINT = -u _printf_float
+FLOAT-PRINT = -u _printf_float
 
 # mcu
 MCU = $(CPU) -mthumb $(FPU) $(FLOAT-ABI) $(FLOAT-PRINT) -specs=nosys.specs -specs=nano.specs

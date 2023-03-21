@@ -51,6 +51,10 @@ uint8_t CAL_bit = 0;		// bit 2 - A/D auto calibration
 uint8_t CONT_bit = 0;		// bit 1 - Continuous conversion
 uint8_t ADON_bit = 0;		// bit 0 - A/D converter ON/OFF
 
+uint16_t adc_buffer[ADC_BUFLEN];   //For ADC samples.
+uint16_t RxData[3];
+float Temperature;
+uint8_t adc_dma_flag = 0;
 
 void adc_read_SR_reg(void) {
 	// read SR reg
@@ -114,6 +118,13 @@ uint8_t adc_read_SR_EOC_bit(void) {
 	return EOC_bit;
 }
 void adc_dma_init(void) {
+
+	// ADC1 clock enable (ADC1 EN: bit 9)
+	RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
+
+	// ADC1 prescale to div by 2. Value: 00
+	RCC->CFGR &= ~(3 << 14);
+
 	// Dual mode: independent mode;
 	ADC1->CR1 &= ~(0x0F << 16);
 
@@ -126,13 +137,13 @@ void adc_dma_init(void) {
 	// Data rigth data align
 	ADC1->CR2 &= ~(1 << 11); 
 
-	// Enable DMA for ADC
-	ADC1->CR2 |= (1 << 8);
+	// Enable DMA for ADC (DMA)
+	ADC1->CR2 |= (1 << ADC_CR2_DMA_Pos);
 
 	// Set 1.5 cycles sampling time to IN2 - set 000 to SMP2[2:0]
 	ADC1->SMPR2 &= ~(7 << 6);
 
-	// Set regular channel sequence length
+	// Set regular channel sequence length (number of channels)
 	ADC1->SQR1 |= (1 << 20);
 
 	// Set to the first rank the channel 2
@@ -145,10 +156,206 @@ void adc_dma_init(void) {
 	ADC1->CR2 |= (1 << 0);
 
 	// Ref.: https://controllerstech.com/dma-with-adc-using-registers-in-stm32/
-	// Initialize the DMA
+	/* Initialize the DMA
+	Steps to follow:
+	1- Enable DMA clock;
+	2- Configure those registers.
+	*/
 
+	// Enable DMA1 clock
+	RCC->AHBENR |= (1 << 0);
+	
+	// Memory to memory disable;
+	DMA1_Channel1->CCR &= ~(1<<14);
 
+	// Channel priority level to medium: 01
+	DMA1_Channel1->CCR |= (1<<12);
+
+	// Memory size to 16 bits: 01
+	DMA1_Channel1->CCR |= (1<<10);
+
+	// Peripheral size to 16 bits: 01 ()
+	DMA1_Channel1->CCR |= (1<<8);
+
+	// Memory increment mode enable (MINC)
+	DMA1_Channel1->CCR |= (1<<7);
+
+	// Peripheral increment mode enable (PINC)
+	DMA1_Channel1->CCR |= (1<<6);
+
+	// Circular mode disable 0 or enable 1 (CIRC)
+	DMA1_Channel1->CCR &= ~(1<<5);	// Normal mode
+
+	// Data transfer direction from peripheral to memory (DIR)
+	DMA1_Channel1->CCR &= ~(1<<4);
+
+	// Enable interrupts Trasfer error (TEIE), Half transfer (HTIE) and Transfer complete (TCIE)
+	DMA1_Channel1->CCR |= (1<<3) | (1<<2) | (1<<1);
+
+	// Set buffer size
+	DMA1_Channel1->CNDTR = (uint32_t)(ADC_BUFLEN);
+
+	// Set peripheral source address
+	DMA1_Channel1->CPAR = (uint32_t)(&(ADC1->DR));
+
+	// Set buffer memory address
+	DMA1_Channel1->CMAR = &adc_buffer[0];
+
+	// Channel enable
+	DMA1_Channel1->CCR |= (1<<0);
 }
+void adc_start_conversion(void) {
+	ADC1->CR2 |= (1<<22);
+}
+
+void ADC_Init(void) {
+	/************** STEPS TO FOLLOW *****************
+	1. Enable ADC and GPIO clock
+	2. Set the prescalar in the Clock configuration register (RCC_CFGR)
+	3. Set the Scan Mode and Resolution in the Control Register 1 (CR1)
+	4. Set the Continuous Conversion, EOC, and Data Alignment in Control Reg 2 (CR2)
+	5. Set the Sampling Time for the channels in ADC_SMPRx
+	6. Set the Regular channel sequence length in ADC_SQR1
+	7. Set the Respective GPIO PINs in the Analog Mode
+	************************************************/
+	
+//1. Enable ADC and GPIO clock
+	RCC->APB2ENR |= 1<<9;  // enable ADC1 clock
+	RCC->APB2ENR |= (1<<2);  // enable GPIOA clock
+	
+//2. Set the prescalar in the Clock configuration register (RCC_CFGR)	
+	RCC->CFGR |= (2<<14);  // Prescaler 6, ADC Clock = 72/6 = 12 MHz  		 
+	
+//3. Set the Scan Mode and Resolution in the Control Register 1 (CR1)	
+	ADC1->CR1 = (1<<8);    // SCAN mode enabled
+	// Resolution is 12 bit in F103
+	
+//4. Set the Continuous Conversion, EOC, and Data Alignment in Control Reg 2 (CR2)
+	ADC1->CR2 = (1<<1);     // enable continuous conversion mode
+	// EOC after each conversion by default
+	ADC1->CR2 |= (7<<17);  // External Event selection pointed to SWSTART bit
+	ADC1->CR2 &= ~(1<<11);   // Data Alignment RIGHT
+	
+//5. Set the Sampling Time for the channels	
+	ADC1->SMPR2 &= ~((7<<3) | (7<<12));  // Sampling time of 1.5 cycles for channel 1 and channel 4
+
+//6. Set the Regular channel sequence length in ADC_SQR1
+	ADC1->SQR1 |= (2<<20);   // SQR1_L =2 for 3 conversions
+	
+//7. Set the Respective GPIO PINs in the Analog Mode	
+	GPIOA->CRL &= ~(0xf<<4);  // analog mode for PA 1
+	GPIOA->CRL &= ~(0xf<<16); // analog mode for PA 4
+	
+	
+	/**************************************************************************************************/
+	
+	
+	// Sampling Freq for Temp Sensor 
+	ADC1->SMPR1 |= (7<<18);  // Sampling time (71.5 cycles) of 7 us for channel 16.. It should be <17.1 us
+	
+	// Set the TSVREFE Bit to wake the sensor
+	ADC1->CR2 |= (1<<23);
+	
+	// Enable DMA for ADC
+	ADC1->CR2 |= (1<<8);
+	
+//	// Enable Continuous Request
+//	ADC1->CR2 |= (1<<9);
+	
+	// Channel Sequence
+	ADC1->SQR3 |= (1<<0);  // SEQ1 for Channel 1
+	ADC1->SQR3 |= (4<<5);  // SEQ2 for CHannel 4
+	ADC1->SQR3 |= (16<<10);  // SEQ3 for CHannel 16
+}
+void ADC_Enable2(void) {
+	/************** STEPS TO FOLLOW *****************
+	1. Enable the ADC by setting ADON bit in CR2
+	2. Wait for ADC to stabilize (approx 10us) 
+	************************************************/
+	ADC1->CR2 |= 1<<0;   // ADON =1 enable ADC1
+	
+	uint32_t delay = 10000;
+	while (delay--);
+}
+void ADC_Start(void) {	
+	/************** STEPS TO FOLLOW *****************
+	1. Clear the Status register
+	2. Start the Conversion by Setting the SWSTART bit in CR2
+	*************************************************/
+	ADC1->SR = 0;                      // Clear Status register
+	ADC1->CR2 |= (1<<20);              // Conversion on external event enabled
+	ADC1->CR2 |= 1<<22;                // Start conversion
+}
+void DMA_Init(void) {
+	/************** STEPS TO FOLLOW *****************
+	1. Enable DMA clock
+	2. Set the DATA Direction
+	3. Enable/Disable the Circular Mode
+	4. Enable/Disable the Memory Increment and Peripheral Increment
+	5. Set the Data Size
+	6. Select the channel for the Stream
+	************************************************/
+	
+	// 1. Enable DMA1 Clock
+	RCC->AHBENR |= 1<<0;
+	
+	// 2. Set the Data Direction
+//	DMA1_Channel7->CCR |= (1<<4);   // Read From Memory
+	DMA1_Channel1->CCR &= ~(1<<4);   // Read From Peripheral
+	
+	// 2. Enable the circular mode (CIRC)
+	DMA1_Channel1->CCR |= 1<<5;
+	
+	// 3. Enable the Memory Increment (MINC)
+	DMA1_Channel1->CCR |= 1<<7;
+	
+	// 4. Set the Peripheral data size (PSIZE)
+	DMA1_Channel1->CCR |= (1<<8);  // 01 : 8 Bit Data
+	
+	// 5. Set the Memory data size (MSIZE)
+	DMA1_Channel1->CCR |= (1<<10);  // 01 : 8 Bit Data
+}
+void DMA_Config(uint32_t srcAdd, uint32_t destAdd, uint16_t size) {
+	
+	/************** STEPS TO FOLLOW *****************
+	1. Set the Data Size in the CNDTR Register
+	2. Set the Peripheral Address and the Memory Address
+	3. Enable the DMA Stream
+		 
+		 Some peripherals don't need a start condition, like UART, So as soon as you enable the DMA, the transfer will begin
+		 While Peripherals like ADC needs the Start condition, so Start the ADC later in the program, to enable the transfer
+	************************************************/
+	
+	DMA1_Channel1->CNDTR = size;   // Set the size of the transfer
+	
+	DMA1_Channel1->CPAR = srcAdd;  // Source address is peripheral address
+	
+	DMA1_Channel1->CMAR = destAdd;  // Destination Address is memory address
+	
+	// Enable the DMA Stream
+	DMA1_Channel1->CCR |= (1<<0);  // EN =1
+}
+void adc_test_2(void) {
+	SystemInit();
+	tim2_config_2();
+
+	ADC_Init ();
+	ADC_Enable2();
+	DMA_Init ();
+
+	DMA_Config ((uint32_t ) &ADC1->DR, (uint32_t) RxData, 3);
+
+	ADC_Start ();
+
+	while (1)
+	{
+
+		Temperature = ((1.43 - ((float)(3.3*RxData[2]/(float)4095))) / 0.0043) + 25;
+		printf("Temp: %f\n", Temperature);
+		Delay_ms(10);
+	}
+}
+
 
 void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle) {
 	GPIO_InitTypeDef GPIO_InitStruct = {0};

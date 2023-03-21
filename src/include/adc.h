@@ -28,8 +28,15 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "system_main.h"
 
+#define ADC_BUFLEN 10
+
 extern ADC_HandleTypeDef hadc1;
 extern DMA_HandleTypeDef hdma_adc1;
+
+extern uint16_t adc_buffer[ADC_BUFLEN];
+extern uint16_t RxData[3];
+extern float Temperature;
+extern uint8_t adc_dma_flag;
 
 void adc_read_SR_reg(void);
 void adc_print_SR_reg(void);
@@ -37,10 +44,21 @@ void adc_read_CR1_reg(void);
 void adc_print_CR1_reg(void);
 void adc_read_CR2_reg(void);
 void adc_print_CR2_reg(void);
-uint8_t adc_read_SR_EOC_bit(void);
+
 void adc_set_CR2_EXTSEL_bits(uint8_t value);
 void adc_set_CR2_DMA_bit(void);
+uint8_t adc_read_SR_EOC_bit(void);
 void adc_dma_init(void);
+void adc_start_conversion(void);
+
+void ADC_Init(void);
+void ADC_Enable2(void);
+void ADC_Start(void);
+void DMA_Init(void);
+void DMA_Config(uint32_t srcAdd, uint32_t destAdd, uint16_t size);
+void adc_test_2(void);
+
+
 
 #ifdef __cplusplus
 }

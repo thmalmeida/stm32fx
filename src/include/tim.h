@@ -39,6 +39,10 @@ extern uint8_t tim3_flag_1sec;
 void tim2_init(void);
 void tim3_init(void);
 
+void tim2_config_2(void);
+void Delay_us(uint16_t us);
+void Delay_ms(uint16_t ms);
+
 #ifdef __cplusplus
 }
 #endif
