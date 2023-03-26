@@ -27,6 +27,7 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "system_main.h"
+#include "stm32f1xx_ll_adc.h"
 
 #define ADC_BUFLEN 10
 
@@ -48,8 +49,13 @@ void adc_print_CR2_reg(void);
 void adc_set_CR2_EXTSEL_bits(uint8_t value);
 void adc_set_CR2_DMA_bit(void);
 uint8_t adc_read_SR_EOC_bit(void);
-void adc_dma_init(void);
+void adc_init(void);
 void adc_start_conversion(void);
+
+void adc_gpioa_config(void);
+
+void adc_dma_init(void);
+void adc_dma_config(uint32_t* dest_addr, uint16_t size);
 
 void ADC_Init(void);
 void ADC_Enable2(void);

@@ -24,6 +24,10 @@
 #include "i2c.h"
 #include "tim.h"
 #include "adc.h"
+
+// #ifdef __cplusplus
+// extern "C" {
+// #endif
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* USER CODE END Includes */
@@ -262,8 +266,36 @@ void DMA1_Channel1_IRQHandler(void)
 	/* USER CODE BEGIN DMA1_Channel1_IRQn 0 */
 
 	/* USER CODE END DMA1_Channel1_IRQn 0 */
-	HAL_DMA_IRQHandler(&hdma_adc1);
-	printf("dma1 IRQ\n");
+	// HAL_DMA_IRQHandler(&hdma_adc1);/
+	
+	printf("DMA1: IRQ\n");
+	// Transfer error TEIF
+	if((DMA1->ISR) & (1<<3)) {
+		DMA1->IFCR |= (1<<3);
+		printf("DMA1: TEIF\n");
+	}
+
+	// Half Transfer HTIF
+	if((DMA1->ISR) & (1<<2)) {
+		DMA1->IFCR |= (1<<2);
+		printf("DMA1: HTIF\n");
+	}
+
+	// Transfer Complete TCIF
+	if((DMA1->ISR) & (1<<1)) {
+		DMA1->IFCR |= (1<<1);
+		printf("DMA1: TCIF\n");
+	}
+
+	// Global interrupt (TEIF | HTIF | TCIF)
+	if((DMA1->ISR) & (1<<0)) {
+		DMA1->IFCR |= (1<<0);
+		printf("DMA1: GIF\n");
+	}
+
+	adc_dma_flag = 1;
+
+
 	/* USER CODE BEGIN DMA1_Channel1_IRQn 1 */
 
 	/* USER CODE END DMA1_Channel1_IRQn 1 */

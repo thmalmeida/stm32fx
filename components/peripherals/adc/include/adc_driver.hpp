@@ -33,7 +33,7 @@ public:
 		hadc1_->Init.ScanConvMode = ADC_SCAN_DISABLE;// ADC_SCAN_ENABLE;			// use SCAN when read 2 or more outputs simultaneusly
 		hadc1_->Init.ContinuousConvMode = DISABLE;
 		hadc1_->Init.DiscontinuousConvMode = DISABLE;
-		hadc1_->Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T3_TRGO; //ADC_SOFTWARE_START;
+		hadc1_->Init.ExternalTrigConv = ADC_SOFTWARE_START; // ADC_EXTERNALTRIGCONV_T3_TRGO;
 		hadc1_->Init.DataAlign = ADC_DATAALIGN_RIGHT;
 		hadc1_->Init.NbrOfConversion = 1;						// will convert 2 channels
 		

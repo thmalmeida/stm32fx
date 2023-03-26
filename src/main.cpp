@@ -15,7 +15,6 @@
 void aht10_test(void);
 void i2c_slave_pcy8575(void);
 void adc_test(void);
-void adc_test_2(void);
 
 int main(void)
 {
@@ -25,7 +24,7 @@ int main(void)
 	// aht10_test();
 	// i2c_slave_pcy8575();
 	// adc_test();
-	adc_test_2();
+	adc_test();
 
     return 0;
 }
@@ -53,8 +52,10 @@ void adc_test(void) {
 	ADC_driver adc0;
 	adc0.init();
 
+	adc_gpioa_config();
+	adc_init();
 	adc_dma_init();
-	
+	adc_dma_config((uint32_t*)&adc_buffer[0], ADC_BUFLEN);
 	tim3_init();
 	// tim2_init();
 
@@ -84,16 +85,20 @@ void adc_test(void) {
 		if(tim3_flag_1sec) {
 			tim3_flag_1sec = 0;
 			// printf("TIM3\n");
-			adc_read_SR_reg();
-			adc_print_SR_reg();
-			adc_read_CR1_reg();
-			adc_print_CR1_reg();
-			adc_read_CR2_reg();
-			adc_print_CR2_reg();
+			// adc_read_SR_reg();
+			// adc_print_SR_reg();
+			// adc_read_CR1_reg();
+			// adc_print_CR1_reg();
+			// adc_read_CR2_reg();
+			// adc_print_CR2_reg();
 
 			if(adc_read_SR_EOC_bit()) {
 				printf("ADC1->DR: %lu\n", ADC1->DR);
 			}
+
+			adc_start_conversion();
+
+
 			// HAL_ADC_Start(&hadc1);
 			// printf("read value: %u\n", adc0.read(0));
 			// printf("read stream:\n");
