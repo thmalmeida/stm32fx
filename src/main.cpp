@@ -51,13 +51,12 @@ void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc) {
 void adc_test(void) {
 	// ADC_driver adc0;
 	// adc0.init();
-
+	tim3_init();
 	adc_gpioa_config();
 	adc_init();
 	adc_dma_init();
 	adc_dma_config_it();
 	adc_dma_config((uint32_t*)&adc_buffer[0], ADC_BUFLEN);
-	tim3_init();
 	// tim2_init();
 
 	// adc_set_CR2_EXTSEL_bits(0x04);
@@ -98,13 +97,16 @@ void adc_test(void) {
 			}
 
 			i++;
+			for(int j=0; j<ADC_BUFLEN; j++) {
+				printf("ADC[%d]= %u\n", j, adc_buffer[j]);
+			}
 			printf("i: %d\n", i);
 
 			if(i == ADC_BUFLEN) {
 				i=0;
 			}
 
-			adc_start_conversion();
+			// adc_start_conversion();
 
 
 			// HAL_ADC_Start(&hadc1);

@@ -29,7 +29,7 @@ extern "C" {
 #include "system_main.h"
 #include "stm32f1xx_ll_adc.h"
 
-#define ADC_BUFLEN 10
+#define ADC_BUFLEN 40
 
 extern ADC_HandleTypeDef hadc1;
 extern DMA_HandleTypeDef hdma_adc1;

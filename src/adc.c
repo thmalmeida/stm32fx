@@ -184,10 +184,10 @@ void adc_init(void) {
 	// External trigger conversion mode for regular channels using:
 		// 011: Timer 2 CC2 event
 		// 100: Timer 3 TRGO event
-	// ADC1->CR2 &= ~(7<<17);
-	// ADC1->CR2 |= (4<<17);
+	ADC1->CR2 &= ~(7<<17);
+	ADC1->CR2 |= (4<<17);
 	// External trigger with Software control bit
-	ADC1->CR2 |= (7<<17);
+	// ADC1->CR2 |= (7<<17);
 
 	// Data rigth data align
 	ADC1->CR2 &= ~(1<<11); 
