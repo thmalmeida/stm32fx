@@ -284,6 +284,7 @@ void DMA1_Channel1_IRQHandler(void)
 	// Transfer Complete TCIF
 	if((DMA1->ISR) & (1<<1)) {
 		DMA1->IFCR |= (1<<1);
+    adc_dma_tc_flag = 1;
 		printf("DMA1: TCIF\n");
 	}
 

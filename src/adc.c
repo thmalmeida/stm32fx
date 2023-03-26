@@ -55,6 +55,8 @@ uint16_t adc_buffer[ADC_BUFLEN];   //For ADC samples.
 uint16_t RxData[3];
 float Temperature;
 uint8_t adc_dma_flag = 0;
+uint8_t adc_dma_tc_flag = 0;
+
 
 void adc_read_SR_reg(void) {
 	// read SR reg
@@ -159,14 +161,14 @@ void adc_init(void) {
 	// Discontinous number DISCNUM[2:0] at bit 13: 000: 1 channel only
 	ADC1->CR1 &= ~(7<<13);
 
-	// Dicontinous mode on regular channels enable at bit 11.
-	ADC1->CR1 |= (1<<11);
+	// Disable discontinous mode on regular channels enable at bit 11.
+	ADC1->CR1 &= ~(1<<11);
 
 	// 3- Disable the Scan Mode in the Control Register 1 (CR1)
 	ADC1->CR1 &= ~(1<<8);
 
-	// Enable End Of Conversion Interrupt bit (EOCIE)
-	ADC1->CR1 |= (1<<5);
+	// Disable End Of Conversion Interrupt bit (EOCIE)
+	ADC1->CR1 &= ~(1<<5);
 
 	// 4- CR2: Disable Continuous Conversion, EOC and Alignment in Control Register 2 (CR2)
 
@@ -311,6 +313,14 @@ void adc_dma_config(uint32_t* dest_addr, uint16_t size) {
 
 	// DMA Channel enable
 	DMA1_Channel1->CCR |= (1<<0);
+}
+void adc_dma_config_it(void) {
+	/* DMA interrupt init */
+	/* DMA1_Channel1_IRQn interrupt configuration */
+	HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
+	
+	NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+	// HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 }
 
 void ADC_Init(void) {

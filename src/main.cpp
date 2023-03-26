@@ -49,12 +49,13 @@ void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc) {
 	printf("ADC: callback dma error\n");
 }
 void adc_test(void) {
-	ADC_driver adc0;
-	adc0.init();
+	// ADC_driver adc0;
+	// adc0.init();
 
 	adc_gpioa_config();
 	adc_init();
 	adc_dma_init();
+	adc_dma_config_it();
 	adc_dma_config((uint32_t*)&adc_buffer[0], ADC_BUFLEN);
 	tim3_init();
 	// tim2_init();
@@ -76,8 +77,8 @@ void adc_test(void) {
 	// HAL_ADC_Start_DMA(&hadc1, &adc_buffer[0], ADC_BUFLEN); //Link DMA to ADC1
 	// adc0.read_stream(&adc_buffer[0], ADC_BUFLEN);
 
-	// volatile int i = 0;
-	adc_start_conversion();
+	volatile int i = 0;
+	// adc_start_conversion();
 
 	while(1) {
 
@@ -94,6 +95,13 @@ void adc_test(void) {
 
 			if(adc_read_SR_EOC_bit()) {
 				printf("ADC1->DR: %lu\n", ADC1->DR);
+			}
+
+			i++;
+			printf("i: %d\n", i);
+
+			if(i == ADC_BUFLEN) {
+				i=0;
 			}
 
 			adc_start_conversion();
@@ -115,9 +123,13 @@ void adc_test(void) {
 
 		if (adc_dma_flag) {
 			adc_dma_flag = 0;
-			// i++;
 			for(int j=0; j<ADC_BUFLEN; j++) {
 				printf("ADC[%d]= %u\n", j, adc_buffer[j]);
+			}
+
+			if(adc_dma_tc_flag) {
+				adc_dma_tc_flag = 0;
+				memset(adc_buffer, 0, sizeof(adc_buffer));
 			}
 
 		}

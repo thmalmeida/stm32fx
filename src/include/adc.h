@@ -38,6 +38,7 @@ extern uint16_t adc_buffer[ADC_BUFLEN];
 extern uint16_t RxData[3];
 extern float Temperature;
 extern uint8_t adc_dma_flag;
+extern uint8_t adc_dma_tc_flag;
 
 void adc_read_SR_reg(void);
 void adc_print_SR_reg(void);
@@ -56,6 +57,7 @@ void adc_gpioa_config(void);
 
 void adc_dma_init(void);
 void adc_dma_config(uint32_t* dest_addr, uint16_t size);
+void adc_dma_config_it(void);
 
 void ADC_Init(void);
 void ADC_Enable2(void);
