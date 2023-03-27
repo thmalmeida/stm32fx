@@ -89,6 +89,7 @@ components/modules/aht10/aht10.cpp \
 components/peripherals/adc/adc_driver.cpp \
 components/peripherals/gpio/gpio.cpp \
 components/peripherals/backup/backup.cpp \
+components/peripherals/backup/reset_reason.cpp \
 components/peripherals/i2c_master/i2c_master.cpp
 # $(SRC_DIR)/usart.cpp
 

@@ -12,6 +12,7 @@
 #include "tim.h"
 #include "iwdg.h"
 #include "backup.hpp"
+#include "reset_reason.hpp"
 
 void aht10_test(void);
 void i2c_slave_pcy8575(void);
@@ -54,11 +55,11 @@ void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc) {
 void bkp_test(void) {
 
 	uint16_t value = backup_DR1_get();
-	printf("bkp DR1: 0x%04x\n", value);
+	printf("bkp DR1: 0x%04x, reset_reason:%d\n", value, static_cast<int>(reset_reason()));
 
 	backup_DR1_set(value+1);
 	printf("Restarting system...\n");
-	HAL_Delay(1000);
+	HAL_Delay(4000);
 	HAL_NVIC_SystemReset();
 
 	while(1) {
