@@ -11,10 +11,12 @@
 #include "pcy8575.hpp"
 #include "tim.h"
 #include "iwdg.h"
+#include "backup.hpp"
 
 void aht10_test(void);
 void i2c_slave_pcy8575(void);
 void adc_test(void);
+void bkp_test(void);
 
 int main(void)
 {
@@ -24,7 +26,8 @@ int main(void)
 	// aht10_test();
 	// i2c_slave_pcy8575();
 	// adc_test();
-	adc_test();
+	// adc_test();
+	bkp_test();
 
     return 0;
 }
@@ -47,6 +50,20 @@ void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc) {
 }
 void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc) {
 	printf("ADC: callback dma error\n");
+}
+void bkp_test(void) {
+
+	uint16_t value = backup_DR1_get();
+	printf("bkp DR1: 0x%04x\n", value);
+
+	backup_DR1_set(value+1);
+	printf("Restarting system...\n");
+	HAL_Delay(1000);
+	HAL_NVIC_SystemReset();
+
+	while(1) {
+
+	}
 }
 void adc_test(void) {
 	// ADC_driver adc0;

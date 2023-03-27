@@ -72,10 +72,6 @@ void Delay_ms (uint16_t ms)
 }
 void tim2_init(void) {
 
-	TIM_ClockConfigTypeDef sClockSourceConfig = {0};
-	TIM_MasterConfigTypeDef sMasterConfig = {0};
-	TIM_OC_InitTypeDef sConfigOC = {0};
-
 	htim2.Instance = TIM2;
 	htim2.Init.Prescaler = 4000;
 	htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
@@ -91,12 +87,17 @@ void tim2_init(void) {
 		printf("TIM2: initialized!\n");
 	}
 
+	TIM_ClockConfigTypeDef sClockSourceConfig = {0};
 	sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
 	if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
 	{
 		printf("TIM2: clock config error!\n");
 		Error_Handler();
 	}
+
+	TIM_MasterConfigTypeDef sMasterConfig = {0};
+	TIM_OC_InitTypeDef sConfigOC = {0};	
+
 
 	// if (HAL_TIM_OC_Init(&htim2) != HAL_OK)
 	// {
@@ -137,9 +138,9 @@ void tim2_init(void) {
 void tim3_init(void) {
 
 	htim3.Instance = TIM3;
-	htim3.Init.Prescaler = 1000;
+	htim3.Init.Prescaler = 8000;									// 16 bit size value
 	htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-	htim3.Init.Period = 1000-1;
+	htim3.Init.Period = 1000-1;										// 12 bit size value
 	htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
 	htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
 

@@ -88,6 +88,7 @@ components/modules/pcy8575/pcy8575.cpp \
 components/modules/aht10/aht10.cpp \
 components/peripherals/adc/adc_driver.cpp \
 components/peripherals/gpio/gpio.cpp \
+components/peripherals/backup/backup.cpp \
 components/peripherals/i2c_master/i2c_master.cpp
 # $(SRC_DIR)/usart.cpp
 
@@ -170,6 +171,7 @@ CXX_INCLUDES = \
 -Icomponents/modules/aht10/include \
 -Icomponents/modules/pcy8575/include \
 -Icomponents/peripherals/adc/include \
+-Icomponents/peripherals/backup/include \
 -Icomponents/peripherals/gpio/include \
 -Icomponents/peripherals/i2c_master/include
 
