@@ -5,6 +5,7 @@
 #include "tim.h"						// needs for module uptime. TIM3 update every 1 second.
 #include "gpio.hpp"
 #include "stm32_log.h"
+#include "backup.hpp"
 #include "reset_reason.hpp"
 
 /* list of I2C addresses */
@@ -72,8 +73,6 @@ Start | ADDR - R/W = 0 | UPTIME | Stop | ... delay ... | Start | ADDR - R/W = 1 
 
 RST REASON:	write												 Read				8 bits
 Start | ADDR - R/W = 0 | REASON | Stop | ... delay ... | Start | ADDR - R/W = 1 | byte L  | Stop |
-
-
 */
 
 class pcy8575 {
@@ -91,14 +90,15 @@ public:
 	~pcy8575(void) {}
 
 	void init(void) {
+		// I2C slave initialization
 		i2c_init(PCY8575_ADDR, PCY8575_NORMAL_SPEED);
 
-		// I2C to GPIO system
-		// declare pin status registers
-
-		// reset all pins
+		// Restore last output pins before reset
 		put(backup_DR1_get());
+
+		// Verify output pins
 		output_ = get();
+
 		#ifdef PCY8575_DEBUG_PRINT
 		printf("PCY8575 init with output:0x%04x\n",output_);
 		#endif
@@ -119,7 +119,6 @@ public:
 				#endif
 			}
 		}
-
 		// master write - slave receiver
 		if(i2c_has_data_rx) {
 			i2c_has_data_rx = 0;
