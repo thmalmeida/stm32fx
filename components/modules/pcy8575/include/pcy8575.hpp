@@ -97,7 +97,7 @@ public:
 		// declare pin status registers
 
 		// reset all pins
-		put(0x0000);
+		put(backup_DR1_get());
 		output_ = get();
 		#ifdef PCY8575_DEBUG_PRINT
 		printf("PCY8575 init with output:0x%04x\n",output_);
