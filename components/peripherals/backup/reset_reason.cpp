@@ -1,32 +1,39 @@
 #include "reset_reason.hpp"
 
+static uint8_t reset_reason_read_flag = 0;
+static reset_reason_t reset_reason_last = reset_reason_t::UNKNOW;
+
 reset_reason_t reset_reason(void) {
 	reset_reason_t r;
 
 	// uint32_t r0 = (RCC->CSR >> 26);
+	if(reset_reason_read_flag) {
+		return reset_reason_last;
+	} else {
+		if (__HAL_RCC_GET_FLAG(RCC_FLAG_LPWRRST)) {
+			r = reset_reason_t::LOW_POWER_RESET;
+		}
+		else if (__HAL_RCC_GET_FLAG(RCC_FLAG_WWDGRST)) {
+			r = reset_reason_t::WINDOW_WATCHDOG_RESET;
+		}
+		else if (__HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST)) {
+			r = reset_reason_t::INDEPENDENT_WATCHDOG_RESET;
+		}
+		else if (__HAL_RCC_GET_FLAG(RCC_FLAG_SFTRST)) {
+			r = reset_reason_t::SOFTWARE_RESET;
+		}
+		else if (__HAL_RCC_GET_FLAG(RCC_FLAG_PORRST)) {
+			r = reset_reason_t::POWER_ON_POWER_DOWN_RESET;
+		}
+		else if (__HAL_RCC_GET_FLAG(RCC_FLAG_PINRST)) {
+			r = reset_reason_t::EXTERNAL_RESET_PIN_RESET;
+		}
+		else {
+			r = reset_reason_t::UNKNOW;
+		}
 
-	if (__HAL_RCC_GET_FLAG(RCC_FLAG_LPWRRST)) {
-		r = reset_reason_t::LOW_POWER_RESET;
+		reset_reason_read_flag = 1;
 	}
-	else if (__HAL_RCC_GET_FLAG(RCC_FLAG_WWDGRST)) {
-		r = reset_reason_t::WINDOW_WATCHDOG_RESET;
-	}
-	else if (__HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST)) {
-		r = reset_reason_t::INDEPENDENT_WATCHDOG_RESET;
-	}
-	else if (__HAL_RCC_GET_FLAG(RCC_FLAG_SFTRST)) {
-		r = reset_reason_t::SOFTWARE_RESET;
-	}
-	else if (__HAL_RCC_GET_FLAG(RCC_FLAG_PORRST)) {
-		r = reset_reason_t::POWER_ON_POWER_DOWN_RESET;
-	}
-	else if (__HAL_RCC_GET_FLAG(RCC_FLAG_PINRST)) {
-		r = reset_reason_t::EXTERNAL_RESET_PIN_RESET;
-	}
-	else {
-		r = reset_reason_t::UNKNOW;
-	}
-
 	reset_clear_flags();
 
 	return r;

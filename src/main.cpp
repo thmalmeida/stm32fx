@@ -54,7 +54,6 @@ void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc) {
 }
 void bkp_test(void) {
 
-
 	uint16_t value = backup_DR1_get();
 	printf("bkp DR1: 0x%04x, reset_reason:%d\n", value, static_cast<int>(reset_reason()));
 
