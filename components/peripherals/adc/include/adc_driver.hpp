@@ -30,12 +30,12 @@ public:
 	void init(void) {
 
 		hadc1_->Instance = ADC1;
-		hadc1_->Init.ScanConvMode = ADC_SCAN_DISABLE;// ADC_SCAN_ENABLE;			// use SCAN when read 2 or more outputs simultaneusly
+		hadc1_->Init.ScanConvMode = ADC_SCAN_DISABLE;		// use SCAN when read 2 or more outputs simultaneusly
 		hadc1_->Init.ContinuousConvMode = DISABLE;
 		hadc1_->Init.DiscontinuousConvMode = DISABLE;
 		hadc1_->Init.ExternalTrigConv = ADC_SOFTWARE_START; // ADC_EXTERNALTRIGCONV_T3_TRGO;
 		hadc1_->Init.DataAlign = ADC_DATAALIGN_RIGHT;
-		hadc1_->Init.NbrOfConversion = 1;						// will convert 2 channels
+		hadc1_->Init.NbrOfConversion = 1;					// will convert 2 channels
 		
 		if (HAL_ADC_Init(hadc1_) != HAL_OK) {
 			printf("ADC init error!\n");

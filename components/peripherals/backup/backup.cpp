@@ -11,7 +11,10 @@ static void backup_enable(void) {
 	PWR->CR |= (1<<8);
 }
 static void backup_disable(void) {
-	PWR->CR &= ~(1<<8);
+	if(bkp_en) {
+		PWR->CR &= ~(1<<8);
+		bkp_en = 0;
+	}
 }
 void backup_DR1_set(uint16_t value) {
 	if(!bkp_en) {

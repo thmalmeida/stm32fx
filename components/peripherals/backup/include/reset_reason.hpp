@@ -16,6 +16,5 @@ enum class reset_reason_t {
 };
 
 reset_reason_t reset_reason(void);
-void reset_clear_flags(void);
 
 #endif
