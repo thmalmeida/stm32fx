@@ -5,6 +5,11 @@
  *      Author: titi
  */
 
+
+/* Briefly description of ADC behavior's
+
+	1
+*/
 #ifndef ADC_DRIVER_HPP__
 #define ADC_DRIVER_HPP__
 

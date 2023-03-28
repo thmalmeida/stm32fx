@@ -5,6 +5,7 @@
 #include "tim.h"						// needs for module uptime. TIM3 update every 1 second.
 #include "gpio.hpp"
 #include "stm32_log.h"
+#include "reset_reason.hpp"
 
 /* list of I2C addresses */
 #define PCY8575_ADDR			0x53	// device address: 0b0010 0011 >> 0b0001 0001 = 0x11
@@ -21,6 +22,7 @@
 #define PCY8575_REG_TEMPERATURE	0x05
 #define PCY8575_REG_UPTIME		0x06
 #define PCY8575_REG_IRMS		0x07
+#define PCY8575_REG_RST_REASON	0x08
 
 #define PCY8575_DEBUG_PRINT		1
 
@@ -40,14 +42,15 @@ opcode:
 	- TEMP:			0x05
 	- UPTIME:		0x06
 	- IRMS:			0x07
+	- RST_REASON:	0x08
 
 protocol example
 
 PROBE:		write													read
-Start | ADDR - R/W = 0 | PROBE | Stop | ... delay ... | Start | ADDR - R/W = 1 | byte 0 |
+Start | ADDR - R/W = 0 | PROBE	| Stop | ... delay ... | Start | ADDR - R/W = 1 | byte 0 | Stop |
 
 SOFT RESET:	write
-Start | ADDR - R/W = 0 | RESET | Stop |
+Start | ADDR - R/W = 0 | RESET	| Stop |
 
 CONFIG:		write				  P07-P00   P15-P00
 Start | ADDR - R/W = 0 | CONFIG	| byte 0  | byte 1  | Stop |
@@ -56,16 +59,21 @@ PUT:		write
 Start | ADDR - R/W = 0 | PUT    | byte 0  | byte 1  | Stop |
 
 GET:		write												 Read			  P07-P00   P15-P00
-Start | ADDR - R/W = 0 | GET    | Stop | ... delay ... | Start | ADDR - R/W = 1 | byte 0  | byte 1 |
+Start | ADDR - R/W = 0 | GET    | Stop | ... delay ... | Start | ADDR - R/W = 1 | byte 0  | byte 1 | Stop |
 
 GET TEMP:	write												 Read					16 bits
-Start | ADDR - R/W = 0 | TEMP   | Stop | ... delay ... | Start | ADDR - R/W = 1 | byte L  | byte H |
+Start | ADDR - R/W = 0 | TEMP   | Stop | ... delay ... | Start | ADDR - R/W = 1 | byte L  | byte H | Stop |
 
 UPTIME:		write												 Read			     	32 bits
-Start | ADDR - R/W = 0 | UPTIME | Stop | ... delay ... | Start | ADDR - R/W = 1 | byte L  | byte L | byte H | byte H |
+Start | ADDR - R/W = 0 | UPTIME | Stop | ... delay ... | Start | ADDR - R/W = 1 | byte L  | byte L | byte H | byte H | Stop |
 
 IRMS:		write																		16 bits
-Start | ADDR - R/W = 0 | UPTIME | Stop | ... delay ... | Start | ADDR - R/W = 1 | byte L  | byte H |
+Start | ADDR - R/W = 0 | UPTIME | Stop | ... delay ... | Start | ADDR - R/W = 1 | byte L  | byte H | Stop |
+
+RST REASON:	write												 Read				8 bits
+Start | ADDR - R/W = 0 | REASON | Stop | ... delay ... | Start | ADDR - R/W = 1 | byte L  | Stop |
+
+
 */
 
 class pcy8575 {
@@ -84,18 +92,6 @@ public:
 
 	void init(void) {
 		i2c_init(PCY8575_ADDR, PCY8575_NORMAL_SPEED);
-		i2c_enable_interrupt();
-		i2c_set_ack();
-		// i2c_set_nostretch();
-
-		i2c_read_CR1_reg();
-		i2c_read_CR2_reg();
-		i2c_read_OAR1_reg();
-
-		// i2c_print_CR2_reg();
-		// i2c_print_CR1_reg();
-		// i2c_print_addr1();
-		// printf("I2C State: 0x%02x\n",HAL_I2C_GetState(&hi2c2));
 
 		// I2C to GPIO system
 		// declare pin status registers
@@ -199,6 +195,10 @@ public:
 					irms_ = irms();	// this conversion located here will depends the time calculation because the i2c transfer time
 					i2c_data_tx[0] = static_cast<uint8_t>(irms_);
 					i2c_data_tx[1] = static_cast<uint8_t>(irms_ >> 8);
+					break;
+				}
+				case PCY8575_REG_RST_REASON: {
+					i2c_data_tx[0] = static_cast<uint8_t>(reset_reason());
 					break;
 				}
 

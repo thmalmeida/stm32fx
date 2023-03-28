@@ -28,7 +28,7 @@ int main(void)
 	// i2c_slave_pcy8575();
 	// adc_test();
 	// adc_test();
-	bkp_test();
+	// bkp_test();
 
     return 0;
 }
@@ -59,8 +59,6 @@ void bkp_test(void) {
 
 	backup_DR1_set(value+1);
 	printf("Restarting system...\n");
-	HAL_Delay(4000);
-	HAL_NVIC_SystemReset();
 
 	while(1) {
 

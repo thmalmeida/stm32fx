@@ -102,9 +102,26 @@ void i2c_init(uint32_t addr1, uint32_t freq) {
 	} else {
 		printf("I2C initialized with addr 0x%02x\n", addr1);
 	}
+
+	i2c_enable_interrupt();
+
+	i2c_set_ack();
 	
 	// Enable I2C peripheral
 	// I2C2->CR1 |= (1 << 0);
+
+	// i2c_set_nostretch();
+
+	// For debug purposes
+	// i2c_read_CR1_reg();
+	// i2c_read_CR2_reg();
+	// i2c_read_OAR1_reg();
+
+	// i2c_print_CR2_reg();
+	// i2c_print_CR1_reg();
+	// i2c_print_addr1();
+	// printf("I2C State: 0x%02x\n",HAL_I2C_GetState(&hi2c2));
+
 }
 void HAL_I2C_MspInit(I2C_HandleTypeDef* i2cHandle) {
 
