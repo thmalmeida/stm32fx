@@ -3,6 +3,8 @@
 reset_reason_t reset_reason(void) {
 	reset_reason_t r;
 
+	// uint32_t r0 = (RCC->CSR >> 26);
+
 	if (__HAL_RCC_GET_FLAG(RCC_FLAG_LPWRRST)) {
 		r = reset_reason_t::LOW_POWER_RESET;
 	}
@@ -25,9 +27,10 @@ reset_reason_t reset_reason(void) {
 		r = reset_reason_t::UNKNOW;
 	}
 
-	return r; 
-}
+	reset_clear_flags();
 
+	return r;
+}
 void reset_clear_flags(void) {
 	// set RMVF bit 24;
 	RCC->CSR |= (1<<24);
