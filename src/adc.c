@@ -540,3 +540,15 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle) {
 		/* USER CODE END ADC1_MspDeInit 1 */
 	}
 }
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
+	printf("ADC cplt!\n");
+	adc_dma_flag = 1;
+}
+void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc) {
+	printf("ADC half!\n");
+	adc_dma_flag = 1;
+}
+void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc) {
+	printf("ADC: callback dma error\n");
+}

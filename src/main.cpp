@@ -26,8 +26,7 @@ int main(void)
 
 	// aht10_test();
 	// i2c_slave_pcy8575();
-	// adc_test();
-	// adc_test();
+	adc_test();
 	// bkp_test();
 
     return 0;
@@ -41,17 +40,6 @@ int main(void)
 // 	GPIO_driver{11,1}, GPIO_driver{12,1}, GPIO_driver{13,1}, GPIO_driver{14,1},
 // 	GPIO_driver{15,1}, GPIO_driver{16,1}, GPIO_driver{17,1}};
 
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
-	printf("ADC cplt!\n");
-	adc_dma_flag = 1;
-}
-void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc) {
-	printf("ADC half!\n");
-	adc_dma_flag = 1;
-}
-void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc) {
-	printf("ADC: callback dma error\n");
-}
 void bkp_test(void) {
 
 	uint16_t value = backup_DR1_get();
