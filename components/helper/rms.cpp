@@ -24,42 +24,6 @@ float rms::calc_irms(void)//uint8_t channel)//, uint8_t numberOfCycles)
 	const int nPointsPerCycle_div = (int) Fs_div/f;						// Number of points per cycle;
 	const int nPoints_div = (int) nPointsPerCycle_div*numberOfCycles;	// Number of signal points.
 
-
-//	sprintf(buffer,"---- Signal Captured ----");
-//	Serial1.println(buffer);
-//	Serial1.println("");
-//
-//	Serial1.print("Fs:");
-//	Serial1.println(Fs);
-//	Serial1.println("");
-//
-//	sprintf(buffer,", nPointsPerCycle:%d", nPointsPerCycle);
-//	Serial1.println(buffer);
-//	Serial1.println("");
-//
-//	sprintf(buffer,"nPoints:%d", nPoints);
-//	Serial1.println(buffer);
-//	Serial1.println("");
-//
-//
-//
-//	sprintf(buffer,"---- Signal Processed ----");
-//	Serial1.println(buffer);
-//	Serial1.println("");
-//
-//	Serial1.print("Fs:");
-//	Serial1.println(Fs_div);
-//	Serial1.println("");
-//
-//	sprintf(buffer,", nPointsPerCycle:%d", nPointsPerCycle_div);
-//	Serial1.println(buffer);
-//	Serial1.println("");
-//
-//	sprintf(buffer,"nPoints:%d", nPoints_div);
-//	Serial1.println(buffer);
-//	Serial1.println("");
-
-
 	int *adcSamples = NULL;
 	adcSamples = (int*)malloc(nPoints_div * sizeof(int));
 
@@ -85,14 +49,6 @@ float rms::calc_irms(void)//uint8_t channel)//, uint8_t numberOfCycles)
 			divScale_count--;
 		}
 	}
-
-//	Serial.println("ENTROU!");
-//	for(i=0;i<nPoints_div;i++)
-//	{
-//		Serial.println(adcSamples[i]);
-//	}
-//	Serial.println("SAIU!");
-
 
 	float *vs = NULL;
 	vs = (float*)malloc(nPoints_div * sizeof(float));
