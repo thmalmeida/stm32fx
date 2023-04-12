@@ -51,12 +51,24 @@ uint8_t CAL_bit = 0;		// bit 2 - A/D auto calibration
 uint8_t CONT_bit = 0;		// bit 1 - Continuous conversion
 uint8_t ADON_bit = 0;		// bit 0 - A/D converter ON/OFF
 
+uint32_t DMA1_ISR_reg = 0;
+uint8_t TEIF1_bit = 0;
+uint8_t HTIF1_bit = 0;
+uint8_t TCIF1_bit = 0;
+uint8_t GIF1_bit = 0;
+
+uint16_t DMA1_CNDTR_reg = 0;
+uint32_t DMA1_CPAR_reg = 0;
+uint32_t DMA1_CMAR_reg = 0;
+
 uint16_t adc_buffer[ADC_BUFLEN];   //For ADC samples.
 uint16_t RxData[3];
 float Temperature;
-uint8_t adc_dma_flag = 0;
-uint8_t adc_dma_tc_flag = 0;
-
+uint8_t adc_dma_flag = 0;		// dma1 IRQ flag
+uint8_t adc_dma_te_flag = 0;	// transfer error
+uint8_t adc_dma_ht_flag = 0;	// half transfer
+uint8_t adc_dma_tc_flag = 0;	// transfer complete
+uint8_t adc_dma_gi_flag = 0;	// global interruption
 
 void adc_read_SR_reg(void) {
 	// read SR reg
@@ -69,8 +81,8 @@ void adc_read_SR_reg(void) {
 	AWD_bit = (ADC_SR_reg >> 0) & 1;
 }
 void adc_print_SR_reg(void) {
-	printf("ADC_SR1- STRT:%u JSTRT:%u JEOC:%u EOC:%u AWD:%u\n",
-		STRT_bit, JSTRT_bit, JEOC_bit, EOC_bit, AWD_bit);
+	printf("ADC_SR1- 0x%08x STRT:%u JSTRT:%u JEOC:%u EOC:%u AWD:%u\n",
+		ADC_SR_reg, STRT_bit, JSTRT_bit, JEOC_bit, EOC_bit, AWD_bit);
 }
 void adc_read_CR1_reg(void) {
 	// read CR1 reg bits
@@ -85,8 +97,8 @@ void adc_read_CR1_reg(void) {
 	EOCIE_bit = (ADC_CR1_reg >> 5) & 1;
 }
 void adc_print_CR1_reg(void) {
-	printf("ADC_CR1- AWDE:%u JAWDE:%u DUALMOD:0x%02x DISCNUM:0x%02x DISCEN:%u SCAN:%u EOCIE:%u\n",
-		AWDE_bit, JAWDE_bit, DUALMOD_bits, DISCNUM_bits, DISCEN_bit, SCAN_bit, EOCIE_bit);
+	printf("ADC_CR1-0x%08x AWDE:%u JAWDE:%u DUALMOD:0x%02x DISCNUM:0x%02x DISCEN:%u SCAN:%u EOCIE:%u\n",
+		ADC_CR1_reg, AWDE_bit, JAWDE_bit, DUALMOD_bits, DISCNUM_bits, DISCEN_bit, SCAN_bit, EOCIE_bit);
 }
 void adc_read_CR2_reg(void) {
 	// read CR2 reg bits
@@ -104,8 +116,42 @@ void adc_read_CR2_reg(void) {
 	ADON_bit = (ADC_CR2_reg >> 0) & 1;
 }
 void adc_print_CR2_reg(void) {
-		printf("ADC_CR2- TSVREFE:%u SWSTART:%u EXTTRIG:%u EXTSEL:0x%02x ALIGN:%u DMA:%u RSTCAL:%u CAL:%u CONT:%u ADON:%u\n",
-			TSVREFE_bit, SWSTART_bit, EXTTRIG_bit, EXTSEL_bits, ALIGN_bit, DMA_bit, RSTCAL_bit, CAL_bit, CONT_bit, ADON_bit);
+	printf("ADC_CR2-0x%08x TSVREFE:%u SWSTART:%u EXTTRIG:%u EXTSEL:0x%02x ALIGN:%u DMA:%u RSTCAL:%u CAL:%u CONT:%u ADON:%u\n",
+		ADC_CR1_reg, TSVREFE_bit, SWSTART_bit, EXTTRIG_bit, EXTSEL_bits, ALIGN_bit, DMA_bit, RSTCAL_bit, CAL_bit, CONT_bit, ADON_bit);
+}
+void dma1_read_ISR_reg(void) {
+	// Read ISR reg from DMA1 peripheral
+	DMA1_ISR_reg = DMA1->ISR;
+	TEIF1_bit = (DMA1_ISR_reg >> 3) & 1;
+	HTIF1_bit = (DMA1_ISR_reg >> 2) & 1;
+	TCIF1_bit = (DMA1_ISR_reg >> 1) & 1;
+	GIF1_bit = (DMA1_ISR_reg >> 0) & 1;
+}
+void dma1_print_ISR_reg(void) {
+	printf("DMA1_ISR- TEIF1:%u HTIF1:%u TCIF1:%u GIF1:%u\n", 
+					TEIF1_bit, HTIF1_bit, TCIF1_bit, GIF1_bit);
+}
+void dma1_read_CNDTR_reg(void) {
+	// Read memory size
+	DMA1_CNDTR_reg = (uint16_t) DMA1_Channel1->CNDTR;
+}
+void dma1_print_CNDTR_reg(void) {
+	printf("DMA1_CNDTR: %u\n", DMA1_CNDTR_reg);
+}
+void dma1_read_CPAR_reg(void) {
+	DMA1_CPAR_reg = DMA1_Channel1->CPAR;
+
+	// Set peripheral source address
+	// DMA1_Channel1->CPAR = (uint32_t)(&(ADC1->DR));
+}
+void dma1_print_CPAR_reg(void) {
+	printf("CPAR peripheral addr: 0x%08x\n", DMA1_CPAR_reg);
+}
+void dma1_read_CMAR_reg(void) {
+	DMA1_CMAR_reg = DMA1_Channel1->CMAR;
+}
+void dma1_print_CMAR_reg(void) {
+	printf("CMAR memory addr: 0x%08x\n", DMA1_CMAR_reg);
 }
 
 void adc_set_CR2_EXTSEL_bits(uint8_t value) {
@@ -152,17 +198,16 @@ void adc_init(void) {
 	// ADC1 prescale to minimum div by 2. Value: 00
 	RCC->CFGR &= ~(3 << 14);	// 8 MHz/2 = 4 MHz
 
-
-	// CR1
-
-	// Dual mode: independent mode;
-	// ADC1->CR1 &= ~(0x0F << 16);
+	// Control Register 1 (CR1) configuration
+	// Disable Dual mode. Enable independent mode;
+	ADC1->CR1 &= ~(0x0F << 16);
 
 	// Discontinous number DISCNUM[2:0] at bit 13: 000: 1 channel only
 	ADC1->CR1 &= ~(7<<13);
+	// ADC1->CR1 |= (1<<13);
 
-	// Disable discontinous mode on regular channels enable at bit 11.
-	ADC1->CR1 &= ~(1<<11);
+	// Discontinous mode on regular channels enable at bit 11. (Enable = 1/ Disable = 0)
+	ADC1->CR1 &= ~(1<<11);	// disable discontinous mode;
 
 	// 3- Disable the Scan Mode in the Control Register 1 (CR1)
 	ADC1->CR1 &= ~(1<<8);
@@ -183,21 +228,23 @@ void adc_init(void) {
 
 	// External trigger conversion mode for regular channels using:
 		// 011: Timer 2 CC2 event
-		// 100: Timer 3 TRGO event
-	ADC1->CR2 &= ~(7<<17);
-	ADC1->CR2 |= (4<<17);
-	// External trigger with Software control bit
-	// ADC1->CR2 |= (7<<17);
+		// 100: Timer 3 TRGO event (SELECT)
+	// ADC1->CR2 &= ~(7<<17);
+	// ADC1->CR2 |= (4<<17);
+	
+	// External trigger with Software control bit.
+		// 111: SWSTART
+	ADC1->CR2 |= (7<<17);
 
 	// Data rigth data align
-	ADC1->CR2 &= ~(1<<11); 
+	ADC1->CR2 &= ~(1<<11);
 		
 	// Enable DMA for ADC (DMA)
 	ADC1->CR2 |= (1<<8);	//(1 << ADC_CR2_DMA_Pos);
 	// LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
 
-	// Disable Continuous conversion mode
-	ADC1->CR2 &= ~(1<<1);
+	// Continuous conversion mode (Enable = 1\ Disable = 0)
+	ADC1->CR2 |= (1<<1);
 
 	// 5. Set the Sampling Time for the channels in ADC_SMPRx
 
@@ -228,10 +275,58 @@ void adc_start_conversion(void) {
 	ADC1->SR = 0;
 
 	// Conversion on external event enabled EXTTRIG
-	ADC1->CR2 |= (1<<20);
+	// ADC1->CR2 |= (1<<20);
 
 	// Software start conversion (SWSTART)
+	// DMA1_Channel1->CCR &= ~(1<<0);
+	// DMA1_Channel1->CNDTR = ADC_BUFLEN;
+	// DMA1_Channel1->CCR |= (1<<0);
+
 	ADC1->CR2 |= (1<<22);
+}
+void adc_stop_conversion(void) {
+
+	// Disable ADC1
+	ADC1->CR2 &= ~(1<<0);
+
+	// Continuous conversion mode (Enable = 1\ Disable = 0)
+	ADC1->CR2 &= ~(1<<1);
+	
+	// ADC1->CR2 &= ~(1<<22);
+
+}
+void adc_prescale(uint8_t div) {
+
+	// Clear ADCPRE[1:0] 15 and 15 bits;
+	RCC->CFGR &= ~(3 << 14);
+	
+	switch (div) {
+		case 2: {
+			// 00: PCLK2 divided by 2
+			RCC->CFGR &= ~(3 << 14);
+			break;
+		}
+		case 4: {
+			// 01: PCLK2 divided by 4
+			RCC->CFGR |= (1 << 14);
+			break;
+		}
+		case 6: {
+			// 10: PCLK2 divided by 6
+			RCC->CFGR |= (2 << 14);
+			break;
+		}
+		case 8: {
+			// 11: PCLK2 divided by 8
+			RCC->CFGR |= (3 << 14);
+			break;
+		}
+		default: {
+			// 00: PCLK2 divided by 2
+			RCC->CFGR &= ~(3 << 14);
+			break;
+		}
+	}
 }
 
 void adc_gpioa_config(void) {
@@ -247,6 +342,14 @@ void adc_gpioa_config(void) {
 	GPIOA->CRL &= ~(3<<10);	
 }
 
+void adc_dma_begin(uint32_t* dest_addr, uint16_t size) {
+	adc_gpioa_config();						// Configure AN2 to read analog values;
+	adc_prescale(2);						// Configure RCC ADC prescale;
+	adc_init();								// Configure ADC control registers;
+	adc_dma_init();							// Configure DMA, link with ADC peripheral and enable;
+	adc_dma_config_addr(dest_addr, size);	// Configure DMA array address to write ADC values;
+	adc_dma_config_it();					// Configure DMA half and complete transfer interruption;
+}
 void adc_dma_init(void) {
 		/* Initialize the DMA
 	Steps to follow:
@@ -260,6 +363,9 @@ void adc_dma_init(void) {
 
 	// Enable DMA1 clock
 	RCC->AHBENR |= (1<<0);
+
+	// Disable DMA channel before edit;
+	DMA1_Channel1->CCR &= ~(1<<0);
 	
 	// Disable Memory to memory mode
 	DMA1_Channel1->CCR &= ~(1<<14);
@@ -281,8 +387,8 @@ void adc_dma_init(void) {
 	// Peripheral increment mode disable (PINC)
 	DMA1_Channel1->CCR &= ~(1<<6);
 
-	// Circular mode Enable 1. (disable 0) (CIRC)
-	DMA1_Channel1->CCR |= (1<<5);	// Normal mode
+	// Circular mode:1, Normal mode: 0 (CIRC)
+	DMA1_Channel1->CCR &= ~(1<<5);
 
 	// Data transfer direction from peripheral to memory (DIR)
 	DMA1_Channel1->CCR &= ~(1<<4);
@@ -290,7 +396,7 @@ void adc_dma_init(void) {
 	// Enable interrupts Trasfer error (TEIE), Half transfer (HTIE) and Transfer complete (TCIE)
 	DMA1_Channel1->CCR |= (1<<3) | (1<<2) | (1<<1);
 }
-void adc_dma_config(uint32_t* dest_addr, uint16_t size) {
+void adc_dma_config_addr(uint32_t* dest_addr, uint16_t size) {
 	// void DMA_Config(uint32_t srcAdd, uint32_t destAdd, uint16_t size) {
 	// 
 	/* Configure the DMA pointer to memory
@@ -299,6 +405,9 @@ void adc_dma_config(uint32_t* dest_addr, uint16_t size) {
 	3- Set the memory address
 	3- Enable the DMA channel stream
 	*/
+
+	// Disable DMA channel before edit;
+	DMA1_Channel1->CCR &= ~(1<<0);
 
 	// Set buffer size
 	DMA1_Channel1->CNDTR = (uint32_t)(size);
@@ -309,9 +418,9 @@ void adc_dma_config(uint32_t* dest_addr, uint16_t size) {
 	printf("CPAR addr: 0x%08x\n", DMA1_Channel1->CPAR);
 
 	// Set buffer memory address
-	DMA1_Channel1->CMAR = dest_addr;
+	DMA1_Channel1->CMAR = (uint32_t) dest_addr;
 
-	// DMA Channel enable
+	// Enable DMA Channel
 	DMA1_Channel1->CCR |= (1<<0);
 }
 void adc_dma_config_it(void) {
@@ -321,6 +430,13 @@ void adc_dma_config_it(void) {
 	
 	NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 	// HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+}
+
+void adc_power_on(void) {
+	ADC1->CR2 |= (0<<1);
+}
+void adc_power_off(void) {
+	ADC1->CR2 &= ~(0<<1);
 }
 
 void ADC_Init(void) {
@@ -346,7 +462,7 @@ void ADC_Init(void) {
 	// Resolution is 12 bit in F103
 	
 //4. Set the Continuous Conversion, EOC, and Data Alignment in Control Reg 2 (CR2)
-	ADC1->CR2 = (1<<1);     // enable continuous conversion mode
+	ADC1->CR2 &= ~(1<<1);     // enable continuous conversion mode
 	// EOC after each conversion by default
 	ADC1->CR2 |= (7<<17);  // External Event selection pointed to SWSTART bit
 	ADC1->CR2 &= ~(1<<11);   // Data Alignment RIGHT
@@ -471,7 +587,6 @@ void adc_test_2(void) {
 	}
 }
 
-
 void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle) {
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
 	if(adcHandle->Instance == ADC1)
@@ -488,7 +603,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle) {
 		PA0-WKUP     ------> ADC1_IN0
 		*/
 		
-		GPIO_InitStruct.Pin = GPIO_PIN_2;
+		GPIO_InitStruct.Pin = GPIO_PIN_3;
 		GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
 		HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
@@ -539,6 +654,73 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle) {
 		/* USER CODE BEGIN ADC1_MspDeInit 1 */
 		/* USER CODE END ADC1_MspDeInit 1 */
 	}
+}
+
+void DMA1_Channel1_IRQHandler(void)
+{
+	/* USER CODE BEGIN DMA1_Channel1_IRQn 0 */
+
+	/* USER CODE END DMA1_Channel1_IRQn 0 */
+	// HAL_DMA_IRQHandler(&hdma_adc1);/
+	
+	// printf("DMA1: IRQ\n");
+	dma1_read_ISR_reg();
+	adc_dma_flag = 1;
+
+	if((TEIF1_bit)) {
+		DMA1->IFCR |= (1<<3);
+		// printf("DMA1: TEIF\n");
+		adc_dma_te_flag = 1;
+	}
+
+	// Half Transfer HTIF
+	if(HTIF1_bit) {
+		DMA1->IFCR |= (1<<2);
+		adc_dma_ht_flag = 1;
+		// printf("DMA1: HTIF\n");
+	}
+
+	// Transfer Complete TCIF
+	if(TCIF1_bit) {
+		DMA1->IFCR |= (1<<1);
+    	adc_dma_tc_flag = 1;
+		// printf("DMA1: TCIF\n");
+		
+	}
+
+	// Global interrupt (TEIF | HTIF | TCIF)
+	if(GIF1_bit) {
+		DMA1->IFCR |= (1<<0);
+		adc_dma_gi_flag = 1;
+		// printf("DMA1: GIF\n");
+	}
+
+	// Transfer error TEIF
+	// if((DMA1->ISR) & (1<<3)) {
+	// 	DMA1->IFCR |= (1<<3);
+	// 	printf("DMA1: TEIF\n");
+	// }
+
+	// // Half Transfer HTIF
+	// if((DMA1->ISR) & (1<<2)) {
+	// 	DMA1->IFCR |= (1<<2);
+	// 	printf("DMA1: HTIF\n");
+	// }
+
+	// // Transfer Complete TCIF
+	// if((DMA1->ISR) & (1<<1)) {
+	// 	DMA1->IFCR |= (1<<1);
+    // 	adc_dma_tc_flag = 1;
+	// 	printf("DMA1: TCIF\n");
+	// }
+
+	// // Global interrupt (TEIF | HTIF | TCIF)
+	// if((DMA1->ISR) & (1<<0)) {
+	// 	DMA1->IFCR |= (1<<0);
+	// 	printf("DMA1: GIF\n");
+	// }
+
+	// adc_dma_flag = 1;
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){

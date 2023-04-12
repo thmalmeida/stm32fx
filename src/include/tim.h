@@ -25,6 +25,7 @@
 extern "C" {
 #endif
 
+
 /* Includes ------------------------------------------------------------------*/
 #include "system_main.h"
 
@@ -37,11 +38,18 @@ extern uint32_t tim3_uptime;
 extern uint8_t tim3_flag_1sec;
 
 void tim2_init(void);
+void tim2_init2(void);
 void tim3_init(void);
+void tim4_init(void);
+void tim4_pwm(void);
 
 void tim2_config_2(void);
 void Delay_us(uint16_t us);
 void Delay_ms(uint16_t ms);
+
+void MX_TIM4_Init(void);
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle);
+
 
 #ifdef __cplusplus
 }

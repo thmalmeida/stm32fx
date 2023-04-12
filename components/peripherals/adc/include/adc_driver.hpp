@@ -22,37 +22,53 @@
 #include "stm32_log.h"
 // ---------------------------
 
+enum class adc_read_mode {
+	single_read = 0,
+	stream_dma_read
+};
+
 class ADC_driver {
 public:
 	uint8_t channel;
 
 	// ADC_driver(void) {}
-	ADC_driver(void) {
+	ADC_driver(adc_read_mode mode) {
 		hadc1_ = &hadc1;
+
+		init(mode);
 	}
 	~ADC_driver(void) {}
 
-	void init(void) {
+	void init(adc_read_mode mode) {
 
-		hadc1_->Instance = ADC1;
-		hadc1_->Init.ScanConvMode = ADC_SCAN_DISABLE;		// use SCAN when read 2 or more outputs simultaneusly
-		hadc1_->Init.ContinuousConvMode = DISABLE;
-		hadc1_->Init.DiscontinuousConvMode = DISABLE;
-		hadc1_->Init.ExternalTrigConv = ADC_SOFTWARE_START; // ADC_EXTERNALTRIGCONV_T3_TRGO;
-		hadc1_->Init.DataAlign = ADC_DATAALIGN_RIGHT;
-		hadc1_->Init.NbrOfConversion = 1;					// will convert 2 channels
-		
-		if (HAL_ADC_Init(hadc1_) != HAL_OK) {
-			printf("ADC init error!\n");
-			Error_Handler();
-		} else {
-			printf("ADC: initialized!\n");
+		if(mode == adc_read_mode::single_read) {
+			hadc1_->Instance = ADC1;
+			hadc1_->Init.ScanConvMode = ADC_SCAN_DISABLE;		// use SCAN when read 2 or more outputs simultaneusly
+			hadc1_->Init.ContinuousConvMode = DISABLE;
+			hadc1_->Init.DiscontinuousConvMode = DISABLE;
+			hadc1_->Init.ExternalTrigConv = ADC_SOFTWARE_START; // ADC_EXTERNALTRIGCONV_T3_TRGO;
+			hadc1_->Init.DataAlign = ADC_DATAALIGN_RIGHT;
+			hadc1_->Init.NbrOfConversion = 1;					// will convert 2 channels
+			
+			if (HAL_ADC_Init(hadc1_) != HAL_OK) {
+				printf("ADC init error!\n");
+				Error_Handler();
+			} else {
+				printf("ADC single read init\n");
+			}
+
+			channel_config(3);
+
+		} else if(mode == adc_read_mode::stream_dma_read) {
+			// adc with dma init
 		}
-
-		ADC_ChannelConfTypeDef sConfig = {0};
+	}
+	void channel_config(uint8_t channel) {
 
 		/** Configure Regular Channel */
-		sConfig.Channel = ADC_CHANNEL_2;
+		ADC_ChannelConfTypeDef sConfig = {0};
+		sConfig.Channel = ADC_CHANNEL_3;
+		printf("ADC: config channel: %d\n", static_cast<int>(ADC_CHANNEL_3));
 		sConfig.Rank = ADC_REGULAR_RANK_1;
 		// sConfig.SamplingTime = ADC_SAMPLETIME_55CYCLES_5;
 		sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
@@ -80,12 +96,13 @@ public:
 		// 	printf("ADC: rank 3 error!\n");
 		// 	Error_Handler();
 		// }
+
+	}
+	void channel_select(int channel) {
+
 	}
 	void calibrate(void) {
 		HAL_ADCEx_Calibration_Start(hadc1_);
-	}
-	void select_channel(int channel) {
-
 	}
 	uint16_t read(int channel) {
 
