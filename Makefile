@@ -90,7 +90,8 @@ components/peripherals/adc/adc_driver.cpp \
 components/peripherals/gpio/gpio.cpp \
 components/peripherals/backup/backup.cpp \
 components/peripherals/backup/reset_reason.cpp \
-components/peripherals/i2c_master/i2c_master.cpp
+components/peripherals/i2c_master/i2c_master.cpp \
+components/peripherals/tim/tim_driver.cpp
 # $(SRC_DIR)/usart.cpp
 
 # ASM sources
@@ -174,7 +175,8 @@ CXX_INCLUDES = \
 -Icomponents/peripherals/adc/include \
 -Icomponents/peripherals/backup/include \
 -Icomponents/peripherals/gpio/include \
--Icomponents/peripherals/i2c_master/include
+-Icomponents/peripherals/i2c_master/include \
+-Icomponents/peripherals/tim/include
 
 # compile gcc flags
 #-fno-exceptions: C++ only. Disables the generation of code that is needed to support C++ exceptions.

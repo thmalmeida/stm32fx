@@ -8,6 +8,8 @@
 // includes for adc test
 #include "adc_driver.hpp"
 
+#include "tim_driver.hpp"
+
 // includes for pcy8575
 #include "pcy8575.hpp"
 #include "tim.h"
@@ -55,6 +57,59 @@ void i2c_slave_pcy8575(void) {
 		if(tim3_flag_1sec) {
 			tim3_flag_1sec = 0;
 			// printf("TIM3\n");
+		}
+	}
+}
+void test_timer_pwm(void) {
+	TIM_driver tim0(2, 800, timer_mode::pwm_output);
+	ADC_driver adc3(adc_read_mode::single_read);
+
+	uint16_t adc_value = 0;				// instant adc read input value
+
+	int n_bits = 12;
+	uint16_t min_adc_value = 10;		// minimum adc value to shutdown pwm signal;
+	int max = 10000*0.78;				// maximum duty cycle pwm operation value;
+	int min = 0.42*max;					// minimum duty cycle pwm operation value;
+
+		enum class states {
+		off = 0,
+		on
+	};
+
+	states fsm0 = states::off;			// Finite state machine state initialize;
+	uint16_t pwm_set_point = 0, pwm_pid = 0;
+	int error = 0;
+	tim0.set_duty_cycle(pwm_pid);
+
+	while(1) {
+		adc_value = adc3.read(3);
+
+		if(fsm0 == states::off) {
+			if(adc_value > min_adc_value) {
+				fsm0 = states::on;
+			}
+		} else if(fsm0 == states::on) {
+
+			pwm_set_point = (max-min)*adc_value/(4095)+min;
+			error = pwm_set_point - pwm_pid;
+
+			if(error) {
+				if(error > 0) {
+					pwm_pid++;
+				} else if(error < 0) {
+					pwm_pid--;
+				}
+				tim0.set_duty_cycle(pwm_pid);
+				// HAL_Delay(1);
+				delay_us(2000);		
+			}
+
+			if(adc_value < min_adc_value) {
+				fsm0 = states::off;
+				pwm_pid = 0;
+				tim0.set_duty_cycle(pwm_pid);
+			}
+		// printf("ADC3_: %u\n", adc_value);
 		}
 	}
 }
