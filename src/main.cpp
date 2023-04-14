@@ -63,13 +63,13 @@ void test_pjb20(void) {
 	// TODO list:
 	// - implement PID controller. Slow response.
 	
-	tim2_init2();
+	tim2_pwm_init(800);
 	ADC_driver adc3(adc_read_mode::single_read);
 
 	uint16_t adc_value = 0;				// instant adc read input value
 
 	int n_bits = 12;
-	uint16_t min_adc_value = 5;			// minimum adc value to shutdown pwm signal;
+	uint16_t min_adc_value = 10;			// minimum adc value to shutdown pwm signal;
 	int max = 10000*0.78;				// maximum duty cycle pwm operation value;
 	int min = 0.42*max;					// minimum duty cycle pwm operation value;
 
@@ -102,7 +102,8 @@ void test_pjb20(void) {
 					pwm_pid--;
 				}
 				TIM2->CCR3 = pwm_pid;
-				HAL_Delay(10);			
+				// HAL_Delay(1);
+				delay_us(2000);		
 			}
 
 			if(adc_value < min_adc_value) {
@@ -111,11 +112,12 @@ void test_pjb20(void) {
 				TIM2->CCR3 = pwm_pid;
 			}
 		// printf("ADC3_: %u\n", adc_value);
+		}
 	}
 }
 void test_pwm(void) {
 
-	tim2_init2();
+	tim2_pwm_init(800);
 
 	int i = 4000;
 

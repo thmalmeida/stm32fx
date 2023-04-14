@@ -90,6 +90,8 @@ void tim2_init(void) {
 		printf("TIM2: initialized!\n");
 	}
 
+	HAL_TIM_Base_Start_IT(&htim2);		// update interrupt enable;
+
 	TIM_ClockConfigTypeDef sClockSourceConfig = {0};
 	sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
 	if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
@@ -101,22 +103,17 @@ void tim2_init(void) {
 	TIM_MasterConfigTypeDef sMasterConfig = {0};
 	TIM_OC_InitTypeDef sConfigOC = {0};	
 
-
 	// if (HAL_TIM_OC_Init(&htim2) != HAL_OK)
 	// {
 	// 	Error_Handler();
 	// }
 
-	// TIM2->SMCR &= ~TIM_SMCR_SMS;	// Internal clock select;
 
+	// TIM2->SMCR &= ~TIM_SMCR_SMS;		// Internal clock select;
 	// TIM2->PSC = 8000;				// Divide 8MHz by 8000 = 1000 Hz;
-	// TIM2->EGR |= (1<<0);			// Set or reset the UG Bit
-
+	// TIM2->EGR |= (1<<0);				// Set or reset the UG Bit
 	// TIM2->ARR = 1000-1;				// Auto reload count to 1000. 1 second.
-
-	HAL_TIM_Base_Start_IT(&htim2);		// update interrupt enable;
-	// TIM2->DIER |= TIM_DIER_UIE;		
-
+	// TIM2->DIER |= TIM_DIER_UIE;		// update interrupt enable;
 	// TIM2->CR1 &= ~TIM_CR1_DIR;		// Upconting mode DIR = 0;
 	// TIM2->CR1 |=  TIM_CR1_CEN;		// TIM1 Counter Enable;
 
@@ -305,6 +302,9 @@ void tim4_pwm(void) {
 }
 void tim4_init(void) {
 
+	uint32_t gu32_ticks = (HAL_RCC_GetHCLKFreq() / 1000000);
+
+
 	htim4.Instance = TIM4;
 	htim4.Init.Prescaler = 10;
 	htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
@@ -491,19 +491,16 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 		/* USER CODE END TIM3_MspDeInit 1 */
 	}
 }
-void tim2_init2(void)
+void tim2_pwm_init(uint32_t freq)
 {
-	/* USER CODE BEGIN TIM2_Init 0 */
+	uint32_t gu32_ticks = (HAL_RCC_GetHCLKFreq() / 1000000);
 
-	/* USER CODE END TIM2_Init 0 */
+	printf("freq: %d\n", HAL_RCC_GetHCLKFreq());
 
 	TIM_ClockConfigTypeDef sClockSourceConfig = {0};
 	TIM_MasterConfigTypeDef sMasterConfig = {0};
 	TIM_OC_InitTypeDef sConfigOC = {0};
 
-	/* USER CODE BEGIN TIM2_Init 1 */
-
-	/* USER CODE END TIM2_Init 1 */
 	htim2.Instance = TIM2;
 	htim2.Init.Prescaler = 0;
 	htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
@@ -547,6 +544,10 @@ void tim2_init2(void)
 	/* USER CODE END TIM2_Init 2 */
 	HAL_TIM_MspPostInit(&htim2);
 
-	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
+	if(HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3) != HAL_OK) {
+		Error_Handler();
+	} else {
+		printf("TIM2 PWM init\n");
+	}
 
 }

@@ -38,7 +38,7 @@ extern uint32_t tim3_uptime;
 extern uint8_t tim3_flag_1sec;
 
 void tim2_init(void);
-void tim2_init2(void);
+void tim2_pwm_init(uint32_t freq);
 void tim3_init(void);
 void tim4_init(void);
 void tim4_pwm(void);
