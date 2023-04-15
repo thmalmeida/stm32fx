@@ -249,7 +249,7 @@ public:
 		return temp;
 	}
 	uint32_t uptime(void) {
-		return tim3_uptime;
+		return tim3_cnt;
 	}
 	uint16_t irms(void) {
 		return 0x2468;

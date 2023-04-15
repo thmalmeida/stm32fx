@@ -20,18 +20,25 @@
 /* Includes ------------------------------------------------------------------*/
 #include "tim.h"
 
+// For TIM1
+TIM_HandleTypeDef htim1;
+uint8_t tim1_flag = 0;
+uint32_t tim1_cnt = 0;
+
 // For TIM2
 TIM_HandleTypeDef htim2;
-uint32_t tim2_uptime = 0;
 uint8_t tim2_flag = 0;
+uint32_t tim2_cnt = 0;
 
 // For TIM3
 TIM_HandleTypeDef htim3;
-uint32_t tim3_uptime = 0;
-uint8_t tim3_flag_1sec = 0;
+uint8_t tim3_flag = 0;
+uint32_t tim3_cnt = 0;
 
 // For TIM4
 TIM_HandleTypeDef htim4;
+uint8_t tim4_flag = 0;
+uint32_t tim4_cnt = 0;
 
 void tim2_config_2(void) {
 /************** STEPS TO FOLLOW *****************

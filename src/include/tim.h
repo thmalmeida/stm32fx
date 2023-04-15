@@ -29,13 +29,21 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "system_main.h"
 
+extern TIM_HandleTypeDef htim1;
+extern uint8_t tim1_flag;
+extern uint32_t tim1_cnt;
+
 extern TIM_HandleTypeDef htim2;
-extern uint32_t tim2_uptime;
 extern uint8_t tim2_flag;
+extern uint32_t tim2_cnt;
 
 extern TIM_HandleTypeDef htim3;
-extern uint32_t tim3_uptime;
-extern uint8_t tim3_flag_1sec;
+extern uint8_t tim3_flag;
+extern uint32_t tim3_cnt;
+
+extern TIM_HandleTypeDef htim4;
+extern uint8_t tim4_flag;
+extern uint32_t tim4_cnt;
 
 void tim2_init(void);
 void tim2_pwm_init(uint32_t freq);

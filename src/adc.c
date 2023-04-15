@@ -244,18 +244,20 @@ void adc_init(void) {
 	// LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
 
 	// Continuous conversion mode (Enable = 1\ Disable = 0)
-	ADC1->CR2 |= (1<<1);
+	ADC1->CR2 &= ~(1<<1);
 
 	// 5. Set the Sampling Time for the channels in ADC_SMPRx
 
-	// Set 1.5 cycles sampling time to IN2 - set 000 to SMP2[2:0]
-	ADC1->SMPR2 &= ~(7<<6);
+	// Set 239.5 cycles sampling time to IN2 - set 111 to SMP2[2:0] at bit 6 (Channel AN2).
+	// AN2 - PA2 bit 6
+	// AN4 - PA4 bit 12
+	ADC1->SMPR2 |= (7<<12);
 
 	// Set regular channel sequence length (number of channels)
 	ADC1->SQR1 |= (1<<20);
 
-	// Set to the first rank the channel 2
-	ADC1->SQR3 |= (2<<0);
+	// Set channel 4 to rank 1
+	ADC1->SQR3 |= (4<<0);
 
 	// Set PA2 to analog input;
 	// GPIOA->CRLMODER |= (3 << 4);
@@ -335,11 +337,15 @@ void adc_gpioa_config(void) {
 	// Enable GPIOA clock
 	RCC->APB2ENR |= (1<<2);
 	
-	// Set input. MODE2[1:0] = 00 at bit 8.
-	GPIOA->CRL &= ~(3<<8);
+	// Mode to input analog mode to MODE2[1:0] = 00 at bit 8. (Page 171 - rev 21.)
+	// AN2 at bit 8
+	// AN3 at bit 12
+	// AN4 at bit 16
+	GPIOA->CRL &= ~(3<<16);
 
-	// Set Analog Input. CNF2[1:0] = 00 at bit 10.
-	GPIOA->CRL &= ~(3<<10);	
+	// Config to Analog Input. CNF2[1:0] = 00 at bit 18.
+	// AN4 at bit 18
+	GPIOA->CRL &= ~(3<<18);	
 }
 
 void adc_dma_begin(uint32_t* dest_addr, uint16_t size) {
@@ -395,6 +401,9 @@ void adc_dma_init(void) {
 
 	// Enable interrupts Trasfer error (TEIE), Half transfer (HTIE) and Transfer complete (TCIE)
 	DMA1_Channel1->CCR |= (1<<3) | (1<<2) | (1<<1);
+
+	// Enable DMA channel after edit;
+	DMA1_Channel1->CCR |= (1<<0);
 }
 void adc_dma_config_addr(uint32_t* dest_addr, uint16_t size) {
 	// void DMA_Config(uint32_t srcAdd, uint32_t destAdd, uint16_t size) {
@@ -430,6 +439,11 @@ void adc_dma_config_it(void) {
 	
 	NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 	// HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+}
+void adc_dma_reset_cnt(void) {
+	DMA1_Channel1->CCR &= ~(1<<0);
+	DMA1_Channel1->CNDTR = ADC_BUFLEN;
+	DMA1_Channel1->CCR |= (1<<0);
 }
 
 void adc_power_on(void) {

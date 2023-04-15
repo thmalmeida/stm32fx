@@ -20,6 +20,8 @@
 // STM32----------------------
 #include "system_main.h"
 #include "stm32_log.h"
+
+#include "tim.h"
 // ---------------------------
 
 enum class timer_mode {
@@ -37,17 +39,17 @@ enum class timer_mode {
 
 	Predefined setup options
 
-	1)  timer 1 - TIM2
+	1)  timer 1 - TIM1
 
 		a)
 
 		b)
 
-	2) timer 2 - TIM3
+	2) timer 2 - TIM2
 
-	3) timer 3 - TIM4
+	3) timer 3 - TIM3
 
-	4) timer 4 - TIM5
+	4) timer 4 - TIM4
 */
 
 
@@ -57,7 +59,7 @@ public:
 
 	TIM_driver(int timer_num, int freq, timer_mode mode) : timer_num_(timer_num), TIM_num_(timer_num+1) {
 
-		// htimX_ = &htimX;
+		htimX_ = &htim3;
 		switch(timer_num) {
 			case 1: {
 				TIMX_ = TIM1;
@@ -99,14 +101,14 @@ public:
 			div2 = sys_clock_/div1/freq;
 		}
 
-		htimX_.Instance = TIMX_;
-		htimX_.Init.Prescaler = div1-1;
-		htimX_.Init.CounterMode = TIM_COUNTERMODE_UP;
-		htimX_.Init.Period = div2-1;
-		htimX_.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-		htimX_.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+		htimX_->Instance = TIM3; //TIMX_;
+		htimX_->Init.Prescaler = 8000;//div1-1;
+		htimX_->Init.CounterMode = TIM_COUNTERMODE_UP;
+		htimX_->Init.Period = 1000-1;//div2-1;
+		htimX_->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+		htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
 
-		if (HAL_TIM_Base_Init(&htimX_) != HAL_OK)
+		if (HAL_TIM_Base_Init(htimX_) != HAL_OK)
 		{	
 			printf("TIM%d: init error\n", timer_num_);
 			Error_Handler();
@@ -116,28 +118,37 @@ public:
 
 		TIM_ClockConfigTypeDef sClockSourceConfig = {0};
 		sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-		if (HAL_TIM_ConfigClockSource(&htimX_, &sClockSourceConfig) != HAL_OK)
+		if (HAL_TIM_ConfigClockSource(htimX_, &sClockSourceConfig) != HAL_OK)
 		{
 			printf("TIM%d: clock config error!\n", timer_num_);
 			Error_Handler();
+		} else {
+			printf("TIM%d: clock config!\n", timer_num_);
 		}
 
 		switch(mode) {
 			case timer_mode::timer_interrupt: {
-				HAL_TIM_Base_Start_IT(&htimX_);		// update interrupt enable;
+				if(HAL_TIM_Base_Start_IT(htimX_) != HAL_OK) {	// update interrupt enable;
+					printf("TIM%d: interrupt error!\n", timer_num_);
+					Error_Handler();
+				} else {
+					printf("TIM%d: interrupt init!\n", timer_num_);
+				}
 				break;
 			}
 			case timer_mode::pwm_output: {
-				if (HAL_TIM_PWM_Init(&htimX_) != HAL_OK)
+				if (HAL_TIM_PWM_Init(htimX_) != HAL_OK)
 				{
+					printf("TIM%d: PWM init error!\n", timer_num_);					
 					Error_Handler();
 				}
 
 				TIM_MasterConfigTypeDef sMasterConfig = {0};
 				sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
 				sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-				if (HAL_TIMEx_MasterConfigSynchronization(&htimX_, &sMasterConfig) != HAL_OK)
+				if (HAL_TIMEx_MasterConfigSynchronization(htimX_, &sMasterConfig) != HAL_OK)
 				{
+					printf("TIM%d: PWM sync error!\n", timer_num_);										
 					Error_Handler();
 				}
 
@@ -147,14 +158,16 @@ public:
 				sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
 				sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
 
-				if (HAL_TIM_PWM_ConfigChannel(&htimX_, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+				if (HAL_TIM_PWM_ConfigChannel(htimX_, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
 				{
+					printf("TIM%d: PWM channel config error!\n", timer_num_);					
 					Error_Handler();
 				}
 
-				HAL_TIM_MspPostInit_(&htimX_);
+				HAL_TIM_MspPostInit_(htimX_);
 
-				if(HAL_TIM_PWM_Start(&htimX_, TIM_CHANNEL_3) != HAL_OK) {
+				if(HAL_TIM_PWM_Start(htimX_, TIM_CHANNEL_3) != HAL_OK) {
+					printf("TIM%d: PWM init error!\n", timer_num_);					
 					Error_Handler();
 				} else {
 					printf("TIM%d PWM init\n", timer_num_);
@@ -187,7 +200,8 @@ private:
 
 	// STM32F103 specifics
 	int TIM_num_ = 0;
-	TIM_HandleTypeDef htimX_;
+	TIM_HandleTypeDef *htimX_;
+	TIM_HandleTypeDef htimY_;
     TIM_TypeDef *TIMX_;
 	
 	void HAL_TIM_MspPostInit_(TIM_HandleTypeDef* timHandle) {

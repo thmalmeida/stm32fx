@@ -73,6 +73,7 @@ void adc_gpioa_config(void);
 void adc_dma_init(void);
 void adc_dma_config_addr(uint32_t* dest_addr, uint16_t size);
 void adc_dma_config_it(void);
+void adc_dma_reset_cnt(void);
 
 void adc_power_on(void);
 void adc_power_off(void);

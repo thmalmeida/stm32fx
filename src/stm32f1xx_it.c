@@ -241,27 +241,22 @@ void I2C2_ER_IRQHandler(void)
 
 }
 
-void TIM3_IRQHandler(void)
-{
-	/* USER CODE BEGIN TIM3_IRQn 0 */
-
-	/* USER CODE END TIM3_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim3);
-
-	tim3_uptime++;
-	tim3_flag_1sec = 1;
-		
-	/* USER CODE BEGIN TIM3_IRQn 1 */
-
-	/* USER CODE END TIM3_IRQn 1 */
+void TIM1_IRQHandler(void) {
+	HAL_TIM_IRQHandler(&htim1);
+	tim1_flag = 1;
 }
 void TIM2_IRQHandler(void) {
-
 	HAL_TIM_IRQHandler(&htim2);
-	tim2_uptime++;
 	tim2_flag = 1;
 }
-
+void TIM3_IRQHandler(void) {
+	HAL_TIM_IRQHandler(&htim3);
+	tim3_flag = 1;
+}
+void TIM4_IRQHandler(void) {
+	HAL_TIM_IRQHandler(&htim4);
+	tim4_flag = 1;
+}
 // void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc) {
 // 	printf("ADC half!\n");
 
