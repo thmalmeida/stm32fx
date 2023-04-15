@@ -236,4 +236,24 @@ private:
 		}
 	}
 };
+
+// STM32F TIM interruptions functions
+extern "C" {
+void TIM1_IRQHandler(void) {
+	HAL_TIM_IRQHandler(&htim1);
+	tim1_flag = 1;
+}
+void TIM2_IRQHandler(void) {
+	HAL_TIM_IRQHandler(&htim2);
+	tim2_flag = 1;
+}
+void TIM3_IRQHandler(void) {
+	HAL_TIM_IRQHandler(&htim3);
+	tim3_flag = 1;
+}
+void TIM4_IRQHandler(void) {
+	HAL_TIM_IRQHandler(&htim4);
+	tim4_flag = 1;
+}
+}
 #endif /* __TIM_DRIVER_HPP__ */
