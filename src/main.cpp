@@ -217,7 +217,7 @@ void test_adc_dma_tim_class(void) {
 		// 1 second flag to refresh watchdog timer
 		if(tim3_flag) {
 			tim3_flag = 0;
-			printf("TIM3\n");
+			printf("TIM%d\n", tim0.get_tim_number());
 
 			// adc_read_SR_reg();
 			// adc_read_CR1_reg();
@@ -326,7 +326,8 @@ void test_adc_dma_tim_class(void) {
 				adc_dma_tc_flag = 0;
 				memset(adc_buffer, 0, sizeof(adc_buffer));
 				printf("DMA1 TC flag!\n");
-				
+
+				adc_dma_reset_cnt();	
 				// adc_dma_config_addr((uint32_t*)(&adc_buffer[0]), adc_buffer);
 				// adc_dma_begin((uint32_t*)&adc_buffer[0], ADC_BUFLEN);
 				// ADC1->CR2 |= ~(7<<17);

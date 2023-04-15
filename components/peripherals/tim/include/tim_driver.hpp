@@ -57,28 +57,27 @@ class TIM_driver {
 public:
 	uint8_t channel;
 
-	TIM_driver(int timer_num, int freq, timer_mode mode) : timer_num_(timer_num), TIM_num_(timer_num+1) {
+	TIM_driver(int timer_num, int freq, timer_mode mode) : timer_num_(timer_num) {
 
-		htimX_ = &htim3;
 		switch(timer_num) {
 			case 1: {
 				TIMX_ = TIM1;
-				TIM_num_ = 1;
+				htimX_ = &htim1;
 				break;
 			}
 			case 2: {
 				TIMX_ = TIM2;
-				TIM_num_ = 2;
+				htimX_ = &htim2;
 				break;
 			}
 			case 3: {
 				TIMX_ = TIM3;
-				TIM_num_ = 3;
+				htimX_ = &htim3;
 				break;
 			}
 			case 4: {
 				TIMX_ = TIM4;
-				TIM_num_ = 4;
+				htimX_ = &htim4;
 				break;
 			}
 		}
@@ -191,6 +190,10 @@ public:
 
 	}
 
+	int get_tim_number(void) {
+		return timer_num_;
+	}
+
 private:
 	// General timer parameters
 	int timer_num_;
@@ -199,7 +202,6 @@ private:
 	uint32_t duty_cycle_;
 
 	// STM32F103 specifics
-	int TIM_num_ = 0;
 	TIM_HandleTypeDef *htimX_;
 	TIM_HandleTypeDef htimY_;
     TIM_TypeDef *TIMX_;
@@ -239,6 +241,7 @@ private:
 
 // STM32F TIM interruptions functions
 extern "C" {
+
 void TIM1_IRQHandler(void) {
 	HAL_TIM_IRQHandler(&htim1);
 	tim1_flag = 1;
@@ -255,5 +258,6 @@ void TIM4_IRQHandler(void) {
 	HAL_TIM_IRQHandler(&htim4);
 	tim4_flag = 1;
 }
+
 }
 #endif /* __TIM_DRIVER_HPP__ */
