@@ -200,7 +200,10 @@ void test_pwm(void) {
 }
 void test_adc_dma_tim_class(void) {
 
-	TIM_driver tim0(3, 1, timer_mode::timer_interrupt);
+	TIM_driver tim1(1, 1, timer_mode::timer_interrupt);
+	TIM_driver tim2(2, 1, timer_mode::timer_interrupt);
+	TIM_driver tim3(3, 1, timer_mode::timer_interrupt);
+	TIM_driver tim4(4, 1, timer_mode::timer_interrupt);
 
 	// ADC_driver adc0;
 	// adc0.init();	
@@ -215,9 +218,24 @@ void test_adc_dma_tim_class(void) {
 	while(1) {
 
 		// 1 second flag to refresh watchdog timer
+		if(tim1_flag) {
+			tim1_flag = 0;
+			printf("TIM%d\n", tim1.get_tim_number());
+		}
+
+		if(tim2_flag) {
+			tim2_flag = 0;
+			printf("TIM%d\n", tim2.get_tim_number());
+		}
+
+		if(tim4_flag) {
+			tim4_flag = 0;
+			printf("TIM%d\n", tim4.get_tim_number());
+		}
+
 		if(tim3_flag) {
 			tim3_flag = 0;
-			printf("TIM%d\n", tim0.get_tim_number());
+			printf("TIM%d\n", tim3.get_tim_number());
 
 			// adc_read_SR_reg();
 			// adc_read_CR1_reg();
@@ -227,15 +245,15 @@ void test_adc_dma_tim_class(void) {
 			// adc_print_CR1_reg();
 			// adc_print_CR2_reg();
 	
-			dma1_read_ISR_reg();
-			dma1_read_CNDTR_reg();
-			dma1_read_CPAR_reg();
-			dma1_read_CMAR_reg();
+			// dma1_read_ISR_reg();
+			// dma1_read_CNDTR_reg();
+			// dma1_read_CPAR_reg();
+			// dma1_read_CMAR_reg();
 
-			dma1_print_ISR_reg();
-			dma1_print_CNDTR_reg();
-			dma1_print_CPAR_reg();
-			dma1_print_CMAR_reg();
+			// dma1_print_ISR_reg();
+			// dma1_print_CNDTR_reg();
+			// dma1_print_CPAR_reg();
+			// dma1_print_CMAR_reg();
 
 			if(i>3) {
 				
