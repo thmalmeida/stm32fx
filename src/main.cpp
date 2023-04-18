@@ -26,7 +26,7 @@ void test_adc_single_read(void);
 void test_aht10(void);
 void test_bkp(void);
 void test_pjb20(void);
-void test_pwm(void);
+void test_timer_pwm(void);
 
 int main(void)
 {
@@ -35,7 +35,7 @@ int main(void)
 
 	// i2c_slave_pcy8575();
 	// test_adc_dma();
-	test_adc_dma_tim_class();
+	test_timer_pwm();
 	// test_pjb20();
 	// test_aht10();
 	// test_bkp();
@@ -63,7 +63,7 @@ void i2c_slave_pcy8575(void) {
 	}
 }
 void test_timer_pwm(void) {
-	TIM_driver tim0(2, 800, timer_mode::pwm_output);
+	TIM_driver tim0(2, 800, timer_mode::pwm_output, 3);
 	ADC_driver adc3(adc_read_mode::single_read);
 
 	uint16_t adc_value = 0;				// instant adc read input value
@@ -172,32 +172,6 @@ void test_pjb20(void) {
 		}
 	}
 }
-void test_pwm(void) {
-
-	tim2_pwm_init(800);
-
-	int i = 4000;
-
-	int state = 0;
-
-	while(1) {
-		HAL_Delay(1);
-		if(!state) {
-			i++;
-		} else {
-			i--;
-		}
-
-		if(i == 10000) {
-			state = 1;
-		} else if(i == 4000) {
-			state = 0;
-		}
-
-		TIM2->CCR3 = static_cast<uint16_t>(i);
-		
-	}
-}
 void test_adc_dma_tim_class(void) {
 
 	TIM_driver tim1(1, 1, timer_mode::timer_interrupt);
@@ -218,23 +192,23 @@ void test_adc_dma_tim_class(void) {
 	while(1) {
 
 		// 1 second flag to refresh watchdog timer
-		if(tim1_flag) {
-			tim1_flag = 0;
+		if(tim1_flag_) {
+			tim1_flag_ = 0;
 			printf("TIM%d\n", tim1.get_tim_number());
 		}
 
-		if(tim2_flag) {
-			tim2_flag = 0;
+		if(tim2_flag_) {
+			tim2_flag_ = 0;
 			printf("TIM%d\n", tim2.get_tim_number());
 		}
 
-		if(tim4_flag) {
-			tim4_flag = 0;
+		if(tim4_flag_) {
+			tim4_flag_ = 0;
 			printf("TIM%d\n", tim4.get_tim_number());
 		}
 
-		if(tim3_flag) {
-			tim3_flag = 0;
+		if(tim3_flag_) {
+			tim3_flag_ = 0;
 			printf("TIM%d\n", tim3.get_tim_number());
 
 			// adc_read_SR_reg();
