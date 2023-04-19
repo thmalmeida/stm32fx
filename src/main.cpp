@@ -35,8 +35,8 @@ int main(void)
 
 	// i2c_slave_pcy8575();
 	// test_adc_dma();
-	test_timer_pwm();
-	// test_pjb20();
+	// test_timer_pwm();
+	test_pjb20();
 	// test_aht10();
 	// test_bkp();
 	// test_pwm();
@@ -83,14 +83,15 @@ void test_pjb20(void) {
 	// TODO list:
 	// - implement PID controller. Slow response.
 	
-	tim2_pwm_init(800);
-	ADC_driver adc3(adc_read_mode::single_read);
+	// Using PB0
+	TIM_driver tim0(3, 800, timer_mode::pwm_output, 3);
+	ADC_driver adc3(2, adc_read_mode::single_read);
 
 	uint16_t adc_value = 0;				// instant adc read input value
 
 	int n_bits = 12;
-	uint16_t min_adc_value = 10;			// minimum adc value to shutdown pwm signal;
-	int max = 10000*0.78;				// maximum duty cycle pwm operation value;
+	uint16_t min_adc_value = 1;			// minimum adc value to shutdown pwm signal;
+	int max = 100*0.78;					// maximum duty cycle pwm operation value;
 	int min = 0.42*max;					// minimum duty cycle pwm operation value;
 
 	enum class states {
@@ -101,7 +102,7 @@ void test_pjb20(void) {
 	states fsm0 = states::off;			// Finite state machine state initialize;
 	uint16_t pwm_set_point = 0, pwm_pid = 0;
 	int error = 0;
-	TIM2->CCR3 = pwm_pid;
+	tim0.set_duty_cycle(0);
 
 	while(1) {
 		adc_value = adc3.read(3);
@@ -121,7 +122,7 @@ void test_pjb20(void) {
 				} else if(error < 0) {
 					pwm_pid--;
 				}
-				TIM2->CCR3 = pwm_pid;
+				tim0.set_duty_cycle(pwm_pid);
 				// HAL_Delay(1);
 				delay_us(2000);		
 			}
@@ -129,7 +130,7 @@ void test_pjb20(void) {
 			if(adc_value < min_adc_value) {
 				fsm0 = states::off;
 				pwm_pid = 0;
-				TIM2->CCR3 = pwm_pid;
+				tim0.set_duty_cycle(pwm_pid);
 			}
 		// printf("ADC3_: %u\n", adc_value);
 		}
@@ -482,7 +483,7 @@ void test_adc_dma(void) {
 	}
 }
 void test_adc_single_read(void) {
-	ADC_driver adc3(adc_read_mode::single_read);
+	ADC_driver adc3(3, adc_read_mode::single_read);
 
 	while(1) {
 		printf("ADC3: %d\n", adc3.read(3));

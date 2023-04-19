@@ -32,14 +32,14 @@ public:
 	uint8_t channel;
 
 	// ADC_driver(void) {}
-	ADC_driver(adc_read_mode mode) {
+	ADC_driver(uint32_t channel, adc_read_mode mode) {
 		hadc1_ = &hadc1;
 
-		init(mode);
+		init(channel, mode);
 	}
 	~ADC_driver(void) {}
 
-	void init(adc_read_mode mode) {
+	void init(uint32_t channel, adc_read_mode mode) {
 
 		if(mode == adc_read_mode::single_read) {
 			hadc1_->Instance = ADC1;
@@ -57,7 +57,7 @@ public:
 				printf("ADC single read init\n");
 			}
 
-			channel_config(3);
+			channel_config(channel);
 
 		} else if(mode == adc_read_mode::stream_dma_read) {
 			// adc with dma init
@@ -67,8 +67,49 @@ public:
 
 		/** Configure Regular Channel */
 		ADC_ChannelConfTypeDef sConfig = {0};
-		sConfig.Channel = ADC_CHANNEL_3;
-		printf("ADC: config channel: %d\n", static_cast<int>(ADC_CHANNEL_3));
+		switch (channel) {
+			case 0:
+				channel_ = ADC_CHANNEL_0;
+			break;
+
+			case 1:
+				channel_ = ADC_CHANNEL_1;
+				break;
+			
+			case 2:
+				channel_ = ADC_CHANNEL_2;
+				break;
+
+			case 3:
+				channel_ = ADC_CHANNEL_3;
+				break;
+
+			case 4:
+				channel_ = ADC_CHANNEL_4;
+				break;
+
+			case 5:
+				channel_ = ADC_CHANNEL_5;
+				break;
+
+			case 6:
+				channel_ = ADC_CHANNEL_6;
+				break;
+
+			case 7:
+				channel_ = ADC_CHANNEL_7;
+				break;
+
+			case 8:
+				channel_ = ADC_CHANNEL_8;
+				break;
+
+			case 9:
+				channel_ = ADC_CHANNEL_9;
+				break;
+		}
+		sConfig.Channel = channel_;
+		printf("ADC: config channel: %d\n", static_cast<int>(channel_));
 		sConfig.Rank = ADC_REGULAR_RANK_1;
 		// sConfig.SamplingTime = ADC_SAMPLETIME_55CYCLES_5;
 		sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
@@ -121,6 +162,9 @@ public:
 
 
 private:
+	uint32_t channel_;
+
+	// STM32F specifics
 	ADC_HandleTypeDef *hadc1_;
 	DMA_HandleTypeDef *hdma_adc1_;
 };
