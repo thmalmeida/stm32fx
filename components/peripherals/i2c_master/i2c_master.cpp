@@ -115,7 +115,7 @@ int I2C_Master::write(uint8_t slave_addr, uint8_t reg, bool ack_check /* = true 
 	uint8_t data = 0x00;
 	return write(slave_addr, reg, &data, 0, ack_check);
 }
-int I2C_Master::write(uint8_t slave_addr, uint8_t reg, uint8_t* data, size_t len, bool ack_check) {
+int I2C_Master::write(uint8_t slave_addr, uint8_t reg, uint8_t* data, size_t len, bool ack_check = true) {
 	// ESP32
 	// esp_err_t ret;
 	// i2c_cmd_handle_t cmd_handle = i2c_cmd_link_create();
@@ -130,8 +130,10 @@ int I2C_Master::write(uint8_t slave_addr, uint8_t reg, uint8_t* data, size_t len
 	// 	return I2C_ERR_WRITE;
 	// }
 
+
 	// STM32
 	HAL_StatusTypeDef ret;
+
 	// ret = HAL_I2C_Master_Transmit(&hi2c2_, static_cast<uint16_t>(slave_addr << 1 | I2C_MASTER_WRITE), data, len, I2C_COMMAND_WAIT_MS);
 	ret = HAL_I2C_Mem_Write(&hi2c2_, (slave_addr << 1) | I2C_MASTER_WRITE, reg, 1, data, len, I2C_COMMAND_WAIT_MS);
 

@@ -163,7 +163,7 @@ public:
 		uint32_t div1 = 1;
 		uint32_t div2 = sys_clock_/freq;
 
-		uint32_t div_remain = sys_clock_/freq;
+		// uint32_t div_remain = sys_clock_/freq;
 
 		if(div2 > 65535) {
 			div1 = 1000;
@@ -171,7 +171,7 @@ public:
 		}
 
 		duty_max_ = div2-1;
-		printf("sys_clock_: %lu, div1:%lu, freq:%lu, div2:%lu", sys_clock_, div1, freq, div2);
+		printf("sys_clock_: %lu, div1:%lu, freq:%d, div2:%lu", sys_clock_, div1, freq, div2);
 		printf("Duty max: %lu\n", duty_max_);
 
 		htimX_->Instance = TIMX_;
@@ -189,7 +189,7 @@ public:
 			printf("TIM%d: initialized!\n", timer_num_);
 		}
 
-		TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+		TIM_ClockConfigTypeDef sClockSourceConfig;
 		sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
 		if (HAL_TIM_ConfigClockSource(htimX_, &sClockSourceConfig) != HAL_OK)
 		{
@@ -237,7 +237,7 @@ public:
 					printf("TIM%d PWM init\n", timer_num_);
 				}
 
-				TIM_MasterConfigTypeDef sMasterConfig = {0};
+				TIM_MasterConfigTypeDef sMasterConfig;
 				sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
 				sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
 				if (HAL_TIMEx_MasterConfigSynchronization(htimX_, &sMasterConfig) != HAL_OK) {
@@ -245,10 +245,13 @@ public:
 					Error_Handler();
 				}
 
-				TIM_OC_InitTypeDef sConfigOC = {0};
+				TIM_OC_InitTypeDef sConfigOC;
 				sConfigOC.OCMode = TIM_OCMODE_PWM1;
 				sConfigOC.Pulse = 0;
 				sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+				sConfigOC.OCNPolarity = TIM_OCNPOLARITY_LOW;
+				sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
+				sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
 				sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
 
 				if (HAL_TIM_PWM_ConfigChannel(htimX_, &sConfigOC, channel_addr_) != HAL_OK)
@@ -282,8 +285,8 @@ public:
 		__HAL_TIM_SET_COMPARE(htimX_, channel_addr_, pulse_width);
 	}
 	void set_frequency(uint32_t freq) {
-		// uint32_t value = freq*2;
-		__HAL_TIM_SET_AUTORELOAD(htimX_, 5000);
+		uint32_t value = freq*2;
+		__HAL_TIM_SET_AUTORELOAD(htimX_, value);
 	}
 	int get_tim_number(void) {
 		return timer_num_;
@@ -305,7 +308,7 @@ private:
 	uint32_t channel_addr_;
 
 	void HAL_TIM_MspPostInit_(TIM_HandleTypeDef* timHandle, int channel) {
-		GPIO_InitTypeDef GPIO_InitStruct = {0};
+		GPIO_InitTypeDef GPIO_InitStruct;
 		
 		if(timHandle->Instance==TIM1) {
 			switch(channel) {

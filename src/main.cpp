@@ -89,7 +89,7 @@ void test_pjb20(void) {
 
 	uint16_t adc_value = 0;				// instant adc read input value
 
-	int n_bits = 12;
+	// int n_bits = 12;
 	uint16_t min_adc_value = 1;			// minimum adc value to shutdown pwm signal;
 	int max = 100*0.78;					// maximum duty cycle pwm operation value;
 	int min = 0.42*max;					// minimum duty cycle pwm operation value;
@@ -149,7 +149,6 @@ void test_adc_dma_tim_class(void) {
 	memset(adc_buffer, 0, sizeof(adc_buffer));
 
 	int i = 0;
-	int flag0 = 0;
 	printf("test_adc_dma_tim_class!\n");
 	// adc_start_conversion();
 
@@ -345,7 +344,6 @@ void test_adc_dma(void) {
 	// adc0.read_stream(&adc_buffer[0], ADC_BUFLEN);
 
 	int i = 0;
-	int flag0 = 0;
 	// adc_start_conversion();
 
 	while(1) {
