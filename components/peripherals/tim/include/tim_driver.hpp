@@ -158,7 +158,7 @@ public:
 
 	void init(int freq, timer_mode mode) {
 
-		sys_clock_ = (HAL_RCC_GetHCLKFreq() / 1000000);
+		sys_clock_ = HAL_RCC_GetHCLKFreq();
 
 		uint32_t div1 = 1;
 		uint32_t div2 = sys_clock_/freq;
@@ -170,12 +170,16 @@ public:
 			div2 = sys_clock_/div1/freq;
 		}
 
+		duty_max_ = div2-1;
+		printf("sys_clock_: %lu, div1:%lu, freq:%lu, div2:%lu", sys_clock_, div1, freq, div2);
+		printf("Duty max: %lu\n", duty_max_);
+
 		htimX_->Instance = TIMX_;
 		htimX_->Init.Prescaler = div1-1;
 		htimX_->Init.CounterMode = TIM_COUNTERMODE_UP;
 		htimX_->Init.Period = div2-1;
 		htimX_->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-		htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+		htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 
 		if (HAL_TIM_Base_Init(htimX_) != HAL_OK)
 		{	
@@ -226,17 +230,17 @@ public:
 				}
 
 
-				if (HAL_TIM_PWM_Init(htimX_) != HAL_OK)
-				{
+				if (HAL_TIM_PWM_Init(htimX_) != HAL_OK) {
 					printf("TIM%d: PWM init error!\n", timer_num_);					
 					Error_Handler();
+				} else {
+					printf("TIM%d PWM init\n", timer_num_);
 				}
 
 				TIM_MasterConfigTypeDef sMasterConfig = {0};
 				sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
 				sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-				if (HAL_TIMEx_MasterConfigSynchronization(htimX_, &sMasterConfig) != HAL_OK)
-				{
+				if (HAL_TIMEx_MasterConfigSynchronization(htimX_, &sMasterConfig) != HAL_OK) {
 					printf("TIM%d: PWM sync error!\n", timer_num_);										
 					Error_Handler();
 				}
@@ -259,7 +263,7 @@ public:
 					printf("TIM%d: PWM init error!\n", timer_num_);					
 					Error_Handler();
 				} else {
-					printf("TIM%d PWM init\n", timer_num_);
+					printf("TIM%d PWM channel %d init\n", timer_num_, channel_);
 				}
 				break;
 			}
@@ -274,10 +278,12 @@ public:
 		TIMX_->CNT = value;
 	}
 	void set_duty_cycle(uint32_t value) {
-		TIMX_->CCR3 = value;
+		uint32_t pulse_width = static_cast<uint32_t>(value*duty_max_/100.0);
+		__HAL_TIM_SET_COMPARE(htimX_, channel_addr_, pulse_width);
 	}
 	void set_frequency(uint32_t freq) {
-
+		// uint32_t value = freq*2;
+		__HAL_TIM_SET_AUTORELOAD(htimX_, 5000);
 	}
 	int get_tim_number(void) {
 		return timer_num_;
@@ -287,6 +293,7 @@ private:
 	// General timer parameters
 	int timer_num_;
 	int channel_;
+	uint32_t duty_max_;
     uint32_t sys_clock_;
 	uint32_t freq_;
 	uint32_t duty_cycle_;
@@ -370,6 +377,7 @@ private:
 					GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
 					GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 					HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+					printf("HOLLA!\n");
 					break;
 				}
 				default:
@@ -430,6 +438,7 @@ private:
 					GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
 					GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 					HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+					printf("TIM4_CH2!!!!\n");
 					break;
 				}
 				case 3: {
@@ -486,6 +495,8 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
 	} else if(tim_baseHandle->Instance==TIM4) {
 		/* TIM4 clock enable */
 		__HAL_RCC_TIM4_CLK_ENABLE();
+
+		printf("TIM4 CLOCK ENABLE!\n");
 
 		/* TIM4 interrupt Init */
 		HAL_NVIC_SetPriority(TIM4_IRQn, 0, 0);

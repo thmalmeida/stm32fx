@@ -63,57 +63,20 @@ void i2c_slave_pcy8575(void) {
 	}
 }
 void test_timer_pwm(void) {
-	TIM_driver tim0(2, 800, timer_mode::pwm_output, 3);
-	ADC_driver adc3(adc_read_mode::single_read);
+	TIM_driver tim0(2, 800, timer_mode::pwm_output, 4);
 
-	uint16_t adc_value = 0;				// instant adc read input value
+	tim0.set_duty_cycle(50);
 
-	int n_bits = 12;
-	uint16_t min_adc_value = 10;		// minimum adc value to shutdown pwm signal;
-	int max = 10000*0.78;				// maximum duty cycle pwm operation value;
-	int min = 0.42*max;					// minimum duty cycle pwm operation value;
-
-		enum class states {
-		off = 0,
-		on
-	};
-
-	states fsm0 = states::off;			// Finite state machine state initialize;
-	uint16_t pwm_set_point = 0, pwm_pid = 0;
-	int error = 0;
-	tim0.set_duty_cycle(pwm_pid);
-
+	int i = 0;
 	while(1) {
-		adc_value = adc3.read(3);
-
-		if(fsm0 == states::off) {
-			if(adc_value > min_adc_value) {
-				fsm0 = states::on;
-			}
-		} else if(fsm0 == states::on) {
-
-			pwm_set_point = (max-min)*adc_value/(4095)+min;
-			error = pwm_set_point - pwm_pid;
-
-			if(error) {
-				if(error > 0) {
-					pwm_pid++;
-				} else if(error < 0) {
-					pwm_pid--;
-				}
-				tim0.set_duty_cycle(pwm_pid);
-				// HAL_Delay(1);
-				delay_us(2000);		
-			}
-
-			if(adc_value < min_adc_value) {
-				fsm0 = states::off;
-				pwm_pid = 0;
-				tim0.set_duty_cycle(pwm_pid);
-			}
-		// printf("ADC3_: %u\n", adc_value);
+		if(i>99) {
+			i=0;
 		}
+		tim0.set_duty_cycle(i);
+		HAL_Delay(1000);
+		printf("Count:%d\n",i++);
 	}
+	
 }
 void test_pjb20(void) {
 	// This repoduces the behavior or PJB-20 electric panel
