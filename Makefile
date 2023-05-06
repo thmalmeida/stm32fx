@@ -84,6 +84,7 @@ CXX_SOURCES2=$(shell find -L $(SRC_DIR) -name '*.cpp')
 CXX_SOURCES = \
 $(SRC_DIR)/main.cpp \
 components/helper/delay.cpp \
+components/math/dsp.cpp \
 components/modules/pcy8575/pcy8575.cpp \
 components/modules/aht10/aht10.cpp \
 components/peripherals/adc/adc_driver.cpp \
@@ -170,6 +171,7 @@ CXX_INCLUDES = \
 -IDrivers/CMSIS/Device/ST/STM32F1xx/Include \
 -IDrivers/CMSIS/Include \
 -Icomponents/helper/include \
+-Icomponents/math/include \
 -Icomponents/modules/aht10/include \
 -Icomponents/modules/pcy8575/include \
 -Icomponents/peripherals/adc/include \

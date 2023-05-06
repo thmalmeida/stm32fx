@@ -64,12 +64,12 @@ public:
 	void oneshot_init(void) {
 		// resource allocation
 		hadc1_->Instance = ADC1;
-		hadc1_->Init.ScanConvMode = ADC_SCAN_ENABLE;// ADC_SCAN_DISABLE;		// use SCAN when read 2 or more outputs simultaneusly
-		hadc1_->Init.ContinuousConvMode = ENABLE;
+		hadc1_->Init.ScanConvMode = ADC_SCAN_DISABLE;// ADC_SCAN_DISABLE;		// use SCAN when read 2 or more outputs simultaneusly
+		hadc1_->Init.ContinuousConvMode = DISABLE;
 		hadc1_->Init.DiscontinuousConvMode = DISABLE;
 		hadc1_->Init.ExternalTrigConv = ADC_SOFTWARE_START; // ADC_EXTERNALTRIGCONV_T3_TRGO;
 		hadc1_->Init.DataAlign = ADC_DATAALIGN_RIGHT;
-		hadc1_->Init.NbrOfConversion = 1;					// will convert 1 channels
+		hadc1_->Init.NbrOfConversion = 5;					// will convert 1 channels
 		
 		if (HAL_ADC_Init(hadc1_) != HAL_OK) {
 			printf("ADC init error!\n");
@@ -305,6 +305,7 @@ public:
 
 private:
 	int channel_;
+	uint16_t adc_raw_[17];
 	uint32_t channel_addr_;	// channel type converted
 	int cirp_ = -1;			// channel index rank position
 	pattern_s ptable_[17];	// pattern table

@@ -50,7 +50,7 @@ void I2C_Master::init(uint32_t freq) {
 	GPIO_InitTypeDef GPIO_InitStruct;
 	// if(i2cHandle->Instance==I2C2)
 	// {
-		/* I2C1 GPIO Configuration
+		/* I2C2 GPIO Configuration
 		PB10     ------> I2C1_SCL
 		PB11     ------> I2C1_SDA
 		*/
@@ -59,7 +59,7 @@ void I2C_Master::init(uint32_t freq) {
 		GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
 		HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 	
-		// __HAL_RCC_GPIOB_CLK_ENABLE();
+		__HAL_RCC_GPIOB_CLK_ENABLE();
 		/* I2C2 clock enable */
 
 		__HAL_RCC_I2C2_CLK_ENABLE();
@@ -115,7 +115,7 @@ int I2C_Master::write(uint8_t slave_addr, uint8_t reg, bool ack_check /* = true 
 	uint8_t data = 0x00;
 	return write(slave_addr, reg, &data, 0, ack_check);
 }
-int I2C_Master::write(uint8_t slave_addr, uint8_t reg, uint8_t* data, size_t len, bool ack_check = true) {
+int I2C_Master::write(uint8_t slave_addr, uint8_t reg, uint8_t* data, size_t len, bool ack_check /* = true */) {
 	// ESP32
 	// esp_err_t ret;
 	// i2c_cmd_handle_t cmd_handle = i2c_cmd_link_create();

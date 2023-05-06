@@ -27,7 +27,6 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "system_main.h"
-// #include "stm32f1xx_ll_adc.h"
 
 #define ADC_BUFLEN 8
 

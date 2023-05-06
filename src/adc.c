@@ -612,42 +612,42 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle) {
 		/* ADC1 clock enable */
 		__HAL_RCC_ADC1_CLK_ENABLE();
 
-		__HAL_RCC_GPIOA_CLK_ENABLE();
-		/**ADC1 GPIO Configuration
-		PA0-WKUP     ------> ADC1_IN0
-		*/
+		// __HAL_RCC_GPIOA_CLK_ENABLE();
+		// /**ADC1 GPIO Configuration
+		// PA0-WKUP     ------> ADC1_IN0
+		// */
 		
-		GPIO_InitStruct.Pin = GPIO_PIN_3;
-		GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-		HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+		// // GPIO_InitStruct.Pin = GPIO_PIN_3;
+		// // GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+		// // HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-		/* ADC1 DMA Init */
-		hdma_adc1.Instance = DMA1_Channel1;
-		hdma_adc1.Init.Direction = DMA_PERIPH_TO_MEMORY;
-		hdma_adc1.Init.PeriphInc = DMA_PINC_DISABLE;
-		hdma_adc1.Init.MemInc = DMA_MINC_ENABLE;
+		// /* ADC1 DMA Init */
+		// hdma_adc1.Instance = DMA1_Channel1;
+		// hdma_adc1.Init.Direction = DMA_PERIPH_TO_MEMORY;
+		// hdma_adc1.Init.PeriphInc = DMA_PINC_DISABLE;
+		// hdma_adc1.Init.MemInc = DMA_MINC_ENABLE;
 
-		hdma_adc1.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
-		// hdma_adc1.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
-		hdma_adc1.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
-		// hdma_adc1.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+		// hdma_adc1.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
+		// // hdma_adc1.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+		// hdma_adc1.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
+		// // hdma_adc1.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
 
-		hdma_adc1.Init.Mode = DMA_NORMAL; //DMA_CIRCULAR;
-		hdma_adc1.Init.Priority = DMA_PRIORITY_LOW;
-		if (HAL_DMA_Init(&hdma_adc1) != HAL_OK) {
-			Error_Handler();
-		}
+		// hdma_adc1.Init.Mode = DMA_NORMAL; //DMA_CIRCULAR;
+		// hdma_adc1.Init.Priority = DMA_PRIORITY_LOW;
+		// if (HAL_DMA_Init(&hdma_adc1) != HAL_OK) {
+		// 	Error_Handler();
+		// }
 
-		__HAL_LINKDMA(adcHandle,DMA_Handle,hdma_adc1);
+		// __HAL_LINKDMA(adcHandle,DMA_Handle,hdma_adc1);
 		
-		/* Enable DMA controller clock*/
-		/* DMA controller clock enable */
-		__HAL_RCC_DMA1_CLK_ENABLE();
+		// /* Enable DMA controller clock*/
+		// /* DMA controller clock enable */
+		// __HAL_RCC_DMA1_CLK_ENABLE();
 
-		/* DMA interrupt init */
-		/* DMA1_Channel1_IRQn interrupt configuration */
-		HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
-		HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+		// /* DMA interrupt init */
+		// /* DMA1_Channel1_IRQn interrupt configuration */
+		// HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
+		// HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 	}
 }
 void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle) {

@@ -50,15 +50,15 @@ class I2C_Master{
 		void init(uint32_t freq);
 		void deinit(void);
 
-		int write(uint8_t slave_addr, uint8_t reg, uint8_t* data, size_t len, bool ack_check);
-		int write(uint8_t slave_addr, uint8_t reg, uint8_t data, bool ack_check);
-		int write(uint8_t slave_addr, uint8_t reg, bool ack_check);
+		int write(uint8_t slave_addr, uint8_t reg, uint8_t* data, size_t len, bool ack_check = true);
+		int write(uint8_t slave_addr, uint8_t reg, uint8_t data, bool ack_check = true);
+		int write(uint8_t slave_addr, uint8_t reg, bool ack_check = true);
 
 		int write(uint8_t slave_addr, uint8_t *data, uint8_t data_len);
 
 		int set_mask(uint8_t slave_addr, uint8_t reg, uint8_t data, uint8_t mask, bool ack_check = true);
 
-		int read(uint8_t slave_addr, uint8_t reg, uint8_t* data, size_t len, bool ack_check);
+		int read(uint8_t slave_addr, uint8_t reg, uint8_t* data, size_t len, bool ack_check = true);
 		int read(uint8_t slave_addr, uint8_t reg, uint8_t* data, bool ack_check = true);
 		int read(uint8_t slave_address, const uint8_t *write_buffer, size_t write_buffer_len, uint8_t *read_buffer, size_t read_buffer_len);
 		int read_only(uint8_t slave_addr, uint8_t* data, size_t data_len, bool ack_check = true);
