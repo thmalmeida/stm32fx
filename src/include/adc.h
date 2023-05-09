@@ -48,6 +48,8 @@ void adc_read_CR1_reg(void);
 void adc_print_CR1_reg(void);
 void adc_read_CR2_reg(void);
 void adc_print_CR2_reg(void);
+void adc_read_SQR1_reg(void);
+void adc_print_L_regular(void);
 void dma1_read_ISR_reg(void);
 void dma1_print_ISR_reg(void);
 void dma1_print_ISR_reg(void);
@@ -57,6 +59,9 @@ void dma1_read_CPAR_reg(void);
 void dma1_print_CPAR_reg(void);
 void dma1_read_CMAR_reg(void);
 void dma1_print_CMAR_reg(void);
+
+void adc_print_DISCNUM(void);
+void adc_set_CR1_discnum(uint8_t value);
 
 void adc_set_CR2_EXTSEL_bits(uint8_t value);
 void adc_set_CR2_DMA_bit(void);
@@ -69,10 +74,12 @@ void adc_prescale(uint8_t div);
 
 void adc_gpioa_config(void);
 
+uint16_t adc_read_oneshot(void);
+
 void adc_dma_init(void);
 void adc_dma_config_addr(uint32_t* dest_addr, uint16_t size);
 void adc_dma_config_it(void);
-void adc_dma_reset_cnt(void);
+void adc_dma_reset_cnt(uint32_t value);
 
 void adc_power_on(void);
 void adc_power_off(void);

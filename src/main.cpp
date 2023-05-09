@@ -23,21 +23,30 @@ void i2c_slave_pcy8575(void);
 void test_adc_dma(void);
 void test_adc_dma_tim_class(void);
 void test_adc_oneshot(void);
+void test_adc_stream(void);
+void test_adc_stream_reg(void);
 void test_aht10(void);
 void test_bkp(void);
 void test_pjb20(void);
 void test_timer_pwm(void);
 
+
 int main(void)
 {
-	init_system();
-	printf("\nSystem reset...\n");
+	/* System must initializes */
+	HAL_Init();								// Reset of all peripherals, Initializes the Flash interface and the Systick. */
+	HAL_Delay(10);							// little delay after peripheral reset;
+	SystemClock_Config_48MHz_HSE_ADC();		// Configure the system clock
+	printf("\nSystem reset...\n");			// Beautiful welcome message;
 
+
+	/* your sample code */
 	// i2c_slave_pcy8575();
 	// test_adc_dma();
 	// test_adc_dma_tim_class();
 	// test_adc_oneshot();
-	test_timer_pwm();
+	test_adc_stream_reg();
+	// test_timer_pwm();
 	// test_pjb20();
 	// test_aht10();
 	// test_bkp();
@@ -387,7 +396,7 @@ void test_adc_dma_tim_class(void) {
 				memset(adc_buffer, 0, sizeof(adc_buffer));
 				printf("DMA1 TC flag!\n");
 
-				adc_dma_reset_cnt();	
+				adc_dma_reset_cnt(ADC_BUFLEN);	
 				// adc_dma_config_addr((uint32_t*)(&adc_buffer[0]), adc_buffer);
 				// adc_dma_begin((uint32_t*)&adc_buffer[0], ADC_BUFLEN);
 				// ADC1->CR2 |= ~(7<<17);
@@ -411,18 +420,108 @@ void test_adc_dma_tim_class(void) {
 void test_adc_oneshot(void) {
 	ADC_driver adc0(adc_mode::oneshot);
 
-	adc0.oneshot_channel_config(2);
-	adc0.oneshot_channel_config(3);
-	adc0.oneshot_channel_config(4);
-	adc0.oneshot_channel_config(17);
-	adc0.oneshot_channel_config(16);
+	adc0.channel_config(3);
+	// adc0.oneshot_channel_config(3);
+	// adc0.oneshot_channel_config(4);
+	// adc0.oneshot_channel_config(16);
+	// adc0.oneshot_channel_config(17);
 
-	adc0.ptable_print_();
+	// adc0.ptable_print();
+
+	int n_channels = 1;
+	int adc_data_raw[n_channels];
+
+	// adc_print_DISCNUM();
+	// adc_print_L_regular();
 
 	while(1) {
-		printf("ADC1- ch2:%d ch3:%d ch3:%d Vref:%d temp:%d\n",
-			adc0.read(2), adc0.read(3), adc0.read(4), adc0.read(17), adc0.read(16));
-		// printf("ADC1- ch2:%d ch3:%d\n", adc0.read(3), adc0.read(2));
+
+		adc_data_raw[0] = adc0.read(3);
+		// adc_data_raw[1] = adc0.read(3);
+		// adc_data_raw[2]  = adc0.read(4);
+		// adc_data_raw[3] = adc0.read(16);
+		// adc_data_raw[4] = adc0.read(17);
+		// adc0.read_all();
+		// adc0.ptable_print_();
+		// printf("ch2:%d\n", adc0.get_raw(2));
+		// printf("ch17:%d\n", adc0.get_raw(17));
+		// printf("\nADC1: \n");
+		for(auto i=0; i<n_channels; i++) {
+			printf("adc_data_raw[%d]:%d\n", i, adc_data_raw[i]);
+		}
+		HAL_Delay(100);
+	}
+}
+void test_adc_stream(void) {
+	ADC_driver adc0(adc_mode::stream);
+
+	adc0.channel_config(8);
+	
+	int n_points_cycle = 198;
+	int n_cycles = 2;
+	int n_points = n_cycles*n_points_cycle;
+
+	uint16_t adc_array_raw[n_points];
+
+	while(1) {
+		adc0.stream_read(&adc_array_raw[0], n_points);
+		printf("\n\nadc_array_raw: \n");
+		for(auto i=0; i<n_points; i++) {
+			printf("%u, ", adc_array_raw[i]);
+		}
+		HAL_Delay(1000);
+	}
+}
+void test_adc_stream_reg(void) {
+	ADC_driver adc0(adc_mode::stream);
+
+	adc0.channel_config(8);
+
+	int n_points_cycle = 198;
+	int n_cycles = 2;
+	int n_points = n_cycles*n_points_cycle+1;
+
+	uint16_t adc_array_raw[n_points];
+	adc_dma_begin((uint32_t*)&adc_array_raw[0], n_points);
+	memset(adc_array_raw, 0, sizeof(adc_array_raw));
+
+	dma1_read_ISR_reg();
+	dma1_read_CNDTR_reg();
+	dma1_read_CPAR_reg();
+	dma1_read_CMAR_reg();
+
+	dma1_print_ISR_reg();
+	dma1_print_CNDTR_reg();
+	dma1_print_CPAR_reg();
+	dma1_print_CMAR_reg();
+
+	adc_start_conversion();
+
+	int count = 0;
+	while(1) {
+
+		printf("next:%d\n", count++);
+		// dma1_read_ISR_reg();
+		// dma1_read_CNDTR_reg();
+		// dma1_read_CPAR_reg();
+		// dma1_read_CMAR_reg();
+
+		// dma1_print_ISR_reg();
+		// dma1_print_CNDTR_reg();
+		// dma1_print_CPAR_reg();
+		// dma1_print_CMAR_reg();
+
+		if(adc_dma_tc_flag) {
+			adc_dma_tc_flag = 0;
+
+			printf("\nadc_array_raw: ");
+			for(auto i=0; i<n_points; i++) {
+				printf("%u, ", adc_array_raw[i]);
+			}
+			printf("\n");
+
+			adc_dma_reset_cnt(n_points);
+		}
 		HAL_Delay(1000);
 	}
 }

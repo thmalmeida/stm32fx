@@ -30,6 +30,14 @@ uint8_t JEOC_bit = 0;		// bit 2
 uint8_t EOC_bit = 0;		// bit 1
 uint8_t AWD_bit = 0;		// bit 0
 
+//ADC regular sequence register 1 (ADC_SQR1)
+uint32_t ADC_SQR1_reg = 0;
+uint8_t L_bits = 0;			// bit[23:20]. Regular channel sequence length. 0000 is one conversion.
+uint8_t SQ16_bits = 0;		// five bits for each rank channel position
+uint8_t SQ15_bits = 0;		
+uint8_t SQ14_bits = 0;
+uint8_t SQ13_bits = 0;
+
 uint32_t ADC_CR1_reg = 0;
 uint8_t AWDE_bit = 0;		// bit 23 - Analog watchdog enable on regular channels
 uint8_t JAWDE_bit = 0;		// bit 22 - Analog watchdog enable on injected channels
@@ -119,6 +127,15 @@ void adc_print_CR2_reg(void) {
 	printf("ADC_CR2-0x%08x TSVREFE:%u SWSTART:%u EXTTRIG:%u EXTSEL:0x%02x ALIGN:%u DMA:%u RSTCAL:%u CAL:%u CONT:%u ADON:%u\n",
 		ADC_CR1_reg, TSVREFE_bit, SWSTART_bit, EXTTRIG_bit, EXTSEL_bits, ALIGN_bit, DMA_bit, RSTCAL_bit, CAL_bit, CONT_bit, ADON_bit);
 }
+void adc_read_SQR1_reg(void) {
+	ADC_SQR1_reg = ADC1->SQR1;
+	L_bits = (ADC_SQR1_reg >> 20) & 0x0F;
+	SQ16_bits = (ADC_SQR1_reg >> 15) & 0x1F;
+	SQ15_bits = (ADC_SQR1_reg >> 10) & 0x1F;
+	SQ14_bits = (ADC_SQR1_reg >> 5) & 0x1F;
+	SQ13_bits = (ADC_SQR1_reg >> 0) & 0x1F;
+}
+
 void dma1_read_ISR_reg(void) {
 	// Read ISR reg from DMA1 peripheral
 	DMA1_ISR_reg = DMA1->ISR;
@@ -195,11 +212,11 @@ void adc_init(void) {
 
 	// 2- Set the prescalar in the Clock configuration register (RCC_CFGR)
 
-	// ADC1 prescale to minimum div by 2. Value: 00
-	RCC->CFGR &= ~(3 << 14);	// 8 MHz/2 = 4 MHz
+	// ADC1 prescale to maximum div by 8. Value: 11
+	RCC->CFGR |= (3 << 14);	// 48 MHz/8 = 6 MHz
 
 	// Control Register 1 (CR1) configuration
-	// Disable Dual mode. Enable independent mode;
+	// Disable Dual mode. Enable independent mode: 0000;
 	ADC1->CR1 &= ~(0x0F << 16);
 
 	// Discontinous number DISCNUM[2:0] at bit 13: 000: 1 channel only
@@ -236,7 +253,7 @@ void adc_init(void) {
 		// 111: SWSTART
 	ADC1->CR2 |= (7<<17);
 
-	// Data rigth data align
+	// Data alignment to rigth
 	ADC1->CR2 &= ~(1<<11);
 		
 	// Enable DMA for ADC (DMA)
@@ -244,22 +261,23 @@ void adc_init(void) {
 	// LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
 
 	// Continuous conversion mode (Enable = 1\ Disable = 0)
-	ADC1->CR2 &= ~(1<<1);
+	// ADC1->CR2 &= ~(1<<1);	// Disable
+	ADC1->CR2 |=  (1<<1);	// Enable
 
 	// 5. Set the Sampling Time for the channels in ADC_SMPRx
 
-	// Set 239.5 cycles sampling time to IN2 - set 111 to SMP2[2:0] at bit 6 (Channel AN2).
-	// AN2 - PA2 bit 6
+	// Set 239.5 cycles sampling time to rank 1 - set 111 to SMP0[2:0] at bit 0 (Channel AN2).
+	// AN8 - PB0 bit 6
 	// AN4 - PA4 bit 12
-	ADC1->SMPR2 |= (7<<12);
+	ADC1->SMPR2 |= (7<<0);
 
 	// Set regular channel sequence length (number of channels)
-	ADC1->SQR1 |= (1<<20);
+	ADC1->SQR1 &= ~(0x0F<<20);	// 0000: length is 1 conversion
 
-	// Set channel 4 to rank 1
-	ADC1->SQR3 |= (4<<0);
+	// Set channel 8 to rank 1
+	ADC1->SQR3 |= (8<<0);
 
-	// Set PA2 to analog input;
+	// Set PB0 to analog input;
 	// GPIOA->CRLMODER |= (3 << 4);
 
 	// Enable ADC1
@@ -331,6 +349,21 @@ void adc_prescale(uint8_t div) {
 	}
 }
 
+void adc_print_DISCNUM(void) {
+	adc_read_CR1_reg();
+	printf("disc num channels: %d\n", DISCNUM_bits);
+}
+void adc_print_L_regular(void) {
+	// this prints the regular channel sequence length
+	adc_read_SQR1_reg();
+	printf("reg ch Length:%d\n", (int)L_bits);
+}
+void adc_set_CR1_discnum(uint8_t value) {
+	ADC1->CR1 &= ~(0x07 << 13);
+	ADC1->CR1 |= (value << 13);
+	// DISCNUM_bits = (ADC_CR1_reg >> 13) & 0x07;
+}
+
 void adc_gpioa_config(void) {
 	// Configure IN2 in GPIOA. 
 	
@@ -348,23 +381,34 @@ void adc_gpioa_config(void) {
 	GPIOA->CRL &= ~(3<<18);	
 }
 
+uint16_t adc_read_oneshot(void) {
+
+	int i = 0;
+	do {
+		adc_read_SR_reg();
+		i++;
+	} while(!EOC_bit && (i<100000));
+
+	return (uint16_t)ADC1->DR;
+}
+
 void adc_dma_begin(uint32_t* dest_addr, uint16_t size) {
-	adc_gpioa_config();						// Configure AN2 to read analog values;
-	adc_prescale(2);						// Configure RCC ADC prescale;
+	// adc_gpioa_config();						// Configure AN2 to read analog values;
+	adc_prescale(8);						// Configure RCC ADC prescale;
 	adc_init();								// Configure ADC control registers;
 	adc_dma_init();							// Configure DMA, link with ADC peripheral and enable;
 	adc_dma_config_addr(dest_addr, size);	// Configure DMA array address to write ADC values;
 	adc_dma_config_it();					// Configure DMA half and complete transfer interruption;
 }
 void adc_dma_init(void) {
-		/* Initialize the DMA
+	/* Initialize the DMA
 	Steps to follow:
-	1- Enable DMA clock;
-	2- Set data direction from peripheral to memory
-	3- Configure Circular/Normal mode;
-	4- Enable/Disable Memory Increment and Peripheral Increment
-	5- Set the Data buffer size
-	6- Select the channel for the stream
+		1- Enable DMA clock;
+		2- Set data direction from peripheral to memory
+		3- Configure Circular/Normal mode;
+		4- Enable/Disable Memory Increment and Peripheral Increment
+		5- Set the Data buffer size
+		6- Select the channel for the stream
 	*/
 
 	// Enable DMA1 clock
@@ -380,12 +424,12 @@ void adc_dma_init(void) {
 	DMA1_Channel1->CCR &= ~(3<<12);
 
 	// Memory size to 16 bits: 01 (MSIZE)
-	DMA1_Channel1->CCR &= ~(3<<10);
-	DMA1_Channel1->CCR |= (1<<10);
+	DMA1_Channel1->CCR &= ~(3<<10);	// Clear MSIZE[1:0] at bit 10
+	DMA1_Channel1->CCR |= (1<<10);	// Set 01: 16 bits
 
 	// Peripheral size to 16 bits: 01 (PSIZE)
-	DMA1_Channel1->CCR &= ~(3<<8);
-	DMA1_Channel1->CCR |= (1<<8);
+	DMA1_Channel1->CCR &= ~(3<<8);	// Clear PSIZE[1:0] at bit 8
+	DMA1_Channel1->CCR |= (1<<8);	// Set 01: 16 bits
 
 	// Memory increment mode enable (MINC)
 	DMA1_Channel1->CCR |= (1<<7);
@@ -394,10 +438,10 @@ void adc_dma_init(void) {
 	DMA1_Channel1->CCR &= ~(1<<6);
 
 	// Circular mode:1, Normal mode: 0 (CIRC)
-	DMA1_Channel1->CCR &= ~(1<<5);
+	DMA1_Channel1->CCR &= ~(1<<5);	// Normal mode
 
 	// Data transfer direction from peripheral to memory (DIR)
-	DMA1_Channel1->CCR &= ~(1<<4);
+	DMA1_Channel1->CCR &= ~(1<<4);	// 0: read from peripheral
 
 	// Enable interrupts Trasfer error (TEIE), Half transfer (HTIE) and Transfer complete (TCIE)
 	DMA1_Channel1->CCR |= (1<<3) | (1<<2) | (1<<1);
@@ -440,9 +484,9 @@ void adc_dma_config_it(void) {
 	NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 	// HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 }
-void adc_dma_reset_cnt(void) {
+void adc_dma_reset_cnt(uint32_t value) {
 	DMA1_Channel1->CCR &= ~(1<<0);
-	DMA1_Channel1->CNDTR = ADC_BUFLEN;
+	DMA1_Channel1->CNDTR = value;
 	DMA1_Channel1->CCR |= (1<<0);
 }
 

@@ -22,6 +22,19 @@
 #include "stm32_log.h"
 // ---------------------------
 
+/*
+			Pattern Table [12][2]
+		 _________________________
+  index	|_Channel_|_Rank_position_|
+	0	|    2    |      1        |
+	1	|    3    |      2        |
+	2	|    1    |      3        |
+	3	|    4    |      4        |
+	4	|  Vref   |      5        |
+	5	|__Temp___|______6________|
+
+*/
+
 enum class adc_mode {
 	noption = 0,
 	oneshot,
@@ -38,12 +51,14 @@ struct pattern_s {
 	uint32_t attenuation = 0;
 	uint32_t bitwidth = 12;
 	uint32_t rank_position;
+	uint16_t data_raw;
 };
 
 class ADC_driver {
 public:
 	ADC_driver(adc_mode mode = adc_mode::oneshot) {
 		hadc1_ = &hadc1;
+		mode_ = mode;
 
 		switch (mode) {
 			case adc_mode::oneshot: {
@@ -64,18 +79,19 @@ public:
 	void oneshot_init(void) {
 		// resource allocation
 		hadc1_->Instance = ADC1;
-		hadc1_->Init.ScanConvMode = ADC_SCAN_DISABLE;// ADC_SCAN_DISABLE;		// use SCAN when read 2 or more outputs simultaneusly
+		hadc1_->Init.ScanConvMode = ADC_SCAN_DISABLE;			// ADC_SCAN_DISABLE;		// use SCAN when read 2 or more outputs simultaneusly
 		hadc1_->Init.ContinuousConvMode = DISABLE;
 		hadc1_->Init.DiscontinuousConvMode = DISABLE;
-		hadc1_->Init.ExternalTrigConv = ADC_SOFTWARE_START; // ADC_EXTERNALTRIGCONV_T3_TRGO;
+		hadc1_->Init.ExternalTrigConv = ADC_SOFTWARE_START;		// ADC_EXTERNALTRIGCONV_T3_TRGO;
 		hadc1_->Init.DataAlign = ADC_DATAALIGN_RIGHT;
-		hadc1_->Init.NbrOfConversion = 5;					// will convert 1 channels
+		hadc1_->Init.NbrOfConversion = 1;						// will convert n_channels
+		hadc1_->Init.NbrOfDiscConversion = 1;
 		
 		if (HAL_ADC_Init(hadc1_) != HAL_OK) {
 			printf("ADC init error!\n");
 			Error_Handler();
 		} else {
-			// printf("ADC single read init\n");
+			printf("ADC single read init\n");
 		}
 
 		// next step is configure the channels
@@ -87,7 +103,7 @@ public:
 			printf("ADC deinit\n");
 		}
 	}
-	void oneshot_channel_config(int channel) {
+	void channel_config(int channel) {
 		/** Configure Regular Channel */
 		GPIO_InitTypeDef GPIO_InitStruct;	// = {0};
 			
@@ -192,45 +208,39 @@ public:
 		ADC_ChannelConfTypeDef sConfig;
 		sConfig.Channel = ptable_[cirp_].channel;
 		sConfig.Rank = ptable_[cirp_].rank_position;	//ADC_REGULAR_RANK_1;
-		sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+		sConfig.SamplingTime = adc_sampletime_;
 		if (HAL_ADC_ConfigChannel(hadc1_, &sConfig) != HAL_OK) {
 			printf("ADC channel config error\n");
 			Error_Handler();
 		} else {
-			printf("ADC channel %lu configured\n", channel_addr_);
+			// printf("ADC channel %lu configured\n", channel_addr_);
+			printf("ADC config- ch:%lu, i:%d, rank: %lu\n", ptable_[cirp_].channel, cirp_, ptable_[cirp_].rank_position);
 		}
-
-		printf("index:%d ch:%lu, rank: %lu\n", cirp_, ptable_[cirp_].channel, ptable_[cirp_].rank_position);
-		// /** Configure Regular Channel */
-		// sConfig.Channel = ADC_CHANNEL_VREFINT;
-		// sConfig.Rank = ADC_REGULAR_RANK_2;
-		// sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
-		// if (HAL_ADC_ConfigChannel(hadc1_, &sConfig) != HAL_OK)
-		// {
-		// 	printf("ADC: rank 2 error!\n");
-		// 	Error_Handler();
-		// }
 	}
 	void channel_select(int channel) {
 		channel_ = channel;
+
 		uint8_t index = find_index_(channel);
-		printf("index:%d ch:%lu, rank: %lu\n", index, ptable_[index].channel, ptable_[index].rank_position);
+		printf("Ch select: i:%d ch:%lu, rank: %lu\n", index, ptable_[index].channel, ptable_[index].rank_position);
 
-		ADC_ChannelConfTypeDef sConfig;
+		ADC_ChannelConfTypeDef sConfig = {0};
+		if(mode_ == adc_mode::oneshot) {
+			sConfig.Rank = ADC_REGULAR_RANK_1;
+		} else if(mode_ == adc_mode::stream) {
+			sConfig.Rank = ptable_[index].rank_position;
+		}
 		sConfig.Channel = ptable_[index].channel;					//static_cast<uint32_t>(pattern_table[index][0]);
-		sConfig.Rank = ptable_[index].rank_position;				//static_cast<uint32_t>(pattern_table[index][1]);
-		sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
-
+		sConfig.SamplingTime = adc_sampletime_;
 		if (HAL_ADC_ConfigChannel(hadc1_, &sConfig) != HAL_OK) {
 			printf("ADC channel config error\n");
 			Error_Handler();
-		} else {
-			// printf("ADC channel %lu selected\n", channel_addr_);
 		}
-
+		// else {
+		// 	printf("ADC channel %lu selected\n", channel_addr_);
+		// }
 	}
 	uint8_t find_index_(int channel) {
-		// this will seek for channels corresponding position
+		// this will seek for channels corresponding rank position and return index vector
 		// printf("find index- \n");
 		for(int i=0; i<=cirp_; i++) {
 			// printf("\tch:%lu ptable_ch:%lu\n", static_cast<uint32_t>(channel), ptable_[i].channel);
@@ -241,10 +251,23 @@ public:
 		// if no channel found, return 0;
 		return 0;
 	}
+	void read_all(void) {
+		for(auto i=0; i<=cirp_; i++) {
+			HAL_ADC_Start(hadc1_);
+			HAL_ADC_PollForConversion(hadc1_, 1000);
+			ptable_[i].data_raw = static_cast<int>(HAL_ADC_GetValue(hadc1_));
+		}
+		HAL_ADC_Stop(hadc1_);
+		printf("ADC scan read finished!\n");
+	}
+	int get_data_raw(int channel) {
+		auto i = find_index_(channel);
+		return ptable_[i].data_raw;
+	}
 	int read(void) {
-		int adc_raw = 0;
+		int adc_raw;
 		HAL_ADC_Start(hadc1_);
-		HAL_ADC_PollForConversion(hadc1_, 10);
+		HAL_ADC_PollForConversion(hadc1_, 1000);
 		adc_raw = static_cast<int>(HAL_ADC_GetValue(hadc1_));
 		HAL_ADC_Stop(hadc1_);
 
@@ -264,14 +287,13 @@ public:
 		hadc1_->Init.ExternalTrigConv = ADC_SOFTWARE_START; // ADC_EXTERNALTRIGCONV_T3_TRGO;
 		hadc1_->Init.DataAlign = ADC_DATAALIGN_RIGHT;
 		hadc1_->Init.NbrOfConversion = 1;					// will convert 2 channels
-		
+
 		if (HAL_ADC_Init(hadc1_) != HAL_OK) {
 			printf("ADC init error!\n");
 			Error_Handler();
 		} else {
-			printf("ADC single read init\n");
+			printf("ADC stream read init\n");
 		}
-
 		// adc_dma_begin();
 	}
 	void stream_deinit(void) {
@@ -282,7 +304,7 @@ public:
 		HAL_ADC_Start_DMA(hadc1_, &buffer_temp[0], static_cast<uint32_t>(length));
 		
 		for(int i=0; i<length; i++) {
-			buffer[i] = buffer_temp[i];
+			buffer[i] = static_cast<uint16_t>(buffer_temp[i]);
 		}
 		// HAL_ADC_Stop_DMA(hadc1_);
 	}
@@ -296,39 +318,25 @@ public:
 		HAL_ADCEx_Calibration_Start(hadc1_);
 	}
 
-	void ptable_print_(void) {
+	void ptable_print(void) {
 		printf("ptable_- \n");
 		for(int i=0; i<=cirp_; i++) {
-			printf("\ti:%d ch:%lu, rank: %lu\n", i, ptable_[i].channel, ptable_[i].rank_position);
+			printf("\ti:%d ch:%lu, rank: %lu, raw:%d\n", i, ptable_[i].channel, ptable_[i].rank_position, ptable_[i].data_raw);
 		}
 	}
 
 private:
 	int channel_;
-	uint16_t adc_raw_[17];
+	int num_channels = 1;
+	adc_mode mode_;
+	uint32_t adc_sampletime_ = ADC_SAMPLETIME_239CYCLES_5;
 	uint32_t channel_addr_;	// channel type converted
 	int cirp_ = -1;			// channel index rank position
 	pattern_s ptable_[17];	// pattern table
-	
-
-
-/*
-			Pattern Table [12][2]
-		 _________________________
-  index	|_Channel_|_Rank_position_|
-	0	|    2    |      1        |
-	1	|    3    |      2        |
-	2	|    1    |      3        |
-	3	|    4    |      4        |
-	4	|  Vref   |      5        |
-	5	|__Temp___|______6________|
-
-*/
-
 
 	// STM32F specifics
 	ADC_HandleTypeDef *hadc1_;
-	DMA_HandleTypeDef *hdma_adc1_;
+	DMA_HandleTypeDef *hdma_adc1_;	
 };
 
 #endif /* __ADC_DRIVER_HPP__ */

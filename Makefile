@@ -288,10 +288,10 @@ flash: all
 
 # --clock= 8 means 8 MHz of main clock source
 monitor: flash
-	st-trace --clock=8
+	st-trace --clock=48
 
 monitor2:
-	st-trace --clock=8
+	st-trace --clock=48
 
 erase:
 	st-flash erase
