@@ -7,7 +7,6 @@
 
 // includes for adc test
 #include "adc_driver.hpp"
-
 #include "tim_driver.hpp"
 
 // includes for pcy8575
@@ -17,6 +16,7 @@
 #include "backup.hpp"
 #include "reset_reason.hpp"
 
+#include <math.h>
 
 void i2c_slave_pcy8575(void);
 
@@ -45,7 +45,7 @@ int main(void)
 	// test_adc_dma();
 	// test_adc_dma_tim_class();
 	// test_adc_oneshot();
-	test_adc_stream_reg();
+	// test_adc_stream_reg();
 	// test_timer_pwm();
 	// test_pjb20();
 	// test_aht10();
@@ -436,7 +436,7 @@ void test_adc_oneshot(void) {
 
 	while(1) {
 
-		adc_data_raw[0] = adc0.read(3);
+		// adc_data_raw[0] = adc0.read(3);
 		// adc_data_raw[1] = adc0.read(3);
 		// adc_data_raw[2]  = adc0.read(4);
 		// adc_data_raw[3] = adc0.read(16);
@@ -476,14 +476,28 @@ void test_adc_stream_reg(void) {
 	ADC_driver adc0(adc_mode::stream);
 
 	adc0.channel_config(8);
+	
 
-	int n_points_cycle = 198;
-	int n_cycles = 2;
-	int n_points = n_cycles*n_points_cycle+1;
+	// Sampling parameters for STM32F103C8T6 device
+	float F_clk = 48000000;						// Main clock system
+	float div_1 = 1;							// Advanced High-performance Bus (AHB) prescale;
+	float div_2 = 2;							// Advanced Peripheral Bus (APB2) prescale;
+	float div_3 = 8;							// ADC prescale
+	float adc_clk = F_clk/div_1/div_2/div_3;	// ADC clock after all prescalers
+	float T_conv = 12.5 + 239.5;				// Number of clock cycles to make one conversion
+	float Fs_adc = adc_clk/T_conv;
+
+	float f_signal = 60.0;
+	float n_points_cycle = Fs_adc/f_signal;
+	
+	int n_cycles = 3;
+	int n_points = ceil(n_cycles*n_points_cycle);
 
 	uint16_t adc_array_raw[n_points];
 	adc_dma_begin((uint32_t*)&adc_array_raw[0], n_points);
 	memset(adc_array_raw, 0, sizeof(adc_array_raw));
+
+	// adc0.array_addr_config((uint32_t*)&adc_array_raw[0], n_points);
 
 	dma1_read_ISR_reg();
 	dma1_read_CNDTR_reg();
@@ -495,7 +509,7 @@ void test_adc_stream_reg(void) {
 	dma1_print_CPAR_reg();
 	dma1_print_CMAR_reg();
 
-	adc_start_conversion();
+	// adc_start_conversion();
 
 	int count = 0;
 	while(1) {

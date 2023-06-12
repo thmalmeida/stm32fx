@@ -280,20 +280,23 @@ public:
 	}
 	// Stream functions - ADC DMA Continuous mode
 	void stream_init(void) {
-		hadc1_->Instance = ADC1;
-		hadc1_->Init.ScanConvMode = ADC_SCAN_DISABLE;		// use SCAN when read 2 or more outputs simultaneusly
-		hadc1_->Init.ContinuousConvMode = DISABLE;
-		hadc1_->Init.DiscontinuousConvMode = DISABLE;
-		hadc1_->Init.ExternalTrigConv = ADC_SOFTWARE_START; // ADC_EXTERNALTRIGCONV_T3_TRGO;
-		hadc1_->Init.DataAlign = ADC_DATAALIGN_RIGHT;
-		hadc1_->Init.NbrOfConversion = 1;					// will convert 2 channels
+		// Using HAL functions
+		// hadc1_->Instance = ADC1;
+		// hadc1_->Init.ScanConvMode = ADC_SCAN_DISABLE;		// use SCAN when read 2 or more outputs simultaneusly
+		// hadc1_->Init.ContinuousConvMode = ENABLE;
+		// hadc1_->Init.DiscontinuousConvMode = DISABLE;
+		// hadc1_->Init.ExternalTrigConv = ADC_SOFTWARE_START; // ADC_EXTERNALTRIGCONV_T3_TRGO;
+		// hadc1_->Init.DataAlign = ADC_DATAALIGN_RIGHT;
+		// hadc1_->Init.NbrOfConversion = 1;					// will convert 2 channels
 
-		if (HAL_ADC_Init(hadc1_) != HAL_OK) {
-			printf("ADC init error!\n");
-			Error_Handler();
-		} else {
-			printf("ADC stream read init\n");
-		}
+		// if (HAL_ADC_Init(hadc1_) != HAL_OK) {
+		// 	printf("ADC init error!\n");
+		// 	Error_Handler();
+		// } else {
+		// 	printf("ADC stream read init\n");
+		// }
+
+		// Using registers
 		// adc_dma_begin();
 	}
 	void stream_deinit(void) {
@@ -312,6 +315,10 @@ public:
 		channel_select(channel);
 		stream_read(buffer, length);
 	}
+	// void stream_addr_config((uint32_t*)&adc_array_raw[0], int n_points) {
+	void stream_addr_config(uint32_t* v, int n_points) {
+
+	}
 	void stream_start(void) {
 	}
 	void calibrate(void) {
@@ -328,13 +335,14 @@ public:
 private:
 	int channel_;
 	int num_channels = 1;
+	int stream_length_ = 0;
 	adc_mode mode_;
-	uint32_t adc_sampletime_ = ADC_SAMPLETIME_239CYCLES_5;
 	uint32_t channel_addr_;	// channel type converted
 	int cirp_ = -1;			// channel index rank position
 	pattern_s ptable_[17];	// pattern table
 
 	// STM32F specifics
+	uint32_t adc_sampletime_ = ADC_SAMPLETIME_239CYCLES_5;			// sampling time in cycles to make one conversion Fs = adc_clk/(adc_sampletime + Tfix);
 	ADC_HandleTypeDef *hadc1_;
 	DMA_HandleTypeDef *hdma_adc1_;	
 };

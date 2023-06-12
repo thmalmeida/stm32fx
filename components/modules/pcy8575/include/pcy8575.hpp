@@ -22,8 +22,10 @@
 #define PCY8575_REG_GET			0x04
 #define PCY8575_REG_TEMPERATURE	0x05
 #define PCY8575_REG_UPTIME		0x06
-#define PCY8575_REG_IRMS		0x07
-#define PCY8575_REG_RST_REASON	0x08
+#define PCY8575_REG_RST_REASON	0x07
+#define PCY8575_REG_IRMS		0x08
+#define PCY8575_REG_I_DATA		0x08
+
 
 #define PCY8575_DEBUG_PRINT		1
 
@@ -35,15 +37,16 @@ ____________.________.________.
 slave_addr|0| opcode | byte 1
 
 opcode:
-	- PROBE ok:		0x00
-	- Soft RESET:	0x01
-	- CONFIG ports:	0x02
+	- PROBE:		0x00
+	- RESET:		0x01	// soft reset
+	- CONFIG:		0x02	// configure ports
 	- PUT:	 		0x03
 	- GET:			0x04
 	- TEMP:			0x05
 	- UPTIME:		0x06
-	- IRMS:			0x07
-	- RST_REASON:	0x08
+	- RST_REASON:	0x07
+	- IRMS:			0x08
+	- I_DATA:		0x09
 
 protocol example
 
@@ -62,17 +65,20 @@ Start | ADDR - R/W = 0 | PUT    | byte 0  | byte 1  | Stop |
 GET:		write												 Read			  P07-P00   P15-P00
 Start | ADDR - R/W = 0 | GET    | Stop | ... delay ... | Start | ADDR - R/W = 1 | byte 0  | byte 1 | Stop |
 
-GET TEMP:	write												 Read					16 bits
+TEMP:		write												 Read					16 bits
 Start | ADDR - R/W = 0 | TEMP   | Stop | ... delay ... | Start | ADDR - R/W = 1 | byte L  | byte H | Stop |
 
 UPTIME:		write												 Read			     	32 bits
 Start | ADDR - R/W = 0 | UPTIME | Stop | ... delay ... | Start | ADDR - R/W = 1 | byte L  | byte L | byte H | byte H | Stop |
 
 IRMS:		write																		16 bits
-Start | ADDR - R/W = 0 | UPTIME | Stop | ... delay ... | Start | ADDR - R/W = 1 | byte L  | byte H | Stop |
+Start | ADDR - R/W = 0 | IRMS	| Stop | ... delay ... | Start | ADDR - R/W = 1 | byte L  | byte H | Stop |
 
-RST REASON:	write												 Read				8 bits
+RST_REASON:	write												 Read				8 bits
 Start | ADDR - R/W = 0 | REASON | Stop | ... delay ... | Start | ADDR - R/W = 1 | byte L  | Stop |
+
+I_DATA:		write				  number to be readed mas 2^16   				   Read. Total of 2*n_samples bytes to transmit.
+Start | ADDR - R/W = 0 | I_DATA | byte H | byte L | Stop | ... delay ... | Start | ADDR - R/W = 1 | byte H0 | byte L0 | ... | byte H(n-1) | byte L(n-1) | Stop |
 */
 
 class pcy8575 {
@@ -81,6 +87,7 @@ public:
 
 	static const int num_pins = 16;
 
+	// (Pin_number, mode)
 	pcy8575(void) : pin_{
 							{31, 1}, {25, 1}, {22, 1}, {21, 1},
 							{20, 1}, {19, 1}, {18, 1}, {17, 1},
@@ -190,17 +197,20 @@ public:
 					i2c_data_tx[3] = static_cast<uint8_t>(uptime_temp_ >> 24);
 					break;
 				}
+				case PCY8575_REG_RST_REASON: {
+					i2c_data_tx[0] = static_cast<uint8_t>(reset_reason());
+					break;
+				}
 				case PCY8575_REG_IRMS: {
 					irms_ = irms();	// this conversion located here will depends the time calculation because the i2c transfer time
 					i2c_data_tx[0] = static_cast<uint8_t>(irms_);
 					i2c_data_tx[1] = static_cast<uint8_t>(irms_ >> 8);
 					break;
 				}
-				case PCY8575_REG_RST_REASON: {
-					i2c_data_tx[0] = static_cast<uint8_t>(reset_reason());
+				case PCY8575_REG_I_DATA: {
+
 					break;
 				}
-
 				default:
 					#ifdef PCY8575_DEBUG_PRINT
 					printf("default handle msg\n");
