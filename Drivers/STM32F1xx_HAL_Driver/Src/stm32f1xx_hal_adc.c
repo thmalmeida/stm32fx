@@ -2018,7 +2018,6 @@ HAL_StatusTypeDef HAL_ADC_ConfigChannel(ADC_HandleTypeDef* hadc, ADC_ChannelConf
   /* Process locked */
   __HAL_LOCK(hadc);
   
-  
   /* Regular sequence configuration */
   /* For Rank 1 to 6 */
   if (sConfig->Rank < 7U)
@@ -2042,7 +2041,6 @@ HAL_StatusTypeDef HAL_ADC_ConfigChannel(ADC_HandleTypeDef* hadc, ADC_ChannelConf
                ADC_SQR1_RK(sConfig->Channel, sConfig->Rank) );
   }
   
-  
   /* Channel sampling time configuration */
   /* For channels 10 to 17 */
   if (sConfig->Channel >= ADC_CHANNEL_10)
@@ -2057,7 +2055,6 @@ HAL_StatusTypeDef HAL_ADC_ConfigChannel(ADC_HandleTypeDef* hadc, ADC_ChannelConf
                ADC_SMPR2(ADC_SMPR2_SMP0, sConfig->Channel)       ,
                ADC_SMPR2(sConfig->SamplingTime, sConfig->Channel) );
   }
-  
   /* If ADC1 Channel_16 or Channel_17 is selected, enable Temperature sensor  */
   /* and VREFINT measurement path.                                            */
   if ((sConfig->Channel == ADC_CHANNEL_TEMPSENSOR) ||

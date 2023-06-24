@@ -75,12 +75,13 @@ public:
 		}
 	}
 	~ADC_driver(void) {}
+
 	// Oneshot functions - ADC single mode
 	void oneshot_init(void) {
 		// resource allocation
 		hadc1_->Instance = ADC1;
-		hadc1_->Init.ScanConvMode = ADC_SCAN_DISABLE;			// ADC_SCAN_DISABLE;		// use SCAN when read 2 or more outputs simultaneusly
-		hadc1_->Init.ContinuousConvMode = DISABLE;
+		hadc1_->Init.ScanConvMode = ADC_SCAN_DISABLE;			// Will scan one channel only. Use SCAN enable when read 2 or more outputs simultaneusly
+		hadc1_->Init.ContinuousConvMode = DISABLE;				
 		hadc1_->Init.DiscontinuousConvMode = DISABLE;
 		hadc1_->Init.ExternalTrigConv = ADC_SOFTWARE_START;		// ADC_EXTERNALTRIGCONV_T3_TRGO;
 		hadc1_->Init.DataAlign = ADC_DATAALIGN_RIGHT;
@@ -93,8 +94,9 @@ public:
 		} else {
 			printf("ADC single read init\n");
 		}
-
-		// next step is configure the channels
+		// next step is call the configure channels functions. 
+		// theses function are called after init manually by user.
+		// channel_config also set the desired ports.
 	}
 	void oneshot_deinit(void) {
 		if(HAL_ADC_DeInit(hadc1_) != HAL_OK) {
@@ -207,8 +209,10 @@ public:
 
 		ADC_ChannelConfTypeDef sConfig;
 		sConfig.Channel = ptable_[cirp_].channel;
-		sConfig.Rank = ptable_[cirp_].rank_position;	//ADC_REGULAR_RANK_1;
+		// sConfig.Rank = ptable_[cirp_].rank_position;	//ADC_REGULAR_RANK_1;
+		sConfig.Rank = ADC_REGULAR_RANK_1;
 		sConfig.SamplingTime = adc_sampletime_;
+
 		if (HAL_ADC_ConfigChannel(hadc1_, &sConfig) != HAL_OK) {
 			printf("ADC channel config error\n");
 			Error_Handler();
@@ -278,26 +282,33 @@ public:
 
 		return read();
 	}
+
 	// Stream functions - ADC DMA Continuous mode
 	void stream_init(void) {
 		// Using HAL functions
-		// hadc1_->Instance = ADC1;
-		// hadc1_->Init.ScanConvMode = ADC_SCAN_DISABLE;		// use SCAN when read 2 or more outputs simultaneusly
-		// hadc1_->Init.ContinuousConvMode = ENABLE;
-		// hadc1_->Init.DiscontinuousConvMode = DISABLE;
-		// hadc1_->Init.ExternalTrigConv = ADC_SOFTWARE_START; // ADC_EXTERNALTRIGCONV_T3_TRGO;
-		// hadc1_->Init.DataAlign = ADC_DATAALIGN_RIGHT;
-		// hadc1_->Init.NbrOfConversion = 1;					// will convert 2 channels
-
-		// if (HAL_ADC_Init(hadc1_) != HAL_OK) {
-		// 	printf("ADC init error!\n");
-		// 	Error_Handler();
-		// } else {
-		// 	printf("ADC stream read init\n");
-		// }
+		hadc1_->Instance = ADC1;
+		hadc1_->Init.ScanConvMode = ADC_SCAN_DISABLE;		// use SCAN when read 2 or more outputs simultaneusly
+		hadc1_->Init.ContinuousConvMode = ENABLE;
+		hadc1_->Init.DiscontinuousConvMode = DISABLE;
+		hadc1_->Init.ExternalTrigConv = ADC_SOFTWARE_START; // ADC_EXTERNALTRIGCONV_T3_TRGO;
+		hadc1_->Init.DataAlign = ADC_DATAALIGN_RIGHT;
+		hadc1_->Init.NbrOfConversion = 1;					// will convert n_channels
+		hadc1_->Init.NbrOfDiscConversion = 1;
+	
+		if (HAL_ADC_Init(hadc1_) != HAL_OK) {
+			printf("ADC init error!\n");
+			Error_Handler();
+		} else {
+			printf("ADC stream read init\n");
+		}
 
 		// Using registers
-		// adc_dma_begin();
+		// adc_dma_begin((uint32_t*)&adc_buffer[0], ADC_BUFLEN);
+
+		// next step is call the configure channels functions. 
+		// theses function are called after init manually by user.
+		// channel_config also set the desired ports.
+		// printf("ADC_drive: nothing to do\n");
 	}
 	void stream_deinit(void) {
 	}
@@ -320,6 +331,7 @@ public:
 
 	}
 	void stream_start(void) {
+		adc_start_conversion();
 	}
 	void calibrate(void) {
 		HAL_ADCEx_Calibration_Start(hadc1_);

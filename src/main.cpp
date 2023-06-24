@@ -18,6 +18,8 @@
 
 #include <math.h>
 
+// #include <iostream>
+
 void i2c_slave_pcy8575(void);
 
 void test_adc_dma(void);
@@ -37,6 +39,7 @@ int main(void)
 	HAL_Init();								// Reset of all peripherals, Initializes the Flash interface and the Systick. */
 	HAL_Delay(10);							// little delay after peripheral reset;
 	SystemClock_Config_48MHz_HSE_ADC();		// Configure the system clock
+	// SystemClock_Config_8MHZ_HSI();
 	printf("\nSystem reset...\n");			// Beautiful welcome message;
 
 
@@ -45,7 +48,8 @@ int main(void)
 	// test_adc_dma();
 	// test_adc_dma_tim_class();
 	// test_adc_oneshot();
-	// test_adc_stream_reg();
+	// test_adc_stream();
+	test_adc_stream_reg();
 	// test_timer_pwm();
 	// test_pjb20();
 	// test_aht10();
@@ -71,6 +75,19 @@ void i2c_slave_pcy8575(void) {
 			tim3_flag = 0;
 			// printf("TIM3\n");
 		}
+	}
+}
+void test_adc_class(void) {
+	// Configure timer 3 to 1 Hertz frequency update into interrupt mode.
+	TIM_driver tim3(3, 1, timer_mode::timer_interrupt);
+
+	// Configure adc channel to using dma mode;
+	ADC_driver adc0(adc_mode::stream);
+	adc0.channel_config(3);
+
+
+	while(1) {
+
 	}
 }
 void test_adc_dma(void) {
@@ -258,7 +275,7 @@ void test_adc_dma_tim_class(void) {
 	TIM_driver tim4(4, 1, timer_mode::timer_interrupt);
 
 	// ADC_driver adc0;
-	// adc0.init();	
+	// adc0.init();
 	adc_dma_begin((uint32_t*)&adc_buffer[0], ADC_BUFLEN);
 	memset(adc_buffer, 0, sizeof(adc_buffer));
 
@@ -436,7 +453,7 @@ void test_adc_oneshot(void) {
 
 	while(1) {
 
-		// adc_data_raw[0] = adc0.read(3);
+		adc_data_raw[0] = adc0.read(3);
 		// adc_data_raw[1] = adc0.read(3);
 		// adc_data_raw[2]  = adc0.read(4);
 		// adc_data_raw[3] = adc0.read(16);
@@ -453,14 +470,14 @@ void test_adc_oneshot(void) {
 	}
 }
 void test_adc_stream(void) {
-	ADC_driver adc0(adc_mode::stream);
 
-	adc0.channel_config(8);
+	ADC_driver adc0(adc_mode::stream);
+	adc0.channel_config(3);
 	
+	// The number of points is calculated based on the ADC sample rate.
 	int n_points_cycle = 198;
 	int n_cycles = 2;
 	int n_points = n_cycles*n_points_cycle;
-
 	uint16_t adc_array_raw[n_points];
 
 	while(1) {
@@ -473,13 +490,8 @@ void test_adc_stream(void) {
 	}
 }
 void test_adc_stream_reg(void) {
-	ADC_driver adc0(adc_mode::stream);
-
-	adc0.channel_config(8);
-	
-
 	// Sampling parameters for STM32F103C8T6 device
-	float F_clk = 48000000;						// Main clock system
+	float F_clk = 48000000;						// Main clock system [Hz]
 	float div_1 = 1;							// Advanced High-performance Bus (AHB) prescale;
 	float div_2 = 2;							// Advanced Peripheral Bus (APB2) prescale;
 	float div_3 = 8;							// ADC prescale
@@ -493,12 +505,21 @@ void test_adc_stream_reg(void) {
 	int n_cycles = 3;
 	int n_points = ceil(n_cycles*n_points_cycle);
 
+	printf("Sample rate: %f\n", Fs_adc);
+	printf("points/cycle: %f\n", n_points_cycle);
+	printf("n cycles: %d\n", n_cycles);
+	printf("total points: %d\n", n_points);
+
+	ADC_driver adc0(adc_mode::stream);
+	adc0.channel_config(3);
+
 	uint16_t adc_array_raw[n_points];
 	adc_dma_begin((uint32_t*)&adc_array_raw[0], n_points);
 	memset(adc_array_raw, 0, sizeof(adc_array_raw));
 
 	// adc0.array_addr_config((uint32_t*)&adc_array_raw[0], n_points);
 
+	// std::cout << "teste" << std::endl;
 	dma1_read_ISR_reg();
 	dma1_read_CNDTR_reg();
 	dma1_read_CPAR_reg();
@@ -509,7 +530,7 @@ void test_adc_stream_reg(void) {
 	dma1_print_CPAR_reg();
 	dma1_print_CMAR_reg();
 
-	// adc_start_conversion();
+	adc_start_conversion();
 
 	int count = 0;
 	while(1) {

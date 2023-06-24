@@ -191,7 +191,7 @@ void adc_init(void) {
 	1. Enable ADC and GPIO clock
 	2. Set the prescalar in the Clock configuration register (RCC_CFGR)
 	3. Disable scan mode in control Register 1 (CR1)
-	4. Disable Continuous Conversion, EOC, and Data Alignment in Control Reg 2 (CR2)
+	4. Enable/Disable Continuous Conversion, EOC, and Data Alignment in Control Reg 2 (CR2)
 	5. Set the Sampling Time for the channels in ADC_SMPRx
 	6. Set the Regular channel sequence length in ADC_SQR1
 	7. Set the Respective GPIO PINs in the Analog Mode
@@ -232,8 +232,6 @@ void adc_init(void) {
 	// Disable End Of Conversion Interrupt bit (EOCIE)
 	ADC1->CR1 &= ~(1<<5);
 
-	// 4- CR2: Disable Continuous Conversion, EOC and Alignment in Control Register 2 (CR2)
-
 	// Disable AD module
 	ADC1->CR2 &= ~(1<<0);
 
@@ -260,6 +258,7 @@ void adc_init(void) {
 	ADC1->CR2 |= (1<<8);	//(1 << ADC_CR2_DMA_Pos);
 	// LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
 
+	// 4- CR2: Enable/Disable Continuous Conversion, EOC and Alignment in Control Register 2 (CR2)
 	// Continuous conversion mode (Enable = 1\ Disable = 0)
 	// ADC1->CR2 &= ~(1<<1);	// Disable
 	ADC1->CR2 |=  (1<<1);	// Enable
@@ -274,8 +273,8 @@ void adc_init(void) {
 	// Set regular channel sequence length (number of channels)
 	ADC1->SQR1 &= ~(0x0F<<20);	// 0000: length is 1 conversion
 
-	// Set channel 8 to rank 1
-	ADC1->SQR3 |= (8<<0);
+	// Set channel 3 to rank 1
+	ADC1->SQR3 |= (3<<0);
 
 	// Set PB0 to analog input;
 	// GPIOA->CRLMODER |= (3 << 4);
@@ -399,7 +398,7 @@ void adc_dma_begin(uint32_t* dest_addr, uint16_t size) {
 	adc_dma_init();							// Configure DMA, link with ADC peripheral and enable;
 	adc_dma_config_addr(dest_addr, size);	// Configure DMA array address to write ADC values;
 	adc_dma_config_it();					// Configure DMA half and complete transfer interruption;
-}
+	}
 void adc_dma_init(void) {
 	/* Initialize the DMA
 	Steps to follow:
