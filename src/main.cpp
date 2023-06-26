@@ -1,4 +1,7 @@
+// stm32f1 includes
 #include "system_main.h"
+#include "delay.h"
+
 #include "stdlib.h"
 // includes for aht10 sensor
 #include "i2c_master.hpp"
@@ -48,8 +51,8 @@ int main(void)
 	// test_adc_dma();
 	// test_adc_dma_tim_class();
 	// test_adc_oneshot();
-	// test_adc_stream();
-	test_adc_stream_reg();
+	test_adc_stream();
+	// test_adc_stream_reg();
 	// test_timer_pwm();
 	// test_pjb20();
 	// test_aht10();
@@ -470,40 +473,61 @@ void test_adc_oneshot(void) {
 	}
 }
 void test_adc_stream(void) {
-
-	ADC_driver adc0(adc_mode::stream);
-	adc0.channel_config(3);
-	
-	// The number of points is calculated based on the ADC sample rate.
-	int n_points_cycle = 198;
-	int n_cycles = 2;
-	int n_points = n_cycles*n_points_cycle;
-	uint16_t adc_array_raw[n_points];
-
-	while(1) {
-		adc0.stream_read(&adc_array_raw[0], n_points);
-		printf("\n\nadc_array_raw: \n");
-		for(auto i=0; i<n_points; i++) {
-			printf("%u, ", adc_array_raw[i]);
-		}
-		HAL_Delay(1000);
-	}
-}
-void test_adc_stream_reg(void) {
+	printf("test_adc_stream\n");
 	// Sampling parameters for STM32F103C8T6 device
-	float F_clk = 48000000;						// Main clock system [Hz]
-	float div_1 = 1;							// Advanced High-performance Bus (AHB) prescale;
-	float div_2 = 2;							// Advanced Peripheral Bus (APB2) prescale;
-	float div_3 = 8;							// ADC prescale
-	float adc_clk = F_clk/div_1/div_2/div_3;	// ADC clock after all prescalers
-	float T_conv = 12.5 + 239.5;				// Number of clock cycles to make one conversion
+	float F_clk = 48000000;							// Main clock system [Hz]
+	float div_1 = 1;								// Advanced High-performance Bus (AHB) prescale;
+	float div_2 = 2;								// Advanced Peripheral Bus (APB2) prescale;
+	float div_3 = 8;								// ADC prescale
+	float adc_clk = F_clk/div_1/div_2/div_3;		// ADC clock after all prescalers
+	float T_conv = 12.5 + 239.5;					// Number of clock cycles to make one conversion
 	float Fs_adc = adc_clk/T_conv;
 
 	float f_signal = 60.0;
 	float n_points_cycle = Fs_adc/f_signal;
 	
 	int n_cycles = 3;
-	int n_points = ceil(n_cycles*n_points_cycle);
+	int n_points = ceil(n_cycles*n_points_cycle);	// The number of points is calculated based on the ADC sample rate.
+	uint32_t adc_array_raw[n_points];				// Array allocation to receive converted points
+
+	printf("Sample rate: %f\n", Fs_adc);
+	printf("points/cycle: %f\n", n_points_cycle);
+	printf("n cycles: %d\n", n_cycles);
+	printf("total points: %d\n", n_points);
+
+	ADC_driver adc0(adc_mode::stream, n_points);
+	adc0.channel_config(3);
+	// adc0.stream_addr_config((uint32_t*)&adc_array_raw[0], n_points);
+	adc0.stream_addr_config(&adc_array_raw[0], n_points);
+
+	adc_print_rank(1);
+
+	while(1) {
+		adc0.stream_read();
+		// printf("\n\nadc_array_raw: \n");
+		// for(auto i=0; i<n_points; i++) {
+		// 	printf("%u, ", adc_array_raw[i]);
+		// }
+		delay_ms(1000);
+	}
+}
+void test_adc_stream_reg(void) {
+	printf("test_adc_stream_reg\n");
+	// Sampling parameters for STM32F103C8T6 device
+	float F_clk = 48000000;							// Main clock system [Hz]
+	float div_1 = 1;								// Advanced High-performance Bus (AHB) prescale;
+	float div_2 = 2;								// Advanced Peripheral Bus (APB2) prescale;
+	float div_3 = 8;								// ADC prescale
+	float adc_clk = F_clk/div_1/div_2/div_3;		// ADC clock after all prescalers
+	float T_conv = 12.5 + 239.5;					// Number of clock cycles to make one conversion
+	float Fs_adc = adc_clk/T_conv;
+
+	float f_signal = 60.0;
+	float n_points_cycle = Fs_adc/f_signal;
+	
+	int n_cycles = 3;
+	int n_points = ceil(n_cycles*n_points_cycle);	// The number of points is calculated based on the ADC sample rate.
+	uint16_t adc_array_raw[n_points];				// Array allocation to receive converted points
 
 	printf("Sample rate: %f\n", Fs_adc);
 	printf("points/cycle: %f\n", n_points_cycle);
@@ -513,7 +537,6 @@ void test_adc_stream_reg(void) {
 	ADC_driver adc0(adc_mode::stream);
 	adc0.channel_config(3);
 
-	uint16_t adc_array_raw[n_points];
 	adc_dma_begin((uint32_t*)&adc_array_raw[0], n_points);
 	memset(adc_array_raw, 0, sizeof(adc_array_raw));
 

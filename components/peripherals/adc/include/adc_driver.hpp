@@ -20,6 +20,7 @@
 // STM32----------------------
 #include "adc.h"
 #include "stm32_log.h"
+#include "delay.h"
 // ---------------------------
 
 /*
@@ -56,9 +57,10 @@ struct pattern_s {
 
 class ADC_driver {
 public:
-	ADC_driver(adc_mode mode = adc_mode::oneshot) {
+	ADC_driver(adc_mode mode = adc_mode::oneshot, int n_points = 0) {
 		hadc1_ = &hadc1;
 		mode_ = mode;
+		n_points_ = n_points;
 
 		switch (mode) {
 			case adc_mode::oneshot: {
@@ -209,10 +211,10 @@ public:
 
 		ADC_ChannelConfTypeDef sConfig;
 		sConfig.Channel = ptable_[cirp_].channel;
-		// sConfig.Rank = ptable_[cirp_].rank_position;	//ADC_REGULAR_RANK_1;
-		sConfig.Rank = ADC_REGULAR_RANK_1;
+		sConfig.Rank = ptable_[cirp_].rank_position;	//ADC_REGULAR_RANK_1;
 		sConfig.SamplingTime = adc_sampletime_;
 
+		// 
 		if (HAL_ADC_ConfigChannel(hadc1_, &sConfig) != HAL_OK) {
 			printf("ADC channel config error\n");
 			Error_Handler();
@@ -227,10 +229,10 @@ public:
 		uint8_t index = find_index_(channel);
 		printf("Ch select: i:%d ch:%lu, rank: %lu\n", index, ptable_[index].channel, ptable_[index].rank_position);
 
-		ADC_ChannelConfTypeDef sConfig = {0};
+		ADC_ChannelConfTypeDef sConfig;
 		if(mode_ == adc_mode::oneshot) {
 			sConfig.Rank = ADC_REGULAR_RANK_1;
-		} else if(mode_ == adc_mode::stream) {
+		} else {//if(mode_ == adc_mode::stream) {
 			sConfig.Rank = ptable_[index].rank_position;
 		}
 		sConfig.Channel = ptable_[index].channel;					//static_cast<uint32_t>(pattern_table[index][0]);
@@ -302,6 +304,13 @@ public:
 			printf("ADC stream read init\n");
 		}
 
+		adc_prescale(8);									// Configure RCC ADC prescale;
+		adc_init();											// Configure ADC control registers;
+		adc_dma_init();										// Configure DMA, link with ADC peripheral and enable;
+		// adc_dma_config_addr(dest_addr, size);				// Configure DMA array address to write ADC values;
+		adc_dma_config_it();								// Configure DMA half and complete transfer interruption;
+		
+
 		// Using registers
 		// adc_dma_begin((uint32_t*)&adc_buffer[0], ADC_BUFLEN);
 
@@ -316,19 +325,33 @@ public:
 
 		uint32_t buffer_temp[length];
 		HAL_ADC_Start_DMA(hadc1_, &buffer_temp[0], static_cast<uint32_t>(length));
-		
+
 		for(int i=0; i<length; i++) {
 			buffer[i] = static_cast<uint16_t>(buffer_temp[i]);
 		}
 		// HAL_ADC_Stop_DMA(hadc1_);
 	}
-	void stream_read(int channel, uint16_t* buffer, int length) {
-		channel_select(channel);
-		stream_read(buffer, length);
-	}
-	// void stream_addr_config((uint32_t*)&adc_array_raw[0], int n_points) {
-	void stream_addr_config(uint32_t* v, int n_points) {
+	void stream_read() {
+		adc_dma_reset_cnt(n_points_);
+		adc_start_conversion();
+		printf("\nADC: start conversion");
+		delay_ms(100);
 
+		if(adc_dma_tc_flag) {
+			adc_dma_tc_flag = 0;
+
+			printf("\nadc_array_raw: ");
+			for(auto i=0; i<n_points_; i++) {
+				printf("%lu, ", adc_array_raw_[i]);
+			}
+			printf("\n");
+
+		}
+	}
+	void stream_addr_config(uint32_t* adc_array, int size) {
+		adc_dma_config_addr(adc_array, size);
+		// adc_array_raw_ = (uint16_t*)adc_array;
+		adc_array_raw_ = adc_array;
 	}
 	void stream_start(void) {
 		adc_start_conversion();
@@ -349,9 +372,12 @@ private:
 	int num_channels = 1;
 	int stream_length_ = 0;
 	adc_mode mode_;
-	uint32_t channel_addr_;	// channel type converted
-	int cirp_ = -1;			// channel index rank position
-	pattern_s ptable_[17];	// pattern table
+	uint32_t channel_addr_;		// channel type converted
+	int cirp_ = -1;				// channel index rank position
+	pattern_s ptable_[17];		// pattern table
+	uint32_t *adc_array_raw_;	// pointer to adc array
+	int n_points_;				// number of points used on ADC dma conversion
+	
 
 	// STM32F specifics
 	uint32_t adc_sampletime_ = ADC_SAMPLETIME_239CYCLES_5;			// sampling time in cycles to make one conversion Fs = adc_clk/(adc_sampletime + Tfix);

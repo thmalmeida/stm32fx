@@ -30,13 +30,19 @@ uint8_t JEOC_bit = 0;		// bit 2
 uint8_t EOC_bit = 0;		// bit 1
 uint8_t AWD_bit = 0;		// bit 0
 
-//ADC regular sequence register 1 (ADC_SQR1)
-uint32_t ADC_SQR1_reg = 0;
+// Each SQR slot has 5 bits with 32 channels possibilities.
+uint32_t ADC_SQR1_reg = 0;	// ADC regular sequence register 1 (ADC_SQR1)
 uint8_t L_bits = 0;			// bit[23:20]. Regular channel sequence length. 0000 is one conversion.
 uint8_t SQ16_bits = 0;		// five bits for each rank channel position
 uint8_t SQ15_bits = 0;		
 uint8_t SQ14_bits = 0;
 uint8_t SQ13_bits = 0;
+uint32_t ADC_SQR2_reg = 0;	// ADC regular sequence register 2 (ADC_SQR2)
+uint32_t ADC_SQR3_reg = 0;	// ADC regular sequence register 3 (ADC_SQR3)
+
+// It has 3 bits into each slot
+uint32_t ADC_SMPR1_reg = 0;	// ADC Sample Time Register 1
+uint32_t ADC_SMPR2_reg = 0;	// ADC Sample Time Register 2
 
 uint32_t ADC_CR1_reg = 0;
 uint8_t AWDE_bit = 0;		// bit 23 - Analog watchdog enable on regular channels
@@ -134,6 +140,48 @@ void adc_read_SQR1_reg(void) {
 	SQ15_bits = (ADC_SQR1_reg >> 10) & 0x1F;
 	SQ14_bits = (ADC_SQR1_reg >> 5) & 0x1F;
 	SQ13_bits = (ADC_SQR1_reg >> 0) & 0x1F;
+}
+void adc_read_SQR2_reg(void) {
+	ADC_SQR2_reg = ADC1->SQR2;
+}
+void adc_read_SQR3_reg(void) {
+	// Regular sequence register.
+	ADC_SQR3_reg = ADC1->SQR3;
+}
+
+void adc_print_rank(int n) {
+
+	int ch = 0;
+	int slot = (n-1)*5;
+	if(n<7) {
+		adc_read_SQR3_reg();
+		ch = (ADC_SQR3_reg >> slot) & 0x1F;
+	} else if(n>=7 && n<=12) {
+		adc_read_SQR2_reg();
+		ch = (ADC_SQR2_reg >> slot) & 0x1F;
+	} else if (n>=13 && n<=16) {
+		adc_read_SQR1_reg();
+		ch = (ADC_SQR1_reg >> slot) & 0x1F;
+	} else {
+		printf("out rank%d has ch:%d\n", n, ch);
+		return;
+	}
+
+	printf("rank%d has ch:%d\n", n, ch);
+}
+void adc_print_DISCNUM(void) {
+	adc_read_CR1_reg();
+	printf("disc num channels: %d\n", DISCNUM_bits);
+}
+void adc_print_L_regular(void) {
+	// this prints the regular channel sequence length
+	adc_read_SQR1_reg();
+	printf("reg ch Length:%d\n", (int)L_bits);
+}
+void adc_set_CR1_discnum(uint8_t value) {
+	ADC1->CR1 &= ~(0x07 << 13);
+	ADC1->CR1 |= (value << 13);
+	// DISCNUM_bits = (ADC_CR1_reg >> 13) & 0x07;
 }
 
 void dma1_read_ISR_reg(void) {
@@ -347,22 +395,6 @@ void adc_prescale(uint8_t div) {
 		}
 	}
 }
-
-void adc_print_DISCNUM(void) {
-	adc_read_CR1_reg();
-	printf("disc num channels: %d\n", DISCNUM_bits);
-}
-void adc_print_L_regular(void) {
-	// this prints the regular channel sequence length
-	adc_read_SQR1_reg();
-	printf("reg ch Length:%d\n", (int)L_bits);
-}
-void adc_set_CR1_discnum(uint8_t value) {
-	ADC1->CR1 &= ~(0x07 << 13);
-	ADC1->CR1 |= (value << 13);
-	// DISCNUM_bits = (ADC_CR1_reg >> 13) & 0x07;
-}
-
 void adc_gpioa_config(void) {
 	// Configure IN2 in GPIOA. 
 	
@@ -448,7 +480,7 @@ void adc_dma_init(void) {
 	// Enable DMA channel after edit;
 	DMA1_Channel1->CCR |= (1<<0);
 }
-void adc_dma_config_addr(uint32_t* dest_addr, uint16_t size) {
+void adc_dma_config_addr(uint32_t* dest_addr, int size) {
 	// void DMA_Config(uint32_t srcAdd, uint32_t destAdd, uint16_t size) {
 	// 
 	/* Configure the DMA pointer to memory

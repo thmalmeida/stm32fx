@@ -60,6 +60,7 @@ void dma1_print_CPAR_reg(void);
 void dma1_read_CMAR_reg(void);
 void dma1_print_CMAR_reg(void);
 
+void adc_print_rank(int n);
 void adc_print_DISCNUM(void);
 void adc_set_CR1_discnum(uint8_t value);
 
@@ -77,7 +78,7 @@ void adc_gpioa_config(void);
 uint16_t adc_read_oneshot(void);
 
 void adc_dma_init(void);
-void adc_dma_config_addr(uint32_t* dest_addr, uint16_t size);
+void adc_dma_config_addr(uint32_t* dest_addr, int size);
 void adc_dma_config_it(void);
 void adc_dma_reset_cnt(uint32_t value);
 
