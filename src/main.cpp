@@ -52,7 +52,7 @@ int main(void)
 	// test_adc_dma_tim_class();
 	// test_adc_oneshot();
 	test_adc_stream();
-	// test_adc_stream_reg();
+	// test_adc_stream_re	g();
 	// test_timer_pwm();
 	// test_pjb20();
 	// test_aht10();
@@ -486,24 +486,39 @@ void test_adc_stream(void) {
 	float f_signal = 60.0;
 	float n_points_cycle = Fs_adc/f_signal;
 	
-	int n_cycles = 3;
+	int n_cycles = 1;
 	int n_points = ceil(n_cycles*n_points_cycle);	// The number of points is calculated based on the ADC sample rate.
-	uint32_t adc_array_raw[n_points];				// Array allocation to receive converted points
+	uint16_t adc_array_raw[n_points];				// Array allocation to receive converted points
 
 	printf("Sample rate: %f\n", Fs_adc);
 	printf("points/cycle: %f\n", n_points_cycle);
 	printf("n cycles: %d\n", n_cycles);
 	printf("total points: %d\n", n_points);
 
-	ADC_driver adc0(adc_mode::stream, n_points);
+	ADC_driver adc0(adc_mode::stream);
 	adc0.channel_config(3);
-	// adc0.stream_addr_config((uint32_t*)&adc_array_raw[0], n_points);
-	adc0.stream_addr_config(&adc_array_raw[0], n_points);
 
-	adc_print_rank(1);
+	printf("ADDR1: %p\n", &adc_array_raw[0]);
+	adc0.stream_addr_config((uint32_t*)&adc_array_raw[0], n_points);
+	memset(adc_array_raw, 0, sizeof(adc_array_raw));
+
+	// printf("size of: %d\n", sizeof(&adc_array_raw[0]));
+	// memset(&adc_array_raw[0], 0, sizeof(&adc_array_raw[0])*n_points);
+
+	printf("\nadc_array_raw[0] addr %p:: ", &adc_array_raw[0]);
+	for(auto i=0; i<n_points; i++) {
+		printf("%lu, ", adc_array_raw[i]);
+	}
+	printf("\n");
 
 	while(1) {
 		adc0.stream_read();
+
+		printf("\nadc_array_raw[0] addr %p:: ", &adc_array_raw[0]);
+		for(auto i=0; i<n_points; i++) {
+			printf("%lu, ", adc_array_raw[i]);
+		}
+		printf("\n");
 		// printf("\n\nadc_array_raw: \n");
 		// for(auto i=0; i<n_points; i++) {
 		// 	printf("%u, ", adc_array_raw[i]);

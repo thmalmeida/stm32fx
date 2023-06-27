@@ -57,11 +57,10 @@ struct pattern_s {
 
 class ADC_driver {
 public:
-	ADC_driver(adc_mode mode = adc_mode::oneshot, int n_points = 0) {
+	ADC_driver(adc_mode mode = adc_mode::oneshot) {
 		hadc1_ = &hadc1;
 		mode_ = mode;
-		n_points_ = n_points;
-
+	
 		switch (mode) {
 			case adc_mode::oneshot: {
 				oneshot_init();
@@ -209,17 +208,15 @@ public:
 		ptable_[cirp_].channel = channel_addr_;
 		ptable_[cirp_].rank_position = cirp_+1;		// rank position starts at 1
 
+		// Set channel and sample time to determined rank position
 		ADC_ChannelConfTypeDef sConfig;
 		sConfig.Channel = ptable_[cirp_].channel;
 		sConfig.Rank = ptable_[cirp_].rank_position;	//ADC_REGULAR_RANK_1;
 		sConfig.SamplingTime = adc_sampletime_;
-
-		// 
 		if (HAL_ADC_ConfigChannel(hadc1_, &sConfig) != HAL_OK) {
 			printf("ADC channel config error\n");
 			Error_Handler();
 		} else {
-			// printf("ADC channel %lu configured\n", channel_addr_);
 			printf("ADC config- ch:%lu, i:%d, rank: %lu\n", ptable_[cirp_].channel, cirp_, ptable_[cirp_].rank_position);
 		}
 	}
@@ -295,7 +292,7 @@ public:
 		hadc1_->Init.ExternalTrigConv = ADC_SOFTWARE_START; // ADC_EXTERNALTRIGCONV_T3_TRGO;
 		hadc1_->Init.DataAlign = ADC_DATAALIGN_RIGHT;
 		hadc1_->Init.NbrOfConversion = 1;					// will convert n_channels
-		hadc1_->Init.NbrOfDiscConversion = 1;
+		// hadc1_->Init.NbrOfDiscConversion = 1;
 	
 		if (HAL_ADC_Init(hadc1_) != HAL_OK) {
 			printf("ADC init error!\n");
@@ -308,7 +305,7 @@ public:
 		adc_init();											// Configure ADC control registers;
 		adc_dma_init();										// Configure DMA, link with ADC peripheral and enable;
 		// adc_dma_config_addr(dest_addr, size);				// Configure DMA array address to write ADC values;
-		adc_dma_config_it();								// Configure DMA half and complete transfer interruption;
+		// adc_dma_config_it();								// Configure DMA half and complete transfer interruption;
 		
 
 		// Using registers
@@ -331,27 +328,31 @@ public:
 		}
 		// HAL_ADC_Stop_DMA(hadc1_);
 	}
-	void stream_read() {
-		adc_dma_reset_cnt(n_points_);
+	void stream_read(void) {
 		adc_start_conversion();
-		printf("\nADC: start conversion");
+		printf("\nADC: start conversion... ");
 		delay_ms(100);
 
 		if(adc_dma_tc_flag) {
 			adc_dma_tc_flag = 0;
 
-			printf("\nadc_array_raw: ");
-			for(auto i=0; i<n_points_; i++) {
-				printf("%lu, ", adc_array_raw_[i]);
-			}
-			printf("\n");
+			printf("ADC read complete!\n");
+			// printf("\nadc_array_raw addr %p:: ", adc_array_raw_);
+			// for(auto i=0; i<n_points_; i++) {
+			// 	printf("%lu, ", adc_array_raw_[i]);
+			// }
+			// printf("\n");
 
+			adc_dma_reset_cnt(n_points_);
 		}
 	}
 	void stream_addr_config(uint32_t* adc_array, int size) {
-		adc_dma_config_addr(adc_array, size);
-		// adc_array_raw_ = (uint16_t*)adc_array;
 		adc_array_raw_ = adc_array;
+		n_points_ = size;
+
+		printf("ADDR2: %p\n", adc_array_raw_);
+		adc_dma_config_addr(adc_array_raw_, n_points_);
+		adc_dma_config_it();
 	}
 	void stream_start(void) {
 		adc_start_conversion();

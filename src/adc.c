@@ -33,10 +33,6 @@ uint8_t AWD_bit = 0;		// bit 0
 // Each SQR slot has 5 bits with 32 channels possibilities.
 uint32_t ADC_SQR1_reg = 0;	// ADC regular sequence register 1 (ADC_SQR1)
 uint8_t L_bits = 0;			// bit[23:20]. Regular channel sequence length. 0000 is one conversion.
-uint8_t SQ16_bits = 0;		// five bits for each rank channel position
-uint8_t SQ15_bits = 0;		
-uint8_t SQ14_bits = 0;
-uint8_t SQ13_bits = 0;
 uint32_t ADC_SQR2_reg = 0;	// ADC regular sequence register 2 (ADC_SQR2)
 uint32_t ADC_SQR3_reg = 0;	// ADC regular sequence register 3 (ADC_SQR3)
 
@@ -135,11 +131,10 @@ void adc_print_CR2_reg(void) {
 }
 void adc_read_SQR1_reg(void) {
 	ADC_SQR1_reg = ADC1->SQR1;
-	L_bits = (ADC_SQR1_reg >> 20) & 0x0F;
-	SQ16_bits = (ADC_SQR1_reg >> 15) & 0x1F;
-	SQ15_bits = (ADC_SQR1_reg >> 10) & 0x1F;
-	SQ14_bits = (ADC_SQR1_reg >> 5) & 0x1F;
-	SQ13_bits = (ADC_SQR1_reg >> 0) & 0x1F;
+	// SQ16_bits = (ADC_SQR1_reg >> 15) & 0x1F;
+	// SQ15_bits = (ADC_SQR1_reg >> 10) & 0x1F;
+	// SQ14_bits = (ADC_SQR1_reg >> 5) & 0x1F;
+	// SQ13_bits = (ADC_SQR1_reg >> 0) & 0x1F;
 }
 void adc_read_SQR2_reg(void) {
 	ADC_SQR2_reg = ADC1->SQR2;
@@ -176,6 +171,7 @@ void adc_print_DISCNUM(void) {
 void adc_print_L_regular(void) {
 	// this prints the regular channel sequence length
 	adc_read_SQR1_reg();
+	L_bits = (ADC_SQR1_reg >> 20) & 0x0F;
 	printf("reg ch Length:%d\n", (int)L_bits);
 }
 void adc_set_CR1_discnum(uint8_t value) {
