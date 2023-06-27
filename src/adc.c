@@ -259,7 +259,9 @@ void adc_init(void) {
 	// ADC1 prescale to maximum div by 8. Value: 11
 	RCC->CFGR |= (3 << 14);	// 48 MHz/8 = 6 MHz
 
-	// Control Register 1 (CR1) configuration
+
+	// --- Control Register 1 (CR1) configuration ---
+
 	// Disable Dual mode. Enable independent mode: 0000;
 	ADC1->CR1 &= ~(0x0F << 16);
 
@@ -312,17 +314,73 @@ void adc_init(void) {
 	// Set 239.5 cycles sampling time to rank 1 - set 111 to SMP0[2:0] at bit 0 (Channel AN2).
 	// AN8 - PB0 bit 6
 	// AN4 - PA4 bit 12
-	ADC1->SMPR2 |= (7<<0);
+	// ADC1->SMPR2 |= (7<<0);
 
 	// Set regular channel sequence length (number of channels)
-	ADC1->SQR1 &= ~(0x0F<<20);	// 0000: length is 1 conversion
+	// ADC1->SQR1 &= ~(0x0F<<20);	// 0000: length is 1 conversion
 
 	// Set channel 3 to rank 1
-	ADC1->SQR3 |= (3<<0);
+	// ADC1->SQR3 |= (3<<0);
 
 	// Set PB0 to analog input;
 	// GPIOA->CRLMODER |= (3 << 4);
 
+	// Enable ADC1
+	// ADC1->CR2 |= (1 << 0);
+
+	// Wait for ADC to stabilize (approx 10us)
+	// HAL_Delay(1);
+
+	// Ref.: https://controllerstech.com/dma-with-adc-using-registers-in-stm32/
+}
+void adc_set_num_reg_channels(int length) {
+	// Number of regular channels to be readed. It must use SCAN mode?
+
+	// Set regular channel sequence length (number of channels)
+	ADC1->SQR1 &= ~(0x0F<<20);	// 0000: length is 1 conversion (clear all bits)
+
+	if((length > 1) && (length < 33)) {
+		uint8_t num = length - 1;
+		num &= 0x0F;
+		ADC1->SQR1 |= (num<<20);
+	}
+}
+void adc_set_channel_to_rank(int channel, int rank) {
+	// Up to 16 ADC channels to read;
+	// 5. Set channel on specific rank. Set channel x to rank n
+	uint8_t rank_slot = 0;
+	uint8_t ch = (uint8_t) channel;
+
+	// Find rank slot first bit to configure
+	uint8_t rank_first_bit_config;
+
+	if((rank>=1) && (rank<=6)) {
+		rank_slot = (uint8_t) (rank - 1);
+		rank_first_bit_config = rank_slot*5;
+		ADC1->SQR3 |= (ch << rank_first_bit_config);
+	}
+	else if((rank>=7)&&(rank<=12)) {
+		rank_slot = (uint8_t) (rank - 7);
+		rank_first_bit_config = rank_slot*5;
+		ADC1->SQR2 |= (ch << rank_first_bit_config);
+	}
+	else if((rank>=13)&&(rank<=16)) {
+		rank_slot = (uint8_t) (rank - 13);
+		rank_first_bit_config = rank_slot*5;
+		ADC1->SQR1 |= (ch << rank_first_bit_config);
+	}
+
+	// Set PB0 to analog input;
+	// GPIOA->CRLMODER |= (3 << 4);
+}
+void adc_set_channel_sample_rate(int channel, int sr) {
+	// 6. Set the Sampling Time for the channels in ADC_SMPRx
+	// Set 239.5 cycles sampling time to rank 1 - set 111 to SMP0[2:0] at bit 0 (Channel AN2).
+	// AN8 - PB0 bit 6
+	// AN4 - PA4 bit 12
+	ADC1->SMPR2 |= (7<<0);
+}
+void adc_module_enable(void) {
 	// Enable ADC1
 	ADC1->CR2 |= (1 << 0);
 
@@ -330,6 +388,10 @@ void adc_init(void) {
 	HAL_Delay(1);
 
 	// Ref.: https://controllerstech.com/dma-with-adc-using-registers-in-stm32/
+}
+void adc_module_disable(void) {
+	// Disable AD module
+	ADC1->CR2 &= ~(1<<0);
 }
 void adc_start_conversion(void) {
 	// Only if SWSTART bit in CR2 is linked toward EXTTRIG 111

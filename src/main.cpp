@@ -503,7 +503,6 @@ void test_adc_stream(void) {
 	memset(adc_array_raw, 0, sizeof(adc_array_raw));
 
 	// printf("size of: %d\n", sizeof(&adc_array_raw[0]));
-	// memset(&adc_array_raw[0], 0, sizeof(&adc_array_raw[0])*n_points);
 
 	printf("\nadc_array_raw[0] addr %p:: ", &adc_array_raw[0]);
 	for(auto i=0; i<n_points; i++) {

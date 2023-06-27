@@ -68,6 +68,11 @@ void adc_set_CR2_EXTSEL_bits(uint8_t value);
 void adc_set_CR2_DMA_bit(void);
 uint8_t adc_read_SR_EOC_bit(void);
 void adc_init(void);
+void adc_set_num_reg_channels(int length);
+
+void adc_init_rank(int n);
+void adc_module_enable(void);
+void adc_module_disable(void);
 void adc_start_conversion(void);
 void adc_stop_conversion(void);
 

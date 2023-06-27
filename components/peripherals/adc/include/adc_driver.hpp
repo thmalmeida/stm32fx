@@ -302,7 +302,10 @@ public:
 		}
 
 		adc_prescale(8);									// Configure RCC ADC prescale;
+		adc_module_disable();
 		adc_init();											// Configure ADC control registers;
+		adc_init_rank(1);
+		adc_module_enable();
 		adc_dma_init();										// Configure DMA, link with ADC peripheral and enable;
 		// adc_dma_config_addr(dest_addr, size);				// Configure DMA array address to write ADC values;
 		// adc_dma_config_it();								// Configure DMA half and complete transfer interruption;
