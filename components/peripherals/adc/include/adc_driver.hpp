@@ -107,9 +107,8 @@ public:
 		}
 	}
 	void channel_config(int channel) {
-		/** Configure Regular Channel */
+		// 1- Configure Regular Channel GPIO to Analog function;
 		GPIO_InitTypeDef GPIO_InitStruct;	// = {0};
-			
 		switch (channel) {
 			case 0:
 				channel_addr_ = ADC_CHANNEL_0;
@@ -204,11 +203,12 @@ public:
 				break;
 		}
 
+		// 2- Register channel to ptable;
 		cirp_++;									// increment to next pattern table position
 		ptable_[cirp_].channel = channel_addr_;
 		ptable_[cirp_].rank_position = cirp_+1;		// rank position starts at 1
 
-		// Set channel and sample time to determined rank position
+		// 3- Configure rank slot and sampling time for to your relative channel;
 		ADC_ChannelConfTypeDef sConfig;
 		sConfig.Channel = ptable_[cirp_].channel;
 		sConfig.Rank = ptable_[cirp_].rank_position;	//ADC_REGULAR_RANK_1;
@@ -304,7 +304,9 @@ public:
 		adc_prescale(8);									// Configure RCC ADC prescale;
 		adc_module_disable();
 		adc_init();											// Configure ADC control registers;
-		adc_init_rank(1);
+		adc_set_num_reg_channels(1);
+		adc_set_channel_to_rank(3, 1);
+		adc_set_rank_sampling_time(1, 7);
 		adc_module_enable();
 		adc_dma_init();										// Configure DMA, link with ADC peripheral and enable;
 		// adc_dma_config_addr(dest_addr, size);				// Configure DMA array address to write ADC values;

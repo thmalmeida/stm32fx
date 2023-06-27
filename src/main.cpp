@@ -506,7 +506,7 @@ void test_adc_stream(void) {
 
 	printf("\nadc_array_raw[0] addr %p:: ", &adc_array_raw[0]);
 	for(auto i=0; i<n_points; i++) {
-		printf("%lu, ", adc_array_raw[i]);
+		printf("%u, ", adc_array_raw[i]);
 	}
 	printf("\n");
 
@@ -515,7 +515,7 @@ void test_adc_stream(void) {
 
 		printf("\nadc_array_raw[0] addr %p:: ", &adc_array_raw[0]);
 		for(auto i=0; i<n_points; i++) {
-			printf("%lu, ", adc_array_raw[i]);
+			printf("%u, ", adc_array_raw[i]);
 		}
 		printf("\n");
 		// printf("\n\nadc_array_raw: \n");

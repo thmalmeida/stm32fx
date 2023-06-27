@@ -373,12 +373,23 @@ void adc_set_channel_to_rank(int channel, int rank) {
 	// Set PB0 to analog input;
 	// GPIOA->CRLMODER |= (3 << 4);
 }
-void adc_set_channel_sample_rate(int channel, int sr) {
+void adc_set_rank_sampling_time(int rank, int st) {
 	// 6. Set the Sampling Time for the channels in ADC_SMPRx
 	// Set 239.5 cycles sampling time to rank 1 - set 111 to SMP0[2:0] at bit 0 (Channel AN2).
 	// AN8 - PB0 bit 6
 	// AN4 - PA4 bit 12
-	ADC1->SMPR2 |= (7<<0);
+
+	uint8_t _st = (uint8_t) st;
+	uint8_t smpr_slot = 0;
+
+	if((rank>=1) && (rank<=10)) {
+		smpr_slot = ((uint8_t) rank - 1)*3;
+		ADC1->SMPR2 |= (st<<smpr_slot);
+	}
+	else if((rank>10) && (rank<=17)) {
+		smpr_slot = ((uint8_t) rank - 10)*3;
+		ADC1->SMPR1 |= (st<<smpr_slot);
+	}
 }
 void adc_module_enable(void) {
 	// Enable ADC1
