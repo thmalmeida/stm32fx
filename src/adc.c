@@ -549,7 +549,7 @@ void adc_dma_init(void) {
 	// Enable DMA channel after edit;
 	DMA1_Channel1->CCR |= (1<<0);
 }
-void adc_dma_config_addr(uint32_t* dest_addr, int size) {
+void adc_dma_config_addr(uint16_t* dest_addr, int size) {
 	// void DMA_Config(uint32_t srcAdd, uint32_t destAdd, uint16_t size) {
 	// 
 	/* Configure the DMA pointer to memory

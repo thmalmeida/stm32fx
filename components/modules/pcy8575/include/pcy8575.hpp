@@ -288,7 +288,16 @@ public:
 	void adc_config(ADC_driver* adc) {
 		adc0_ = adc;
 	}
+	void process(void) {
+		adc0_->stream_read();
+		delay_ms(50);
 
+		printf("adc_data_raw_: ");
+		for(auto i=0; i<adc0_->stream_size(); i++) {
+			printf("%u, ", adc0_->stream_data[i]);
+		}
+		printf("\n");
+	}
 	// Test functions
 	void test_up(void) {
 		// uint16_t value = (1 << (pino - 1));
@@ -303,10 +312,12 @@ public:
 
 
 	void run(void) {
-		handle_message();
+		handle_message();			// handle message fsm
 
+		// 1 second flag
 		if(timer_.get_isr_flag()) {
-			iwdg_refresh();
+			process();				// start adc dma stream each one second;
+			iwdg_refresh();			// clear wdt to prevent reset
 		}
 	}
 	
@@ -326,6 +337,9 @@ private:
 
 	// ADC sensors
 	ADC_driver *adc0_;
+	struct sensor_i {
+
+	}sensor_i_;
 };
 
 #endif // _PCY8575_HPP__

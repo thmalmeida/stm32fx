@@ -46,7 +46,7 @@ void i2c_slave_pcy8575(void) {
 	ADC_driver adc0(adc_mode::stream);
 	adc0.stream_init();
 	adc0.channel_config(3);
-	adc0.stream_addr_config((uint32_t*)&adc_array_raw[0], n_points);
+	adc0.stream_addr_config(&adc_array_raw[0], n_points);
 	memset(adc_array_raw, 0, sizeof(adc_array_raw));
 	// ---- end	
 
@@ -495,7 +495,7 @@ void test_adc_stream(void) {
 
 	ADC_driver adc0(adc_mode::stream);
 	adc0.channel_config(3);
-	adc0.stream_addr_config((uint32_t*)&adc_array_raw[0], n_points);
+	adc0.stream_addr_config(&adc_array_raw[0], n_points);
 	memset(adc_array_raw, 0, sizeof(adc_array_raw));
 
 	printf("\nadc_array_raw[0] addr %p:: ", &adc_array_raw[0]);
