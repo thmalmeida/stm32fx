@@ -44,17 +44,18 @@ RL: 12 bit value = max of 4095
 void iwdg_init(void)
 {
 	hiwdg.Instance = IWDG;
-	hiwdg.Init.Prescaler = IWDG_PRESCALER_16;
-	hiwdg.Init.Reload = 2600; // 2500 is for 1000 ms. Reload is mas 4095
+	hiwdg.Init.Prescaler = IWDG_PRESCALER_16;						// prescaler for counter clock;
+	hiwdg.Init.Reload = 3000;										// 2500 is for 1000 ms. Reload max is 4095
+	int crystal_clock = 40000;										// Crystal clock [Hz]
 
-	int time_value = hiwdg.Init.Reload*16*1000/40000;
+	int time_value = (int) hiwdg.Init.Reload*16*1000/crystal_clock;	// time calculation [ms]
 	if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
 	{
 		printf("IWDG init error\n");
 		Error_Handler();
 	}
 	else {
-		printf("IWDG initialized ok with t= %d ms!\n", time_value);
+		printf("IWDG initialized with t= %d ms!\n", time_value);
 	}
 
 

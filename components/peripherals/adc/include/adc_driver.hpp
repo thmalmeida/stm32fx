@@ -37,7 +37,7 @@
 */
 
 enum class adc_mode {
-	noption = 0,
+	disabled = 0,
 	oneshot,
 	stream
 };
@@ -219,6 +219,9 @@ public:
 		} else {
 			printf("ADC config- ch:%lu, i:%d, rank: %lu\n", ptable_[cirp_].channel, cirp_, ptable_[cirp_].rank_position);
 		}
+
+		adc_set_channel_to_rank(channel, 1);
+		adc_set_rank_sampling_time(1, 7);
 	}
 	void channel_select(int channel) {
 		channel_ = channel;
@@ -305,8 +308,8 @@ public:
 		adc_module_disable();
 		adc_init();											// Configure ADC control registers;
 		adc_set_num_reg_channels(1);
-		adc_set_channel_to_rank(3, 1);
-		adc_set_rank_sampling_time(1, 7);
+		// adc_set_channel_to_rank(3, 1);
+		// adc_set_rank_sampling_time(1, 7);
 		adc_module_enable();
 		adc_dma_init();										// Configure DMA, link with ADC peripheral and enable;
 		// adc_dma_config_addr(dest_addr, size);				// Configure DMA array address to write ADC values;

@@ -36,7 +36,8 @@ extern I2C_HandleTypeDef hi2c2;
 extern volatile int i2c_transfer_direction;
 extern volatile uint8_t transferDirection, transferRequested;
 extern uint8_t i2c_data_rx[10];
-extern uint8_t i2c_data_tx[10];
+// extern uint8_t i2c_data_tx[10];
+extern uint8_t* i2c_data_tx;
 
 // CR2 reg
 extern uint16_t CR2_reg;

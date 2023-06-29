@@ -2,11 +2,13 @@
 #define _PCY8575_HPP__
 
 #include "i2c.h"
-#include "tim.h"						// needs for module uptime. TIM3 update every 1 second.
+// #include "tim.h"						
 #include "gpio.hpp"
 #include "stm32_log.h"
 #include "backup.hpp"
 #include "reset_reason.hpp"
+#include "tim_driver.hpp"	// needs for module uptime. TIM3 update every 1 second.
+#include "iwdg.h"
 
 /* list of I2C addresses */
 #define PCY8575_ADDR			0x53	// device address: 0b0010 0011 >> 0b0001 0001 = 0x11
@@ -77,8 +79,11 @@ Start | ADDR - R/W = 0 | IRMS	| Stop | ... delay ... | Start | ADDR - R/W = 1 | 
 RST_REASON:	write												 Read				8 bits
 Start | ADDR - R/W = 0 | REASON | Stop | ... delay ... | Start | ADDR - R/W = 1 | byte L  | Stop |
 
-I_DATA:		write				  number to be readed mas 2^16   				   Read. Total of 2*n_samples bytes to transmit.
-Start | ADDR - R/W = 0 | I_DATA | byte H | byte L | Stop | ... delay ... | Start | ADDR - R/W = 1 | byte H0 | byte L0 | ... | byte H(n-1) | byte L(n-1) | Stop |
+I_DATA:		write				  number to be readed max of 2^16  				   Read. Total of 2*n_samples bytes to transmit.
+Start | ADDR - R/W = 0 | I_DATA | byte L | byte H | Stop | ... delay ... | Start | ADDR - R/W = 1 | byte H0 | byte L0 | ... | byte H(n-1) | byte L(n-1) | Stop |
+
+I_CONFIG?
+
 */
 
 class pcy8575 {
@@ -92,7 +97,8 @@ public:
 							{31, 1}, {25, 1}, {22, 1}, {21, 1},
 							{20, 1}, {19, 1}, {18, 1}, {17, 1},
 							{16, 1}, {28, 1}, {27, 1}, {1 , 1},
-							{10, 1}, {11, 1}, {12, 1}, {13, 1}} {}
+							{10, 1}, {11, 1}, {12, 1}, {13, 1}},
+					timer_(3, 1, timer_mode::timer_interrupt) {}
 
 	~pcy8575(void) {}
 
@@ -102,6 +108,9 @@ public:
 
 		// Restore last output pins before reset
 		put(backup_DR1_get());
+
+		// WDT init
+		iwdg_init();
 
 		// Verify output pins
 		output_ = get();
@@ -120,7 +129,7 @@ public:
 				// reg_addr_ = i2c_data_rx[0];
 				// printf("opcode:0x%02x, output:0x%04x, i2c_data_tx_size: %d\n", reg_addr_, output_, i2c_data_tx_size);
 				// for(int i=0; i<i2c_data_tx_size; i++) {
-				// 	printf("i2c_data_tx[%d]: 0x%02x\n", i, i2c_data_tx[i]);
+				// 	printf("data_tx_[%d]: 0x%02x\n", i, data_tx_[i]);
 				// }
 				// printf("output_: 0x%04x\n", output_);
 				#endif
@@ -139,7 +148,8 @@ public:
 						printf("i2c_data_rx[%d]: 0x%02x\n", i, i2c_data_rx[i]);
 					}
 					#endif
-					i2c_data_tx[0] = 0xAA;
+					data_tx_[0] = 0xAA;
+					i2c_data_tx = &data_tx_[0];
 					break;
 				}
 				case PCY8575_REG_SOFT_RESET: { // Soft RESET
@@ -179,36 +189,41 @@ public:
 				case PCY8575_REG_GET: { // GET
 					// Master read has write first. Print functions cause delay errors.
 					output_ = get();
-					i2c_data_tx[0] = static_cast<uint8_t>(output_);
-					i2c_data_tx[1] = static_cast<uint8_t>(output_ >> 8);
+					data_tx_[0] = static_cast<uint8_t>(output_);
+					data_tx_[1] = static_cast<uint8_t>(output_ >> 8);
+					i2c_data_tx = &data_tx_[0];
 					break;
 				}
 				case PCY8575_REG_TEMPERATURE: { // TEMP
 					temp_ = temp();
-					i2c_data_tx[0] = static_cast<uint8_t>(temp_);
-					i2c_data_tx[1] = static_cast<uint8_t>(temp_ >> 8);
+					data_tx_[0] = static_cast<uint8_t>(temp_);
+					data_tx_[1] = static_cast<uint8_t>(temp_ >> 8);
+					i2c_data_tx = &data_tx_[0];
 					break;
 				}
 				case PCY8575_REG_UPTIME: { // UPTIME
 					uptime_temp_ = uptime();
-					i2c_data_tx[0] = static_cast<uint8_t>(uptime_temp_);
-					i2c_data_tx[1] = static_cast<uint8_t>(uptime_temp_ >> 8);
-					i2c_data_tx[2] = static_cast<uint8_t>(uptime_temp_ >> 16);
-					i2c_data_tx[3] = static_cast<uint8_t>(uptime_temp_ >> 24);
+					data_tx_[0] = static_cast<uint8_t>(uptime_temp_);
+					data_tx_[1] = static_cast<uint8_t>(uptime_temp_ >> 8);
+					data_tx_[2] = static_cast<uint8_t>(uptime_temp_ >> 16);
+					data_tx_[3] = static_cast<uint8_t>(uptime_temp_ >> 24);
+					i2c_data_tx = &data_tx_[0];
 					break;
 				}
 				case PCY8575_REG_RST_REASON: {
-					i2c_data_tx[0] = static_cast<uint8_t>(reset_reason());
+					data_tx_[0] = static_cast<uint8_t>(reset_reason());
+					i2c_data_tx = &data_tx_[0];
 					break;
 				}
 				case PCY8575_REG_IRMS: {
 					irms_ = irms();	// this conversion located here will depends the time calculation because the i2c transfer time
-					i2c_data_tx[0] = static_cast<uint8_t>(irms_);
-					i2c_data_tx[1] = static_cast<uint8_t>(irms_ >> 8);
+					data_tx_[0] = static_cast<uint8_t>(irms_);
+					data_tx_[1] = static_cast<uint8_t>(irms_ >> 8);
+					i2c_data_tx = &data_tx_[0];
 					break;
 				}
 				case PCY8575_REG_I_DATA: {
-
+					// i2c_data_tx = adc_array_raw_;
 					break;
 				}
 				default:
@@ -259,7 +274,8 @@ public:
 		return temp;
 	}
 	uint32_t uptime(void) {
-		return tim3_cnt;
+		return timer_.get_uptime();
+		// return tim3_cnt_;
 	}
 	uint16_t irms(void) {
 		return 0x2468;
@@ -279,6 +295,15 @@ public:
 		// put(value);
 		pin_[11].write(0);
 	}
+
+
+	void run(void) {
+		handle_message();
+
+		if(timer_.get_isr_flag()) {
+			iwdg_refresh();
+		}
+	}
 	
 private:
 
@@ -289,7 +314,10 @@ private:
 	uint16_t temp_ = 0;
 	uint16_t uptime_temp_ = 0;
 	uint16_t irms_ = 0;
+	uint8_t data_tx_[10];
 	// const std::size_t pin_count_ = sizeof(pin_) / sizeof(pin_[0]);
+
+	TIM_driver timer_;
 };
 
 #endif // _PCY8575_HPP__
