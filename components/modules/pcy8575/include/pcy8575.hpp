@@ -9,6 +9,7 @@
 #include "reset_reason.hpp"
 #include "tim_driver.hpp"	// needs for module uptime. TIM3 update every 1 second.
 #include "iwdg.h"
+#include "adc_driver.hpp"
 
 /* list of I2C addresses */
 #define PCY8575_ADDR			0x53	// device address: 0b0010 0011 >> 0b0001 0001 = 0x11
@@ -275,13 +276,17 @@ public:
 	}
 	uint32_t uptime(void) {
 		return timer_.get_uptime();
-		// return tim3_cnt_;
 	}
 	uint16_t irms(void) {
 		return 0x2468;
 	}
 	void soft_reset(void) {
 		HAL_NVIC_SystemReset();
+	}
+
+	// configure functions for extra features
+	void adc_config(ADC_driver* adc) {
+		adc0_ = adc;
 	}
 
 	// Test functions
@@ -318,6 +323,9 @@ private:
 	// const std::size_t pin_count_ = sizeof(pin_) / sizeof(pin_[0]);
 
 	TIM_driver timer_;
+
+	// ADC sensors
+	ADC_driver *adc0_;
 };
 
 #endif // _PCY8575_HPP__
