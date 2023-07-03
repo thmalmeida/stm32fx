@@ -337,39 +337,43 @@ public:
 		// HAL_ADC_Stop_DMA(hadc1_);
 	}
 	void stream_read(void) {
+		adc_dma_reset_cnt(n_points);
 		adc_start_conversion();
-		printf("\nADC: start conversion... ");
-		delay_ms(100);
-
+		// printf("\nADC: start conversion... ");
+		// delay_ms(100);
+	}
+	int stream_ready(void) {
 		if(adc_dma_tc_flag) {
 			adc_dma_tc_flag = 0;
 
-			stream_ready_ = 1;
+			// printf("ADC read complete!\n");
 
-			printf("ADC read complete!\n");
 			// printf("\nadc_array_raw addr %p:: ", stream_data_);
-			// for(auto i=0; i<n_points_; i++) {
+			// for(auto i=0; i<n_points; i++) {
 			// 	printf("%lu, ", stream_data_[i]);
 			// }
 			// printf("\n");
-
-			adc_dma_reset_cnt(n_points_);
-		}
+			return 1;
+		} else 
+			return 0;
 	}
 	void stream_addr_config(uint16_t* adc_array, int size) {
-		stream_data = adc_array;
-		n_points_ = size;
+		stream_data_p = adc_array;
+		n_points = size;
 
-		printf("ADDR2: %p\n", stream_data);
-		adc_dma_config_addr(stream_data, n_points_);
+		printf("ADDR2: %p\n", stream_data_p);
+		adc_dma_config_addr(stream_data_p, n_points);
 		adc_dma_config_it();
 	}
 	void stream_start(void) {
 		adc_start_conversion();
 	}
-	int stream_size(void) {
-		return n_points_;
+	int stream_length(void) {
+		return n_points;
 	}
+	// uint32_t *stream_addr(void) {
+	// 	return stream_data_p;
+	// }
 
 	void calibrate(void) {
 		HAL_ADCEx_Calibration_Start(hadc1_);
@@ -382,18 +386,16 @@ public:
 		}
 	}
 
-	uint16_t *stream_data;		// pointer to adc array
+	uint16_t *stream_data_p;		// pointer to adc array
+	int n_points;				// number of points used on ADC dma conversion
 
 private:
 	int channel_;
 	int num_channels = 1;
-	int stream_length_ = 0;
 	adc_mode mode_;
 	uint32_t channel_addr_;		// channel type converted
 	int cirp_ = -1;				// channel index rank position
 	pattern_s ptable_[17];		// pattern table
-	int n_points_;				// number of points used on ADC dma conversion
-	uint8_t stream_ready_ = 0;	// if buffers has new data
 
 	// STM32F specifics
 	uint32_t adc_sampletime_ = ADC_SAMPLETIME_239CYCLES_5;			// sampling time in cycles to make one conversion Fs = adc_clk/(adc_sampletime + Tfix);

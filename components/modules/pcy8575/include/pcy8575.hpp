@@ -11,6 +11,8 @@
 #include "iwdg.h"
 #include "adc_driver.hpp"
 
+#include "dsp.hpp"
+
 /* list of I2C addresses */
 #define PCY8575_ADDR			0x53	// device address: 0b0010 0011 >> 0b0001 0001 = 0x11
 #define PCY8575_NORMAL_SPEED	100000  // i2c normal speed [Hz]
@@ -278,7 +280,38 @@ public:
 		return timer_.get_uptime();
 	}
 	uint16_t irms(void) {
-		return 0x2468;
+
+		int n_samples = adc0_->stream_length();
+		// time domain load current;
+		double iL_t[n_samples];
+
+		// rms load current;
+		double iL_rms;
+
+		// Read stream array from ADC using DMA;
+		adc0_->stream_read();
+
+		// Convert digital ADC raw array to iL(t) signal;
+		s0_.calc_iL_t(&adc0_->stream_data_p[0], &iL_t[0], n_samples);
+
+		// Remove DC offset
+		s0_.dc_remove(&iL_t[0], n_samples);
+
+		// Find the RMS value from iL(t) signal
+		iL_rms = s0_.calc_rms(&iL_t[0], n_samples);
+
+		// print adc raw values for debug purposes
+		// printf("adc_buffer: ");
+		// for(int i=0; i<n_samples; i++) {
+		// 	printf("%u, ", adc_buffer2[i]);
+		// }
+		// printf("\n");
+
+		// print rms load current in Amperes
+		printf("iL_rms:%.2lf A\n", iL_rms);
+		// ESP_LOGI(TAG_SETUP, "iL_rms:%.2lf A\n", iL_rms);
+
+		return static_cast<uint16_t>(iL_rms*1000);
 	}
 	void soft_reset(void) {
 		HAL_NVIC_SystemReset();
@@ -289,15 +322,21 @@ public:
 		adc0_ = adc;
 	}
 	void process(void) {
-		adc0_->stream_read();
-		delay_ms(50);
-
-		printf("adc_data_raw_: ");
-		for(auto i=0; i<adc0_->stream_size(); i++) {
-			printf("%u, ", adc0_->stream_data[i]);
-		}
-		printf("\n");
+		irms_ = irms();
 	}
+	void print_samples(void) {
+
+		if(adc0_->stream_ready()) {
+			printf("adc_data_raw_: ");
+			for(auto i=0; i<adc0_->stream_length(); i++) {
+				printf("%u, ", adc0_->stream_data_p[i]);
+			}
+			printf("\n");
+			printf("irms: %u\n\n", irms_);
+		}
+	}
+
+
 	// Test functions
 	void test_up(void) {
 		// uint16_t value = (1 << (pino - 1));
@@ -313,6 +352,8 @@ public:
 
 	void run(void) {
 		handle_message();			// handle message fsm
+
+		print_samples();
 
 		// 1 second flag
 		if(timer_.get_isr_flag()) {
@@ -334,6 +375,9 @@ private:
 	// const std::size_t pin_count_ = sizeof(pin_) / sizeof(pin_[0]);
 
 	TIM_driver timer_;
+
+	// DSP functions;
+	DSP s0_;
 
 	// ADC sensors
 	ADC_driver *adc0_;

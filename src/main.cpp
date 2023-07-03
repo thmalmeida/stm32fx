@@ -21,7 +21,10 @@
 
 void i2c_slave_pcy8575(void) {
 
-	// ---- ADC signal parameters - just for find the number of points and it's sampling rate;
+	// ---- ADC signal parameters
+	// 1- just for find the number of points and it's sampling rate;
+	// 2- another reason to use adc0 class outside pcy8575 is to keep adc_array_raw vector allocated.
+	// 
 	// Sampling parameters for STM32F103C8T6 device
 	float F_clk = 48000000;							// Main clock system [Hz]
 	float div_1 = 1;								// Advanced High-performance Bus (AHB) prescale;
@@ -29,12 +32,12 @@ void i2c_slave_pcy8575(void) {
 	float div_3 = 8;								// ADC prescale
 	float adc_clk = F_clk/div_1/div_2/div_3;		// ADC clock after all prescalers
 	float T_conv = 12.5 + 239.5;					// Number of clock cycles to make one conversion
-	float Fs_adc = adc_clk/T_conv;
+	float Fs_adc = adc_clk/T_conv;					// Sample rate calculation [Samples/s];
 
-	float f_signal = 60.0;
-	float n_points_cycle = Fs_adc/f_signal;
+	float f_signal = 60.0;							// signal frequency [Hz]
+	float n_points_cycle = Fs_adc/f_signal;			// number of points per cycle or period time
 
-	int n_cycles = 1;
+	int n_cycles = 2;								// Number of cycles desired to analyze
 	int n_points = ceil(n_cycles*n_points_cycle);	// The number of points is calculated based on the ADC sample rate.
 	uint16_t adc_array_raw[n_points];				// Array allocation to receive converted points
 
@@ -53,8 +56,7 @@ void i2c_slave_pcy8575(void) {
 	// Extender machine. Composed init of Timer 3 initialized with 1 Hz on interrupt mode. tim3_flag_ ISR variable;
 	pcy8575 extender0;
 	extender0.init();
-	extender0.adc_config(&adc0);
-
+	extender0.adc_config(&adc0);					// send class reference point to pcy8575;
 
 	while(1) {
 		extender0.run();
