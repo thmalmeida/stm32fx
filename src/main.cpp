@@ -99,7 +99,8 @@ void test_adc_dma(void) {
 
 	// ADC_driver adc0;
 	// adc0.init();
-	adc_dma_begin((uint32_t*)&adc_buffer[0], ADC_BUFLEN);
+	// adc_dma_begin((uint32_t*)&adc_buffer[0], ADC_BUFLEN);
+	adc_dma_begin(&adc_buffer[0], ADC_BUFLEN);
 	memset(adc_buffer, 0, sizeof(adc_buffer));
 
 
@@ -279,7 +280,8 @@ void test_adc_dma_tim_class(void) {
 
 	// ADC_driver adc0;
 	// adc0.init();
-	adc_dma_begin((uint32_t*)&adc_buffer[0], ADC_BUFLEN);
+	// adc_dma_begin((uint32_t*)&adc_buffer[0], ADC_BUFLEN);
+	adc_dma_begin(&adc_buffer[0], ADC_BUFLEN);
 	memset(adc_buffer, 0, sizeof(adc_buffer));
 
 	int i = 0;
@@ -547,7 +549,8 @@ void test_adc_stream_reg(void) {
 	ADC_driver adc0(adc_mode::stream);
 	adc0.channel_config(3);
 
-	adc_dma_begin((uint32_t*)&adc_array_raw[0], n_points);
+	// adc_dma_begin((uint32_t*)&adc_array_raw[0], n_points);
+	adc_dma_begin(&adc_array_raw[0], n_points);
 	memset(adc_array_raw, 0, sizeof(adc_array_raw));
 
 	// adc0.array_addr_config((uint32_t*)&adc_array_raw[0], n_points);

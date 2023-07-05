@@ -90,7 +90,7 @@ void adc_dma_reset_cnt(uint32_t value);
 void adc_power_on(void);
 void adc_power_off(void);
 
-void adc_dma_begin(uint32_t* dest_addr, uint16_t size);
+void adc_dma_begin(uint16_t* dest_addr, uint16_t size);
 
 void ADC_Init(void);
 void ADC_Enable2(void);

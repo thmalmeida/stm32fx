@@ -89,6 +89,7 @@ public:
 		V_R2 = R2/(R1+R2)*Vdc;
 	}
 	~DSP() {}
+
 	double calc_rms(double *v, int len) {
 		double sum = 0;
 
@@ -135,12 +136,12 @@ public:
 			v[i] = 0.8*v[i-1] + 0.2*v[i];
 		}
 	}
-	void fft(double *vt, double* vf, int length) {
+	// void fft(double *vt, double* vf, int length) {
 
-	}
-	void ifft(double *vf, double vt, int length) {
+	// }
+	// void ifft(double *vf, double vt, int length) {
 		
-	}
+	// }
 };
 
 #endif

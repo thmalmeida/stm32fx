@@ -492,7 +492,7 @@ uint16_t adc_read_oneshot(void) {
 	return (uint16_t)ADC1->DR;
 }
 
-void adc_dma_begin(uint32_t* dest_addr, uint16_t size) {
+void adc_dma_begin(uint16_t* dest_addr, uint16_t size) {
 	// adc_gpioa_config();						// Configure AN2 to read analog values;
 	adc_prescale(8);						// Configure RCC ADC prescale;
 	adc_init();								// Configure ADC control registers;

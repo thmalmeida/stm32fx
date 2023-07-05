@@ -28,8 +28,10 @@
 #define PCY8575_REG_TEMPERATURE	0x05
 #define PCY8575_REG_UPTIME		0x06
 #define PCY8575_REG_RST_REASON	0x07
-#define PCY8575_REG_IRMS		0x08
-#define PCY8575_REG_I_DATA		0x09
+#define PCY8575_REG_I_PROCESS	0x08
+#define PCY8575_REG_IRMS		0x09
+#define PCY8575_REG_I_DATA		0x0A
+#define PCY8575_REG_TEST		0x0B
 
 
 #define PCY8575_DEBUG_PRINT		1
@@ -52,6 +54,7 @@ opcode:
 	- RST_REASON:	0x07
 	- IRMS:			0x08
 	- I_DATA:		0x09
+	- DATA_TEST:	
 
 protocol example
 
@@ -88,6 +91,8 @@ Start | ADDR - R/W = 0 | I_DATA | byte L | byte H | Stop | ... delay ... | Start
 I_CONFIG?
 
 */
+
+extern uint16_t adc_array_data_raw[4];
 
 class pcy8575 {
 
@@ -218,15 +223,24 @@ public:
 					i2c_data_tx = &data_tx_[0];
 					break;
 				}
+				case PCY8575_REG_I_PROCESS: {
+					// irms_ = irms();	// this conversion located here will depends the time calculation because the i2c transfer time
+					process();
+				}
+					break;
 				case PCY8575_REG_IRMS: {
-					irms_ = irms();	// this conversion located here will depends the time calculation because the i2c transfer time
 					data_tx_[0] = static_cast<uint8_t>(irms_);
 					data_tx_[1] = static_cast<uint8_t>(irms_ >> 8);
 					i2c_data_tx = &data_tx_[0];
 					break;
 				}
 				case PCY8575_REG_I_DATA: {
-					// i2c_data_tx = adc_array_raw_;
+					i2c_data_tx = (uint8_t*)&adc0_->stream_data_p[0];
+					i2c_data_tx = &adc_array8_raw_[0];
+					break;
+				}
+				case PCY8575_REG_TEST: {
+					i2c_data_tx = (uint8_t*)&adc_array_data_raw[0];
 					break;
 				}
 				default:
@@ -247,6 +261,9 @@ public:
 			// 	reg_addr_ = i2c_data_rx[0];
 			// }
 		}
+	}
+	void soft_reset(void) {
+		HAL_NVIC_SystemReset();
 	}
 	void config(uint16_t port_config) {
 		for(int i=0; i<num_pins; i++) {
@@ -271,6 +288,8 @@ public:
 		// return output;
 		return output;
 	}
+
+	// other functions
 	uint16_t temp(void) {
 		uint16_t temp = static_cast<uint16_t>(0x1243);
 
@@ -279,6 +298,8 @@ public:
 	uint32_t uptime(void) {
 		return timer_.get_uptime();
 	}
+	
+	// dsp functions
 	uint16_t irms(void) {
 
 		int n_samples = adc0_->stream_length();
@@ -288,7 +309,7 @@ public:
 		// rms load current;
 		double iL_rms;
 
-		// Read stream array from ADC using DMA;
+		// Read stream array from ADC using DMA and fill stream_data_p memory pointer
 		adc0_->stream_read();
 
 		// Convert digital ADC raw array to iL(t) signal;
@@ -308,13 +329,10 @@ public:
 		// printf("\n");
 
 		// print rms load current in Amperes
-		printf("iL_rms:%.2lf A\n", iL_rms);
+		// printf("iL_rms:%.2lf A\n", iL_rms);
 		// ESP_LOGI(TAG_SETUP, "iL_rms:%.2lf A\n", iL_rms);
 
 		return static_cast<uint16_t>(iL_rms*1000);
-	}
-	void soft_reset(void) {
-		HAL_NVIC_SystemReset();
 	}
 
 	// configure functions for extra features
@@ -323,11 +341,29 @@ public:
 	}
 	void process(void) {
 		irms_ = irms();
+		for(int i=0; i<397*2; i+=2) {
+			adc_array8_raw_[i] = 0x00FF & adc0_->stream_data_p[i];	// low byte first
+			adc_array8_raw_[i+1] = adc0_->stream_data_p[i] >> 8;				// high byte
+		}
+
+		printf("adc_data_raw_: ");
+		for(auto i=0; i<adc0_->stream_length(); i++) {
+			printf("%u, ", adc_array8_raw_[i]);
+		}
+		printf("\n");
+
+		print_samples();
+	}
+	void convert_8_to_16(uint8_t* src, uint16_t* dest, int src_len) {
+
+	}
+	void convert_16_to_8(uint16_t* src, uint8_t* dest, int src_len) {
+
 	}
 	void print_samples(void) {
 
 		if(adc0_->stream_ready()) {
-			printf("adc_data_raw_: ");
+			printf("stream_data_p: ");
 			for(auto i=0; i<adc0_->stream_length(); i++) {
 				printf("%u, ", adc0_->stream_data_p[i]);
 			}
@@ -335,7 +371,6 @@ public:
 			printf("irms: %u\n\n", irms_);
 		}
 	}
-
 
 	// Test functions
 	void test_up(void) {
@@ -349,22 +384,22 @@ public:
 		pin_[11].write(0);
 	}
 
-
+	// must called function to run FSM machine
 	void run(void) {
 		handle_message();			// handle message fsm
 
-		print_samples();
+		// print_samples();
 
 		// 1 second flag
 		if(timer_.get_isr_flag()) {
-			process();				// start adc dma stream each one second;
+			// process();				// start adc dma stream each one second;
 			iwdg_refresh();			// clear wdt to prevent reset
 		}
 	}
 	
 private:
 
-	uint8_t reg_addr_ = 0;							// register to read
+	uint8_t reg_addr_ = 0;			// i2c protocol: register to read
 	GPIO_driver pin_[num_pins];
 	uint16_t output_ = 0;
 	uint16_t port_config_ = 0xFFFF;
@@ -374,10 +409,14 @@ private:
 	uint8_t data_tx_[10];
 	// const std::size_t pin_count_ = sizeof(pin_) / sizeof(pin_[0]);
 
+	// for uptime and 1 second flag
 	TIM_driver timer_;
 
 	// DSP functions;
 	DSP s0_;
+
+
+	uint8_t adc_array8_raw_[397*2];
 
 	// ADC sensors
 	ADC_driver *adc0_;

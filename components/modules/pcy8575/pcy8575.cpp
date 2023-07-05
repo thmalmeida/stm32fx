@@ -2,6 +2,8 @@
 
 const char* TAG_PCY8575 = "PCY8575";
 
+uint16_t adc_array_data_raw[4] = {0x0A03, 0x0405, 0x0607, 0x0809};
+
 // void pcy8575::init(void) {
 
 // }
