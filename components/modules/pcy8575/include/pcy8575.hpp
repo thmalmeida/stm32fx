@@ -32,6 +32,9 @@
 #define PCY8575_REG_IRMS		0x09
 #define PCY8575_REG_I_DATA		0x0A
 #define PCY8575_REG_TEST		0x0B
+#define PCY8575_REG_I_SET_NP	0x0C
+#define PCY8575_REG_I_GET_NP	0x0D
+
 
 
 #define PCY8575_DEBUG_PRINT		1
@@ -106,10 +109,12 @@ public:
 							{20, 1}, {19, 1}, {18, 1}, {17, 1},
 							{16, 1}, {28, 1}, {27, 1}, {1 , 1},
 							{10, 1}, {11, 1}, {12, 1}, {13, 1}},
-					timer_(3, 1, timer_mode::timer_interrupt) {}
+					timer_(3, 1, timer_mode::timer_interrupt),
+					adc0(adc_mode::stream) {}
 
 	~pcy8575(void) {}
 
+	// pcy8575 standard functions
 	void init(void) {
 		// I2C slave initialization
 		i2c_init(PCY8575_ADDR, PCY8575_NORMAL_SPEED);
@@ -235,8 +240,18 @@ public:
 					break;
 				}
 				case PCY8575_REG_I_DATA: {
-					i2c_data_tx = (uint8_t*)&adc0_->stream_data_p[0];
+					i2c_data_tx = (uint8_t*)&adc0.stream_data_p[0];
 					i2c_data_tx = &adc_array8_raw_[0];
+					break;
+				}
+				case PCY8575_REG_I_SET_NP: {
+					adc0.stream_length((i2c_data_rx[2] << 8) | i2c_data_rx[1]);
+					break;
+				}
+				case PCY8575_REG_I_GET_NP: {
+					data_tx_[0] = static_cast<uint8_t>(adc0.stream_length());
+					data_tx_[1] = static_cast<uint8_t>(adc0.stream_length() >> 8);
+					i2c_data_tx = &data_tx_[0];
 					break;
 				}
 				case PCY8575_REG_TEST: {
@@ -289,6 +304,19 @@ public:
 		return output;
 	}
 
+	// must called function to run FSM machine
+	void run(void) {
+		handle_message();			// handle message fsm
+
+		// print_samples();
+
+		// 1 second flag
+		if(timer_.get_isr_flag()) {
+			// process();				// start adc dma stream each one second;
+			iwdg_refresh();			// clear wdt to prevent reset
+		}
+	}
+
 	// other functions
 	uint16_t temp(void) {
 		uint16_t temp = static_cast<uint16_t>(0x1243);
@@ -298,11 +326,52 @@ public:
 	uint32_t uptime(void) {
 		return timer_.get_uptime();
 	}
-	
+
+	// configure functions for extra features
+	void adc_init(void) {
+		// ---- ADC signal parameters
+		// 1- just for find the number of points and it's sampling rate;
+		// 2- another reason to use adc0 class outside pcy8575 is to keep adc_array_raw vector allocated.
+		// 
+		// Sampling parameters for STM32F103C8T6 device
+		float F_clk = 48000000;							// Main clock system [Hz]
+		float div_1 = 1;								// Advanced High-performance Bus (AHB) prescale;
+		float div_2 = 2;								// Advanced Peripheral Bus (APB2) prescale;
+		float div_3 = 8;								// ADC prescale
+		float adc_clk = F_clk/div_1/div_2/div_3;		// ADC clock after all prescalers
+		float T_conv = 12.5 + 239.5;					// Number of clock cycles to make one conversion
+		float Fs_adc = adc_clk/T_conv;					// Sample rate calculation [Samples/s];
+
+		float f_signal = 60.0;							// signal frequency [Hz]
+		float n_points_cycle = Fs_adc/f_signal;			// number of points per cycle or period time
+
+		int n_cycles = 2;								// Number of cycles desired to analyze
+		int n_points = ceil(n_cycles*n_points_cycle);	// The number of points is calculated based on the ADC sample rate.
+		// uint16_t adc_array_raw[n_points];				// Array allocation to receive converted points
+		// uint16_t *adc_array_raw = new uint16_t[n_points];
+		// uint16_t *adc_array_raw;
+
+		printf("Sample rate: %f\n", Fs_adc);
+		printf("points/cycle: %f\n", n_points_cycle);
+		printf("n cycles: %d\n", n_cycles);
+		printf("total points: %d\n", n_points);
+
+		// ADC_driver adc0(adc_mode::stream);
+		adc0.stream_init();
+		adc0.channel_config(3);
+		adc0.stream_addr_config(adc_array16_raw_, n_points);
+		// adc0.stream_addr_config(n_points);
+		// memset(adc_array_raw, 0, sizeof(adc_array_raw));
+		// ---- end	
+	}
+	// void adc_config(ADC_driver* adc) {
+		// adc0_ = adc;
+	// }
+
 	// dsp functions
 	uint16_t irms(void) {
 
-		int n_samples = adc0_->stream_length();
+		int n_samples = adc0.stream_length();
 		// time domain load current;
 		double iL_t[n_samples];
 
@@ -310,10 +379,10 @@ public:
 		double iL_rms;
 
 		// Read stream array from ADC using DMA and fill stream_data_p memory pointer
-		adc0_->stream_read();
+		adc0.stream_read();
 
 		// Convert digital ADC raw array to iL(t) signal;
-		s0_.calc_iL_t(&adc0_->stream_data_p[0], &iL_t[0], n_samples);
+		s0_.calc_iL_t(&adc0.stream_data_p[0], &iL_t[0], n_samples);
 
 		// Remove DC offset
 		s0_.dc_remove(&iL_t[0], n_samples);
@@ -334,38 +403,33 @@ public:
 
 		return static_cast<uint16_t>(iL_rms*1000);
 	}
-
-	// configure functions for extra features
-	void adc_config(ADC_driver* adc) {
-		adc0_ = adc;
-	}
 	void process(void) {
 		irms_ = irms();
 		for(int i=0; i<397*2; i+=2) {
-			adc_array8_raw_[i] = 0x00FF & adc0_->stream_data_p[i];	// low byte first
-			adc_array8_raw_[i+1] = adc0_->stream_data_p[i] >> 8;				// high byte
+			adc_array8_raw_[i] = 0x00FF & adc0.stream_data_p[i];	// low byte first
+			adc_array8_raw_[i+1] = adc0.stream_data_p[i] >> 8;				// high byte
 		}
 
 		printf("adc_data_raw_: ");
-		for(auto i=0; i<adc0_->stream_length(); i++) {
+		for(auto i=0; i<adc0.stream_length(); i++) {
 			printf("%u, ", adc_array8_raw_[i]);
 		}
 		printf("\n");
 
 		print_samples();
 	}
-	void convert_8_to_16(uint8_t* src, uint16_t* dest, int src_len) {
+	// void convert_8_to_16(uint8_t* src, uint16_t* dest, int src_len) {
 
-	}
-	void convert_16_to_8(uint16_t* src, uint8_t* dest, int src_len) {
+	// }
+	// void convert_16_to_8(uint16_t* src, uint8_t* dest, int src_len) {
 
-	}
+	// }
 	void print_samples(void) {
 
-		if(adc0_->stream_ready()) {
+		if(adc0.stream_ready()) {
 			printf("stream_data_p: ");
-			for(auto i=0; i<adc0_->stream_length(); i++) {
-				printf("%u, ", adc0_->stream_data_p[i]);
+			for(auto i=0; i<adc0.stream_length(); i++) {
+				printf("%u, ", adc0.stream_data_p[i]);
 			}
 			printf("\n");
 			printf("irms: %u\n\n", irms_);
@@ -384,19 +448,6 @@ public:
 		pin_[11].write(0);
 	}
 
-	// must called function to run FSM machine
-	void run(void) {
-		handle_message();			// handle message fsm
-
-		// print_samples();
-
-		// 1 second flag
-		if(timer_.get_isr_flag()) {
-			// process();				// start adc dma stream each one second;
-			iwdg_refresh();			// clear wdt to prevent reset
-		}
-	}
-	
 private:
 
 	uint8_t reg_addr_ = 0;			// i2c protocol: register to read
@@ -415,14 +466,10 @@ private:
 	// DSP functions;
 	DSP s0_;
 
-
-	uint8_t adc_array8_raw_[397*2];
-
 	// ADC sensors
-	ADC_driver *adc0_;
-	struct sensor_i {
-
-	}sensor_i_;
+	ADC_driver adc0;
+	uint16_t *adc_array16_raw_;
+	uint8_t *adc_array8_raw_;
 };
 
 #endif // _PCY8575_HPP__

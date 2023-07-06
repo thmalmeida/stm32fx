@@ -293,9 +293,13 @@ monitor: flash
 monitor2:
 	st-trace --clock=48
 
+size:
+	$(SZ) $(BUILD_DIR)/$(TARGET).hex
+	$(SZ) $(BUILD_DIR)/$(TARGET).elf
+
 erase:
 	st-flash erase
 
 flash_openocd: all
-	openocd -f interface/stlink-v2.cfg -f target/stm32f1x.cfg -c "program build/$(TARGET).elf verify exit reset"
+	openocd -f interface/stlink-v2.cfg -f target/stm32f1x.cfg -c "program $(BUILD_DIR)/$(TARGET).elf verify exit reset"
 # *** EOF ***

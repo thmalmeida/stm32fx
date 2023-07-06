@@ -584,9 +584,14 @@ void adc_dma_config_it(void) {
 	NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 	// HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 }
-void adc_dma_reset_cnt(uint32_t value) {
+void adc_dma_set_addr_cnt(uint32_t value) {
+	// Disable DMA channel before edit;
 	DMA1_Channel1->CCR &= ~(1<<0);
+
+	// Set buffer size
 	DMA1_Channel1->CNDTR = value;
+
+	// Enable DMA channel before edit;
 	DMA1_Channel1->CCR |= (1<<0);
 }
 

@@ -337,7 +337,7 @@ public:
 		// HAL_ADC_Stop_DMA(hadc1_);
 	}
 	void stream_read(void) {
-		adc_dma_reset_cnt(n_points);
+		adc_dma_set_addr_cnt(n_points);
 		adc_start_conversion();
 		// printf("\nADC: start conversion... ");
 		// delay_ms(100);
@@ -365,11 +365,30 @@ public:
 		adc_dma_config_addr(stream_data_p, n_points);
 		adc_dma_config_it();
 	}
+	void stream_addr_config(int size) {
+		if(!stream_data_p) {
+			printf("stream_addr_config nullptr\n");
+			stream_data_p = new uint16_t[size];
+		}
+		else {
+			printf("stream_addr_config delete[] 0\n");
+			delete[] stream_data_p;
+			printf("stream_addr_config delete[] 1\n");
+			stream_data_p = new uint16_t[size];
+			printf("stream_addr_config delete[] 2\n");
+		}
+		n_points = size;
+		adc_dma_config_addr(stream_data_p, n_points);
+		adc_dma_config_it();
+	}
 	void stream_start(void) {
 		adc_start_conversion();
 	}
 	int stream_length(void) {
 		return n_points;
+	}
+	void stream_length(int length) {
+		n_points = length;
 	}
 	// uint32_t *stream_addr(void) {
 	// 	return stream_data_p;
@@ -386,7 +405,7 @@ public:
 		}
 	}
 
-	uint16_t *stream_data_p;		// pointer to adc array
+	uint16_t *stream_data_p;	// pointer to adc array
 	int n_points;				// number of points used on ADC dma conversion
 
 private:

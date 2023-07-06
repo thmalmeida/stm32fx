@@ -21,47 +21,61 @@
 
 void i2c_slave_pcy8575(void) {
 
-	// ---- ADC signal parameters
-	// 1- just for find the number of points and it's sampling rate;
-	// 2- another reason to use adc0 class outside pcy8575 is to keep adc_array_raw vector allocated.
-	// 
-	// Sampling parameters for STM32F103C8T6 device
-	float F_clk = 48000000;							// Main clock system [Hz]
-	float div_1 = 1;								// Advanced High-performance Bus (AHB) prescale;
-	float div_2 = 2;								// Advanced Peripheral Bus (APB2) prescale;
-	float div_3 = 8;								// ADC prescale
-	float adc_clk = F_clk/div_1/div_2/div_3;		// ADC clock after all prescalers
-	float T_conv = 12.5 + 239.5;					// Number of clock cycles to make one conversion
-	float Fs_adc = adc_clk/T_conv;					// Sample rate calculation [Samples/s];
-
-	float f_signal = 60.0;							// signal frequency [Hz]
-	float n_points_cycle = Fs_adc/f_signal;			// number of points per cycle or period time
-
-	int n_cycles = 2;								// Number of cycles desired to analyze
-	int n_points = ceil(n_cycles*n_points_cycle);	// The number of points is calculated based on the ADC sample rate.
-	uint16_t adc_array_raw[n_points];				// Array allocation to receive converted points
-
-	printf("Sample rate: %f\n", Fs_adc);
-	printf("points/cycle: %f\n", n_points_cycle);
-	printf("n cycles: %d\n", n_cycles);
-	printf("total points: %d\n", n_points);
-
-	ADC_driver adc0(adc_mode::stream);
-	adc0.stream_init();
-	adc0.channel_config(3);
-	adc0.stream_addr_config(&adc_array_raw[0], n_points);
-	memset(adc_array_raw, 0, sizeof(adc_array_raw));
-	// ---- end	
-
 	// Extender machine. Composed init of Timer 3 initialized with 1 Hz on interrupt mode. tim3_flag_ ISR variable;
 	pcy8575 extender0;
 	extender0.init();
-	extender0.adc_config(&adc0);					// send class reference point to pcy8575;
+	extender0.adc_init();
 
 	while(1) {
 		extender0.run();
 	}
 }
+
+// void i2c_slave_pcy8575_adc(void) {
+
+// 	// ---- ADC signal parameters
+// 	// 1- just for find the number of points and it's sampling rate;
+// 	// 2- another reason to use adc0 class outside pcy8575 is to keep adc_array_raw vector allocated.
+// 	// 
+// 	// Sampling parameters for STM32F103C8T6 device
+// 	float F_clk = 48000000;							// Main clock system [Hz]
+// 	float div_1 = 1;								// Advanced High-performance Bus (AHB) prescale;
+// 	float div_2 = 2;								// Advanced Peripheral Bus (APB2) prescale;
+// 	float div_3 = 8;								// ADC prescale
+// 	float adc_clk = F_clk/div_1/div_2/div_3;		// ADC clock after all prescalers
+// 	float T_conv = 12.5 + 239.5;					// Number of clock cycles to make one conversion
+// 	float Fs_adc = adc_clk/T_conv;					// Sample rate calculation [Samples/s];
+
+// 	float f_signal = 60.0;							// signal frequency [Hz]
+// 	float n_points_cycle = Fs_adc/f_signal;			// number of points per cycle or period time
+
+// 	int n_cycles = 2;								// Number of cycles desired to analyze
+// 	int n_points = ceil(n_cycles*n_points_cycle);	// The number of points is calculated based on the ADC sample rate.
+// 	// uint16_t adc_array_raw[n_points];				// Array allocation to receive converted points
+// 	// uint16_t *adc_array_raw = new uint16_t[n_points];
+// 	uint16_t *adc_array_raw;
+
+// 	printf("Sample rate: %f\n", Fs_adc);
+// 	printf("points/cycle: %f\n", n_points_cycle);
+// 	printf("n cycles: %d\n", n_cycles);
+// 	printf("total points: %d\n", n_points);
+
+// 	ADC_driver adc0(adc_mode::stream);
+// 	adc0.stream_init();
+// 	adc0.channel_config(3);
+// 	adc0.stream_addr_config(adc_array_raw, n_points);
+// 	memset(adc_array_raw, 0, sizeof(adc_array_raw));
+// 	// ---- end	
+
+// 	// Extender machine. Composed init of Timer 3 initialized with 1 Hz on interrupt mode. tim3_flag_ ISR variable;
+// 	pcy8575 extender0;
+// 	extender0.init();
+// 	extender0.adc_config(&adc0);					// send class reference point to pcy8575;
+
+// 	while(1) {
+// 		extender0.run();
+// 	}
+// }
 void i2c_slave_pcy8575_orig(void) {
 	pcy8575 extender0;
 	extender0.init();
@@ -418,7 +432,7 @@ void test_adc_dma_tim_class(void) {
 				memset(adc_buffer, 0, sizeof(adc_buffer));
 				printf("DMA1 TC flag!\n");
 
-				adc_dma_reset_cnt(ADC_BUFLEN);	
+				adc_dma_set_addr_cnt(ADC_BUFLEN);	
 				// adc_dma_config_addr((uint32_t*)(&adc_buffer[0]), adc_buffer);
 				// adc_dma_begin((uint32_t*)&adc_buffer[0], ADC_BUFLEN);
 				// ADC1->CR2 |= ~(7<<17);
@@ -591,7 +605,7 @@ void test_adc_stream_reg(void) {
 			}
 			printf("\n");
 
-			adc_dma_reset_cnt(n_points);
+			adc_dma_set_addr_cnt(n_points);
 		}
 		HAL_Delay(1000);
 	}
