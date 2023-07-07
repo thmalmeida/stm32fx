@@ -48,7 +48,6 @@ C_SOURCES =  \
 $(SRC_DIR)/system_main.c \
 $(SRC_DIR)/adc.c \
 $(SRC_DIR)/i2c.c \
-$(SRC_DIR)/tim.c \
 $(SRC_DIR)/iwdg.c \
 $(SRC_DIR)/stm32_log.c \
 $(SRC_DIR)/stm32f1xx_hal_msp.c \
@@ -67,6 +66,7 @@ $(DRIVER_DIR)/stm32f1xx_hal_tim.c \
 $(DRIVER_DIR)/stm32f1xx_hal_iwdg.c \
 $(DRIVER_DIR)/stm32f1xx_hal_tim_ex.c \
 $(DRIVER_DIR)/stm32f1xx_hal_dma.c
+# $(SRC_DIR)/tim.c \
 
 # $(DRIVER_DIR)/stm32f1xx_hal_gpio_ex.c \
 # $(DRIVER_DIR)/stm32f1xx_hal_flash.c \
@@ -86,13 +86,14 @@ $(SRC_DIR)/main.cpp \
 components/helper/delay.cpp \
 components/math/dsp.cpp \
 components/modules/pcy8575/pcy8575.cpp \
-components/modules/aht10/aht10.cpp \
 components/peripherals/adc/adc_driver.cpp \
 components/peripherals/gpio/gpio.cpp \
 components/peripherals/backup/backup.cpp \
 components/peripherals/backup/reset_reason.cpp \
 components/peripherals/i2c_master/i2c_master.cpp \
 components/peripherals/tim/tim_driver.cpp
+
+# components/modules/aht10/aht10.cpp \
 # $(SRC_DIR)/usart.cpp
 
 # ASM sources
@@ -135,7 +136,8 @@ CPU = -mcpu=cortex-m3
 FLOAT-PRINT = -u _printf_float
 
 # mcu
-MCU = $(CPU) -mthumb $(FPU) $(FLOAT-ABI) $(FLOAT-PRINT) -specs=nosys.specs -specs=nano.specs
+# MCU = $(CPU) -mthumb $(FPU) $(FLOAT-ABI) $(FLOAT-PRINT) -specs=nosys.specs -specs=nano.specs
+MCU = $(CPU) -mthumb $(FPU) $(FLOAT-ABI) -specs=nosys.specs -specs=nano.specs
 
 # MCU = $(CPU) -mthumb -fmessage-length=0 -fsigned-char -Wall -Wextra -ffunction-sections -fdata-sections#$(FPU) $(FLOAT-ABI)
 # macros for gcc

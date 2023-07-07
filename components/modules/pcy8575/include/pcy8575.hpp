@@ -38,7 +38,7 @@
 
 
 
-#define PCY8575_DEBUG_PRINT		1
+// #define PCY8575_DEBUG_PRINT		1
 
 /* PCY8575 protocol will works always in a slave mode. 
 The master uC has the control over the SCL clock.
@@ -111,7 +111,14 @@ public:
 							{16, 1}, {28, 1}, {27, 1}, {1 , 1},
 							{10, 1}, {11, 1}, {12, 1}, {13, 1}},
 					timer_(3, 1, timer_mode::timer_interrupt),
-					adc0(adc_mode::stream) {}
+					adc0(adc_mode::stream) {
+		
+		// Standard init parameters;
+		init();
+
+		// adc peripheral config;
+		adc_init();
+	}
 
 	~pcy8575(void) {}
 
@@ -353,11 +360,12 @@ public:
 		// uint16_t *adc_array_raw = new uint16_t[n_points];
 		// uint16_t *adc_array_raw;
 
+		#ifdef PCY8575_DEBUG_PRINT	
 		printf("Sample rate: %f\n", Fs_adc);
 		printf("points/cycle: %f\n", n_points_cycle);
 		printf("n cycles: %d\n", n_cycles);
 		printf("total points: %d\n", n_points);
-
+		#endif
 		// ADC_driver adc0(adc_mode::stream);
 		adc0.stream_init();
 		adc0.channel_config(3);
@@ -405,8 +413,9 @@ public:
 			delay_ms(1);
 		}
 
+		#ifdef PCY8575_DEBUG_PRINT
 		printf("Count: %lu\n", count);
-
+		#endif
 		// Convert digital ADC raw array to iL(t) signal;
 		s0_.calc_iL_t(adc_array16_raw_, &iL_t[0], n_samples);
 
@@ -431,8 +440,10 @@ public:
 	}
 	void process(void) {
 		irms_ = irms();
+		#ifdef PCY8575_DEBUG_PRINT
 		print_samples();
 		printf("irms: %u\n\n", irms_);
+		#endif
 	}
 	// void convert_8_to_16(uint8_t* src, uint16_t* dest, int src_len) {
 
@@ -440,9 +451,11 @@ public:
 	// void convert_16_to_8(uint16_t* src, uint8_t* dest, int src_len) {
 
 	// }
+	#ifdef PCY8575_DEBUG_PRINT
 	void print_samples(void) {
 
 		// if(adc0.stream_ready()) {
+		
 			printf("stream_data_p: ");
 			for(auto i=0; i<adc0.stream_length(); i++) {
 				printf("%u, ", adc_array16_raw_[i]);
@@ -462,6 +475,7 @@ public:
 		// printf("\n");
 
 	}
+	#endif
 
 	// Test functions
 	void test_up(void) {

@@ -74,16 +74,14 @@ void I2C_Master::init(uint32_t freq) {
 		// HAL_NVIC_SetPriority(I2C2_ER_IRQn, 0, 0);
 		// HAL_NVIC_EnableIRQ(I2C2_ER_IRQn);
 	// }
-
-	printf("I2C: initializing...   ");
 	if (HAL_I2C_Init(&hi2c2_) != HAL_OK)
 	{
-		printf("Error!\n");
-		// Error_Handler();
+		printf("I2C Err\n");
+		Error_Handler();
 	}
 	else
 	{
-		printf("Done!\n");
+		printf("I2C Init\n");
 	}
 	// I2C1->CR1 |=(1<<15);
 }
@@ -154,7 +152,7 @@ int I2C_Master::write(uint8_t slave_addr, uint8_t *data, uint8_t data_len) {
 	// }
 
 	// STM32
-	printf("not implemented!\n");
+	// printf("not implemented!\n");
 
 	return I2C_ERR_OK;
 }

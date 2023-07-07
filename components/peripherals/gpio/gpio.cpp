@@ -248,9 +248,9 @@ GPIO_driver::GPIO_driver(int pin_number, int direction) : direction_(direction){
 			port_ = GPIOB;
 			break;
 
-		default:
-			printf("GPIO: pin not found!\n");
-			break;
+		// default:
+			// printf("GPIO: pin not found!\n");
+			// break;
 
 
 		// case 37:
