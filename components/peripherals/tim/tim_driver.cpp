@@ -75,6 +75,7 @@ void TIM1_CC_IRQHandler(void)
 
 	/* USER CODE END TIM1_CC_IRQn 0 */
 	HAL_TIM_IRQHandler(&htim1_);
+	tim1_cnt_++;
 	/* USER CODE BEGIN TIM1_CC_IRQn 1 */
 
 	/* USER CODE END TIM1_CC_IRQn 1 */
@@ -82,14 +83,17 @@ void TIM1_CC_IRQHandler(void)
 void TIM2_IRQHandler(void) {
 	HAL_TIM_IRQHandler(&htim2_);
 	tim2_flag_ = 1;
+	tim2_cnt_++;
 }
 void TIM3_IRQHandler(void) {
 	HAL_TIM_IRQHandler(&htim3_);
 	tim3_flag_ = 1;
+	tim3_cnt_++;
 }
 void TIM4_IRQHandler(void) {
 	HAL_TIM_IRQHandler(&htim4_);
 	tim4_flag_ = 1;
+	tim4_cnt_++;
 }
 
 }

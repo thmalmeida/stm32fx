@@ -90,8 +90,8 @@ extern uint8_t MSL_bit;		// bit 0
 // state machine variables
 extern volatile uint8_t i2c_has_data_rx;
 extern volatile uint8_t i2c_has_data_tx;
-extern volatile uint8_t i2c_data_rx_size;
-extern volatile uint8_t i2c_data_tx_size;
+extern volatile uint16_t i2c_data_rx_size;
+extern volatile uint16_t i2c_data_tx_size;
 
 void i2c_init(uint32_t addr1, uint32_t freq);
 void i2c_read_SR1_reg(void);

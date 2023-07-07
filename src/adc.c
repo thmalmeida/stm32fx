@@ -546,6 +546,10 @@ void adc_dma_init(void) {
 	// Enable interrupts Trasfer error (TEIE), Half transfer (HTIE) and Transfer complete (TCIE)
 	DMA1_Channel1->CCR |= (1<<3) | (1<<2) | (1<<1);
 
+	// Set peripheral source address
+	DMA1_Channel1->CPAR = (uint32_t)(&(ADC1->DR));
+	printf("CPAR addr: 0x%08x\n", DMA1_Channel1->CPAR);
+
 	// Enable DMA channel after edit;
 	DMA1_Channel1->CCR |= (1<<0);
 }
@@ -563,12 +567,11 @@ void adc_dma_config_addr(uint16_t* dest_addr, int size) {
 	DMA1_Channel1->CCR &= ~(1<<0);
 
 	// Set buffer size
-	DMA1_Channel1->CNDTR = (uint32_t)(size);
+	// DMA1_Channel1->CNDTR = (uint32_t)(size);
 
 	// Set peripheral source address
-	DMA1_Channel1->CPAR = (uint32_t)(&(ADC1->DR));
-
-	printf("CPAR addr: 0x%08x\n", DMA1_Channel1->CPAR);
+	// DMA1_Channel1->CPAR = (uint32_t)(&(ADC1->DR));
+	// printf("CPAR addr: 0x%08x\n", DMA1_Channel1->CPAR);
 
 	// Set buffer memory address
 	DMA1_Channel1->CMAR = (uint32_t) dest_addr;

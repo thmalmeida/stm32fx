@@ -11,6 +11,7 @@
 #include "iwdg.h"
 #include "adc_driver.hpp"
 
+#include "delay.hpp"
 #include "dsp.hpp"
 
 /* list of I2C addresses */
@@ -229,7 +230,6 @@ public:
 					break;
 				}
 				case PCY8575_REG_I_PROCESS: {
-					// irms_ = irms();	// this conversion located here will depends the time calculation because the i2c transfer time
 					process();
 				}
 					break;
@@ -240,12 +240,11 @@ public:
 					break;
 				}
 				case PCY8575_REG_I_DATA: {
-					i2c_data_tx = (uint8_t*)&adc0.stream_data_p[0];
-					i2c_data_tx = &adc_array8_raw_[0];
+					i2c_data_tx = (uint8_t*) adc_array16_raw_;
 					break;
 				}
 				case PCY8575_REG_I_SET_NP: {
-					adc0.stream_length((i2c_data_rx[2] << 8) | i2c_data_rx[1]);
+					adc0.stream_length_config((i2c_data_rx[2] << 8) | i2c_data_rx[1]);
 					break;
 				}
 				case PCY8575_REG_I_GET_NP: {
@@ -359,7 +358,10 @@ public:
 		// ADC_driver adc0(adc_mode::stream);
 		adc0.stream_init();
 		adc0.channel_config(3);
-		adc0.stream_addr_config(adc_array16_raw_, n_points);
+
+		adc_malloc(n_points);
+		adc0.stream_addr_config(adc_array16_raw_);
+		adc0.stream_length_config(n_points);
 		// adc0.stream_addr_config(n_points);
 		// memset(adc_array_raw, 0, sizeof(adc_array_raw));
 		// ---- end	
@@ -367,6 +369,18 @@ public:
 	// void adc_config(ADC_driver* adc) {
 		// adc0_ = adc;
 	// }
+	void adc_malloc(int length) {
+		if(!adc_alloc_flag_) {
+			adc_alloc_flag_ = 1;
+			adc_array16_raw_ = (uint16_t*) malloc(length*sizeof(uint16_t));
+		} else {
+			adc_array16_raw_ = (uint16_t*) realloc(adc_array16_raw_, length*sizeof(uint16_t));
+		}
+	}
+	void adc_buffer_clear(void) {
+		// delete[] adc_array16_raw_;
+		free(adc_array16_raw_);
+	}
 
 	// dsp functions
 	uint16_t irms(void) {
@@ -380,9 +394,18 @@ public:
 
 		// Read stream array from ADC using DMA and fill stream_data_p memory pointer
 		adc0.stream_read();
+		// delay_ms(100);
+
+		uint32_t count = 0;
+		while(!adc0.stream_ready()) {
+			count++;
+			delay_ms(1);
+		}
+
+		printf("Count: %lu\n", count);
 
 		// Convert digital ADC raw array to iL(t) signal;
-		s0_.calc_iL_t(&adc0.stream_data_p[0], &iL_t[0], n_samples);
+		s0_.calc_iL_t(adc_array16_raw_, &iL_t[0], n_samples);
 
 		// Remove DC offset
 		s0_.dc_remove(&iL_t[0], n_samples);
@@ -393,7 +416,7 @@ public:
 		// print adc raw values for debug purposes
 		// printf("adc_buffer: ");
 		// for(int i=0; i<n_samples; i++) {
-		// 	printf("%u, ", adc_buffer2[i]);
+		// 	printf("%u, ", adc_array16_raw_[i]);
 		// }
 		// printf("\n");
 
@@ -405,18 +428,8 @@ public:
 	}
 	void process(void) {
 		irms_ = irms();
-		for(int i=0; i<397*2; i+=2) {
-			adc_array8_raw_[i] = 0x00FF & adc0.stream_data_p[i];	// low byte first
-			adc_array8_raw_[i+1] = adc0.stream_data_p[i] >> 8;				// high byte
-		}
-
-		printf("adc_data_raw_: ");
-		for(auto i=0; i<adc0.stream_length(); i++) {
-			printf("%u, ", adc_array8_raw_[i]);
-		}
-		printf("\n");
-
 		print_samples();
+		printf("irms: %u\n\n", irms_);
 	}
 	// void convert_8_to_16(uint8_t* src, uint16_t* dest, int src_len) {
 
@@ -426,14 +439,25 @@ public:
 	// }
 	void print_samples(void) {
 
-		if(adc0.stream_ready()) {
+		// if(adc0.stream_ready()) {
 			printf("stream_data_p: ");
 			for(auto i=0; i<adc0.stream_length(); i++) {
-				printf("%u, ", adc0.stream_data_p[i]);
+				printf("%u, ", adc_array16_raw_[i]);
 			}
 			printf("\n");
-			printf("irms: %u\n\n", irms_);
-		}
+		// }
+
+				// for(int i=0; i<adc0.stream_length()*2; i+=2) {
+		// 	adc_array8_raw_[i] = 0x00FF & adc_array16_raw_[i];	// low byte first
+		// 	adc_array8_raw_[i+1] = adc_array16_raw_[i] >> 8;				// high byte
+		// }
+
+		// printf("adc_data_raw_: ");
+		// for(auto i=0; i<adc0.stream_length(); i++) {
+		// 	printf("%u, ", adc_array8_raw_[i]);
+		// }
+		// printf("\n");
+
 	}
 
 	// Test functions
@@ -469,7 +493,7 @@ private:
 	// ADC sensors
 	ADC_driver adc0;
 	uint16_t *adc_array16_raw_;
-	uint8_t *adc_array8_raw_;
+	uint8_t adc_alloc_flag_ = 0;
 };
 
 #endif // _PCY8575_HPP__

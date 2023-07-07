@@ -78,8 +78,8 @@ uint8_t MSL_bit = 0;		// bit 0
 // state machine variables
 volatile uint8_t i2c_has_data_rx = 0;
 volatile uint8_t i2c_has_data_tx = 0;
-volatile uint8_t i2c_data_rx_size = 0;
-volatile uint8_t i2c_data_tx_size = 0;
+volatile uint16_t i2c_data_rx_size = 0;
+volatile uint16_t i2c_data_tx_size = 0;
 // enum class state_mode {
 // 	receiver = 0,
 // 	transmitter

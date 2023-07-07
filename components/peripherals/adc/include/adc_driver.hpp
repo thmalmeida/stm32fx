@@ -20,7 +20,7 @@
 // STM32----------------------
 #include "adc.h"
 #include "stm32_log.h"
-#include "delay.h"
+// #include "delay.hpp"
 // ---------------------------
 
 /*
@@ -308,13 +308,12 @@ public:
 		adc_module_disable();
 		adc_init();											// Configure ADC control registers;
 		adc_set_num_reg_channels(1);
-		// adc_set_channel_to_rank(3, 1);
-		// adc_set_rank_sampling_time(1, 7);
+		// adc_set_channel_to_rank(3, 1);					// set channel 3 on rank 1;
+		// adc_set_rank_sampling_time(1, 7);				// set channel 1 with sampling time 111;
 		adc_module_enable();
 		adc_dma_init();										// Configure DMA, link with ADC peripheral and enable;
 		// adc_dma_config_addr(dest_addr, size);				// Configure DMA array address to write ADC values;
-		// adc_dma_config_it();								// Configure DMA half and complete transfer interruption;
-		
+		adc_dma_config_it();								// Configure DMA half and complete transfer interruption;		
 
 		// Using registers
 		// adc_dma_begin((uint32_t*)&adc_buffer[0], ADC_BUFLEN);
@@ -325,6 +324,10 @@ public:
 		// printf("ADC_drive: nothing to do\n");
 	}
 	void stream_deinit(void) {
+		if(HAL_ADC_DeInit(hadc1_) != HAL_OK) {
+			printf("ADC DeInit error!\n");
+			Error_Handler();
+		}
 	}
 	void stream_read(uint16_t *buffer, int length) {
 
@@ -337,7 +340,7 @@ public:
 		// HAL_ADC_Stop_DMA(hadc1_);
 	}
 	void stream_read(void) {
-		adc_dma_set_addr_cnt(n_points);
+		adc_dma_set_addr_cnt(n_points_);
 		adc_start_conversion();
 		// printf("\nADC: start conversion... ");
 		// delay_ms(100);
@@ -349,50 +352,30 @@ public:
 			// printf("ADC read complete!\n");
 
 			// printf("\nadc_array_raw addr %p:: ", stream_data_);
-			// for(auto i=0; i<n_points; i++) {
+			// for(auto i=0; i<n_points_; i++) {
 			// 	printf("%lu, ", stream_data_[i]);
 			// }
 			// printf("\n");
 			return 1;
-		} else 
+		} else {
+			// printf("r0\n");
 			return 0;
-	}
-	void stream_addr_config(uint16_t* adc_array, int size) {
-		stream_data_p = adc_array;
-		n_points = size;
-
-		printf("ADDR2: %p\n", stream_data_p);
-		adc_dma_config_addr(stream_data_p, n_points);
-		adc_dma_config_it();
-	}
-	void stream_addr_config(int size) {
-		if(!stream_data_p) {
-			printf("stream_addr_config nullptr\n");
-			stream_data_p = new uint16_t[size];
 		}
-		else {
-			printf("stream_addr_config delete[] 0\n");
-			delete[] stream_data_p;
-			printf("stream_addr_config delete[] 1\n");
-			stream_data_p = new uint16_t[size];
-			printf("stream_addr_config delete[] 2\n");
-		}
-		n_points = size;
-		adc_dma_config_addr(stream_data_p, n_points);
-		adc_dma_config_it();
+	}
+	void stream_addr_config(uint16_t* adc_array) {
+		stream_data_p_ = adc_array;
+		adc_dma_config_addr(stream_data_p_, 0);
 	}
 	void stream_start(void) {
 		adc_start_conversion();
 	}
 	int stream_length(void) {
-		return n_points;
+		return n_points_;
 	}
-	void stream_length(int length) {
-		n_points = length;
+	void stream_length_config(int length) {
+		n_points_ = length;
+		adc_dma_set_addr_cnt((uint32_t) n_points_);
 	}
-	// uint32_t *stream_addr(void) {
-	// 	return stream_data_p;
-	// }
 
 	void calibrate(void) {
 		HAL_ADCEx_Calibration_Start(hadc1_);
@@ -405,9 +388,6 @@ public:
 		}
 	}
 
-	uint16_t *stream_data_p;	// pointer to adc array
-	int n_points;				// number of points used on ADC dma conversion
-
 private:
 	int channel_;
 	int num_channels = 1;
@@ -415,6 +395,9 @@ private:
 	uint32_t channel_addr_;		// channel type converted
 	int cirp_ = -1;				// channel index rank position
 	pattern_s ptable_[17];		// pattern table
+
+	uint16_t *stream_data_p_;	// pointer to adc array
+	int n_points_ = 0;			// number of points used on ADC dma conversion
 
 	// STM32F specifics
 	uint32_t adc_sampletime_ = ADC_SAMPLETIME_239CYCLES_5;			// sampling time in cycles to make one conversion Fs = adc_clk/(adc_sampletime + Tfix);

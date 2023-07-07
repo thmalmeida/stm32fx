@@ -3,6 +3,7 @@
 
 #include "i2c_master.hpp"
 #include "stm32_log.h"
+#include "delay.hpp"
 
 #include <string.h>
 
