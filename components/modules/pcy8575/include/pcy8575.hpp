@@ -244,7 +244,10 @@ public:
 					break;
 				}
 				case PCY8575_REG_I_SET_NP: {
-					adc0.stream_length_config((i2c_data_rx[2] << 8) | i2c_data_rx[1]);
+					int num = (i2c_data_rx[2] << 8) | i2c_data_rx[1];
+					adc_malloc(num);
+					adc0.stream_addr_config(adc_array16_raw_);
+					adc0.stream_length_config(num);
 					break;
 				}
 				case PCY8575_REG_I_GET_NP: {
