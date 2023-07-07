@@ -205,6 +205,7 @@ public:
 					#endif
 					output_ = (i2c_data_rx[2] << 8) | i2c_data_rx[1];
 					put(output_);
+					backup_DR1_set(output_);
 					break;
 				}
 				case PCY8575_REG_GET: { // GET

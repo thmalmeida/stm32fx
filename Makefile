@@ -87,13 +87,12 @@ components/helper/delay.cpp \
 components/math/dsp.cpp \
 components/modules/pcy8575/pcy8575.cpp \
 components/peripherals/adc/adc_driver.cpp \
+components/modules/aht10/aht10.cpp \
 components/peripherals/gpio/gpio.cpp \
 components/peripherals/backup/backup.cpp \
 components/peripherals/backup/reset_reason.cpp \
 components/peripherals/i2c_master/i2c_master.cpp \
 components/peripherals/tim/tim_driver.cpp
-
-# components/modules/aht10/aht10.cpp \
 # $(SRC_DIR)/usart.cpp
 
 # ASM sources
@@ -181,6 +180,7 @@ CXX_INCLUDES = \
 -Icomponents/peripherals/gpio/include \
 -Icomponents/peripherals/i2c_master/include \
 -Icomponents/peripherals/tim/include
+
 
 # compile gcc flags
 #-fno-exceptions: C++ only. Disables the generation of code that is needed to support C++ exceptions.
