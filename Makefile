@@ -26,7 +26,7 @@ DEBUG = 1
 # optimization
 # Os - Performs optimizations to reduce the code size at the expense of a possible increase in execution time. This option aims for a balanced code size reduction and fast performance.
 # Oz - Optimizes for smaller code size.
-OPT = -O1
+OPT = -Oz
 
 #######################################
 # paths
@@ -83,6 +83,7 @@ CXX_SOURCES2=$(shell find -L $(SRC_DIR) -name '*.cpp')
 # CPP sources
 CXX_SOURCES = \
 $(SRC_DIR)/main.cpp \
+$(SRC_DIR)/test_functions.cpp \
 components/helper/delay.cpp \
 components/math/dsp.cpp \
 components/modules/pcy8575/pcy8575.cpp \
@@ -135,8 +136,8 @@ CPU = -mcpu=cortex-m3
 FLOAT-PRINT = -u _printf_float
 
 # mcu
-# MCU = $(CPU) -mthumb $(FPU) $(FLOAT-ABI) $(FLOAT-PRINT) -specs=nosys.specs -specs=nano.specs
-MCU = $(CPU) -mthumb $(FPU) $(FLOAT-ABI) -specs=nosys.specs -specs=nano.specs
+MCU = $(CPU) -mthumb $(FPU) $(FLOAT-ABI) $(FLOAT-PRINT) -specs=nosys.specs -specs=nano.specs
+# MCU = $(CPU) -mthumb $(FPU) $(FLOAT-ABI) -specs=nosys.specs -specs=nano.specs
 
 # MCU = $(CPU) -mthumb -fmessage-length=0 -fsigned-char -Wall -Wextra -ffunction-sections -fdata-sections#$(FPU) $(FLOAT-ABI)
 # macros for gcc

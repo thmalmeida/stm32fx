@@ -208,20 +208,7 @@ void SysTick_Handler(void)
 /* For the available peripheral interrupt handler names,                      */
 /* please refer to the startup file (startup_stm32f1xx.s).                    */
 /******************************************************************************/
-// void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c) {
-// 	printf("Receive complete!\n");
-// }
-// void HAL_I2C_AddrCallback(I2C_HandleTypeDef *hi2c, uint8_t TransferDirection, uint16_t AddrMatchCode)
-// {
-// 	printf("AddrMatchCode:0x%02x, TRA: %d \n", AddrMatchCode, TransferDirection);
 
-// 	i2c_transfer_direction = TransferDirection;
-// 		// HAL_I2C_Slave_Receive_IT(hi2c, &data_rx[0], 5);
-
-// 		// for(int i=0; i<5; i++) {
-// 		// 	printf("data_rx[%d]: \n", i, data_rx[i]);
-// 		// }
-// }
 /**
   * @brief This function handles I2C2 event interrupt.
   */
