@@ -18,6 +18,10 @@
 #include "backup.hpp"
 #include "reset_reason.hpp"
 
+// time test
+#include <time.h>
+#include <chrono>
+
 void i2c_slave_pcy8575(void);
 
 void test_aht10(void);
@@ -33,5 +37,6 @@ void test_adc_stream_reg(void);
 void test_bkp(void);
 void test_pjb20(void);
 void test_timer_pwm(void);
+void test_time(void);
 
 #endif

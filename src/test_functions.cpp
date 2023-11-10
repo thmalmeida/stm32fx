@@ -716,6 +716,30 @@ void test_timer_pwm(void) {
 	
 }
 
+void test_time(void) {
+	struct tm *p;
+	time_t t;
+
+	// t = time(NULL);		
+	// t = 10;
+
+	TIM_driver tim3(3, 1, timer_mode::timer_interrupt);
+
+	const auto p1 = std::chrono::system_clock::now();
+
+	printf("Time since epoch: %d\n", std::chrono::duration_cast<std::chrono::seconds>(p1.time_since_epoch()).count());
+
+	printf("sizeof(t): %d\n", sizeof(t));
+
+	while(1) {
+		t += tim3.get_uptime();
+		p = localtime(&t);
+		printf("%lu, %s\n",static_cast<uint32_t>(t), asctime(p));
+		// printf("%u\n", 	tim3.get_uptime());
+		delay_ms(1000);
+	}
+
+}
 
 // Example to declare an array of GPIO_driver class
 // #include "gpio"

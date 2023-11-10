@@ -127,7 +127,7 @@ public:
 		// I2C slave initialization
 		i2c_init(PCY8575_ADDR, PCY8575_NORMAL_SPEED);
 
-		// Restore last output pins before reset
+		// Restore the latest output pins state
 		put(backup_DR1_get());
 
 		// WDT init
@@ -322,7 +322,7 @@ public:
 
 		// 1 second flag
 		if(timer_.get_isr_flag()) {
-			// process();				// start adc dma stream each one second;
+			process();				// start adc dma stream each one second;
 			iwdg_refresh();			// clear wdt to prevent reset
 		}
 	}
@@ -397,7 +397,9 @@ public:
 	// dsp functions
 	uint16_t irms(void) {
 
+		// number of samples
 		int n_samples = adc0.stream_length();
+	
 		// time domain load current;
 		double iL_t[n_samples];
 
@@ -440,11 +442,13 @@ public:
 		return static_cast<uint16_t>(iL_rms*1000);
 	}
 	void process(void) {
-		irms_ = irms();
-		#ifdef PCY8575_DEBUG_PRINT
-		print_samples();
-		printf("irms: %u\n\n", irms_);
-		#endif
+		if(output_ & 0xFFFF) {
+			irms_ = irms();
+			#ifdef PCY8575_DEBUG_PRINT
+			print_samples();
+			printf("irms: %u\n\n", irms_);
+			#endif
+		}
 	}
 	// void convert_8_to_16(uint8_t* src, uint16_t* dest, int src_len) {
 
@@ -505,7 +509,7 @@ private:
 	// for uptime and 1 second flag
 	TIM_driver timer_;
 
-	// DSP functions;
+	// Digital Signal Processing (DSP) functions;
 	DSP s0_;
 
 	// ADC sensors

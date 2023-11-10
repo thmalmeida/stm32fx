@@ -22,6 +22,7 @@ int main(void)
 	// test_aht10();
 	// test_bkp();
 	// test_pwm();
+	// test_time();
 
     return 0;
 }
