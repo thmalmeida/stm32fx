@@ -62,6 +62,9 @@ opcode:
 
 protocol example
 
+I2C protocol is coordinated by master. Always start by write before read command. It requires a minimum delay time to slave process
+the requested data.
+
 PROBE:		write													read
 Start | ADDR - R/W = 0 | PROBE	| Stop | ... delay ... | Start | ADDR - R/W = 1 | byte 0 | Stop |
 
@@ -82,6 +85,9 @@ Start | ADDR - R/W = 0 | TEMP   | Stop | ... delay ... | Start | ADDR - R/W = 1 
 
 UPTIME:		write												 Read			     	32 bits
 Start | ADDR - R/W = 0 | UPTIME | Stop | ... delay ... | Start | ADDR - R/W = 1 | byte L  | byte L | byte H | byte H | Stop |
+
+I_PROCESS:	write
+Start | ADDR - R/W = 0 | I_PROCESS | Stop |
 
 IRMS:		write																		16 bits
 Start | ADDR - R/W = 0 | IRMS	| Stop | ... delay ... | Start | ADDR - R/W = 1 | byte L  | byte H | Stop |
@@ -237,10 +243,10 @@ public:
 					i2c_data_tx = &data_tx_[0];
 					break;
 				}
-				case PCY8575_REG_I_PROCESS: {
+				case PCY8575_REG_I_PROCESS: {	// Calc i rms
 					process();
-				}
 					break;
+				}
 				case PCY8575_REG_IRMS: {
 					data_tx_[0] = static_cast<uint8_t>(irms_);
 					data_tx_[1] = static_cast<uint8_t>(irms_ >> 8);
