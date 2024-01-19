@@ -328,7 +328,9 @@ public:
 
 		// 1 second flag
 		if(timer_.get_isr_flag()) {
-			process();				// start adc dma stream each one second;
+			if(config_ & 0x0001) {
+				process();				// start adc dma stream each one second;
+			}
 			iwdg_refresh();			// clear wdt to prevent reset
 		}
 	}
@@ -448,13 +450,13 @@ public:
 		return static_cast<uint16_t>(iL_rms*1000);
 	}
 	void process(void) {
-		if(output_ & 0xFFFF) {
+		// if(output_ & 0xFFFF) {
 			irms_ = irms();
 			#ifdef PCY8575_DEBUG_PRINT
 			print_samples();
 			printf("irms: %u\n\n", irms_);
 			#endif
-		}
+		// }
 	}
 	// void convert_8_to_16(uint8_t* src, uint16_t* dest, int src_len) {
 
@@ -510,6 +512,28 @@ private:
 	uint16_t uptime_temp_ = 0;
 	uint16_t irms_ = 0;
 	uint8_t data_tx_[10];
+	/*
+	config_:
+		16 - 
+		15
+		14
+		13
+		12
+		11
+		10
+		09
+		08
+		07
+		06
+		05
+		04
+		03
+		02
+		01
+		00
+	*/
+	uint16_t config_ = 0x0001;		// internal working parameters with 16 bit values;
+
 	// const std::size_t pin_count_ = sizeof(pin_) / sizeof(pin_[0]);
 
 	// for uptime and 1 second flag

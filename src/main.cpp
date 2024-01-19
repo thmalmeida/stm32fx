@@ -11,7 +11,7 @@ int main(void)
 	// printf("\nSystem reset...\n");			// Beautiful welcome message;
 
 	/* your sample code */
-	i2c_slave_pcy8575();
+	// i2c_slave_pcy8575();
 	// test_adc_dma();
 	// test_adc_dma_tim_class();
 	// test_adc_oneshot();
@@ -19,7 +19,7 @@ int main(void)
 	// test_adc_stream_re	g();
 	// test_timer_pwm();
 	// test_pjb20();
-	// test_aht10();
+	test_aht10();
 	// test_bkp();
 	// test_pwm();
 	// test_time();
