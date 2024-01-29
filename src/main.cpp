@@ -8,10 +8,12 @@ int main(void)
 	HAL_Delay(10);							// little delay after peripheral reset;
 	SystemClock_Config_48MHz_HSE_ADC();		// Configure the system clock
 	// SystemClock_Config_8MHZ_HSI();
-	// printf("\nSystem reset...\n");			// Beautiful welcome message;
+	// printf("\nSystem reset...\n");		// Beautiful welcome message;
 
-	/* your sample code */
+	/* I2C to gpio main code. It works with Acionna0 */
 	// i2c_slave_pcy8575();
+
+	/* Test functions */
 	// test_adc_dma();
 	// test_adc_dma_tim_class();
 	// test_adc_oneshot();

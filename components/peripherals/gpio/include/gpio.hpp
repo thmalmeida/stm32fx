@@ -25,6 +25,13 @@
 /**
  * TODO fazer melhor controle da variavel driver_instaled, que contém quantos dispositivos
  * 	estao se utilizando do driver de interrucao
+ *
+ * Usage example:
+ * 1- Object instance
+ * GPIO_driver pin0(3, 0)
+ * 
+ * 2- Configure the mode of operation
+ * pin0.mode()
  */
 
 class GPIO_driver{

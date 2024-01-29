@@ -41,14 +41,7 @@
 
 #else
 
-#include <stm32f10x.h>
-
-#include "Hardware/adc.h"
-#include "Hardware/usart.h"
-#include "Hardware/spi.h"
-#include "Hardware/gpio.h"
-
-#include "nokia5110/nokia5110.h"
+#include "gpio.hpp"
 
 //#define pin_data_HX711	32
 //#define pin_sck_HX711	31
@@ -63,15 +56,17 @@ public:
 	int stabWeight = 501;		//
 	int unstWeight = 25000;	//
 
+	// Array constants of approximation
 	const double betaV[2][11] = {{0.01, 0.02, 0.03, 0.04, 0.07, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0},
 								 {0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.1, 0.2, 0.3}};
 
+	// ?
 	int WeightIndex = 0;
 
 	uint8_t pin_data_HX711;
 	uint8_t pin_sck_HX711;
 
-	uint8_t stable = 0;
+	uint8_t stable = 0;						// stable state when weight is found
 
 	int timeD = 1;							// time/frequency of HX711 interface;
 	int offset = 0;							// offset after tare;
@@ -85,12 +80,12 @@ public:
 	int signal;
 	int error;
 
-	double beta = 0.05;
-	static const int Waccu = 100;			//
+	double beta = 0.05;						// beta constant used initially
+	static const int Waccu = 100;			// raw weight accuracy used;
 //	static const int Werror = Waccu*0.10;	// 1000;
 //	double A = 1.3299;						// mV/V signal response;
-	double A;//= 3.0012;						// mV/V signal response;
-	double Kp;// = 1.1030;						// proportional constant;
+	double A;								// mV/V signal response (3.0012);
+	double Kp;								// proportional constant (1.1030);
 	double Vrange = 20.0;					// Small signal scale range [mV];
 	double scaleHalf = 8388607.0;			// ((2^24)/2)-1;
 	double Wmax = 1000.0;					// Sensor max weight [g];
