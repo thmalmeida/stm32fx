@@ -6,8 +6,8 @@
  * modified on: 2023-03-01
  */
 
-#ifndef GPIO_HPP__
-#define GPIO_HPP__
+#ifndef GPIO_DRIVER_H__
+#define GPIO_DRIVER_H__
 
 #include <stdio.h>
 #include <stdint.h>
@@ -28,15 +28,16 @@
  *
  * Usage example:
  * 1- Object instance
- * GPIO_driver pin0(3, 0)
+ * GPIO_DRIVER pin0(3, 0)
  * 
  * 2- Configure the mode of operation
  * pin0.mode()
  */
 
-class GPIO_driver{
+class GPIO_DRIVER{
 	public:
-		GPIO_driver(int pin_number, int direction);
+		GPIO_DRIVER(int pin_number);
+		GPIO_DRIVER(int pin_number, int direction);
 
 		void mode(int direction);
 		int read(void);
@@ -57,7 +58,7 @@ class GPIO_driver{
 		// static void deep_sleep_hold(bool hold);
 
 		// void* get_isr_args();
-		~GPIO_driver();
+		~GPIO_DRIVER();
 
 	// protected:
 		// int level = 0;
@@ -73,7 +74,7 @@ class GPIO_driver{
 };
 
 // typedef struct {
-// 	GPIO_driver* esse;
+// 	GPIO_DRIVER* esse;
 // 	void* args;
 // }gpio_isr_args_t;
 

@@ -3,7 +3,7 @@
 
 #include "i2c.h"
 // #include "tim.h"						
-#include "gpio.hpp"
+#include "gpio_driver.h"
 #include "stm32_log.h"
 #include "backup.hpp"
 #include "reset_reason.hpp"
@@ -505,7 +505,7 @@ public:
 private:
 
 	uint8_t reg_addr_ = 0;			// i2c protocol: register to read
-	GPIO_driver pin_[num_pins];
+	GPIO_DRIVER pin_[num_pins];
 	uint16_t output_ = 0;
 	uint16_t port_config_ = 0xFFFF;
 	uint16_t temp_ = 0;

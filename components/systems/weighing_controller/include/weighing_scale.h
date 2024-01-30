@@ -1,4 +1,7 @@
-#pragma once
+#ifndef __WEIGHING_SCALE_H__
+#define __WEIGHING_SCALE_H__
+
+#include "load_cell.h"
 
 /* This class defines the controller of weighing scale. It uses each load cell as an object with it's parameters.
 * 
@@ -12,8 +15,23 @@
 */
 
 class WEIGHING_SCALE {
-    public:
+public:
 
-    private:
+	WEIGHING_SCALE(void) {
+		init();
+	}
 
-}
+	void init(void) {
+
+	}
+
+    void tare_system3(void) {
+		// int Ssum = 0;
+		// for(int i=0; i<nWeight; i++) {
+		// 	Ssum+= signalVect[i];
+		// }
+		// offset = Ssum/nWeight;
+	}
+};
+
+#endif //__WEIGHING_SCALE_H__

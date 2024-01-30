@@ -603,7 +603,7 @@ void test_aht10(void) {
 	aht10 sensor0(&i2c);
 	sensor0.init(aht10_mode::NORMAL_MODE);
 
-	GPIO_driver led0(1, 1);
+	GPIO_DRIVER led0(1, 1);
 	led0.write(1);
 	int count = 0;
 
@@ -741,10 +741,10 @@ void test_time(void) {
 
 }
 
-// Example to declare an array of GPIO_driver class
+// Example to declare an array of GPIO_DRIVER class
 // #include "gpio"
-// GPIO_driver pin0[] = {
-// 	GPIO_driver{3, 1}, GPIO_driver{4, 1}, GPIO_driver{5, 1}, GPIO_driver{6, 1},
-// 	GPIO_driver{7, 1}, GPIO_driver{8, 1}, GPIO_driver{9, 1}, GPIO_driver{10,1},
-// 	GPIO_driver{11,1}, GPIO_driver{12,1}, GPIO_driver{13,1}, GPIO_driver{14,1},
-// 	GPIO_driver{15,1}, GPIO_driver{16,1}, GPIO_driver{17,1}};
+// GPIO_DRIVER pin0[] = {
+// 	GPIO_DRIVER{3, 1}, GPIO_DRIVER{4, 1}, GPIO_DRIVER{5, 1}, GPIO_DRIVER{6, 1},
+// 	GPIO_DRIVER{7, 1}, GPIO_DRIVER{8, 1}, GPIO_DRIVER{9, 1}, GPIO_DRIVER{10,1},
+// 	GPIO_DRIVER{11,1}, GPIO_DRIVER{12,1}, GPIO_DRIVER{13,1}, GPIO_DRIVER{14,1},
+// 	GPIO_DRIVER{15,1}, GPIO_DRIVER{16,1}, GPIO_DRIVER{17,1}};

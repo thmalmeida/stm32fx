@@ -1,7 +1,7 @@
 #ifndef __HX711_H__
 #define __HX711_H__
 
-#include "gpio.hpp"
+#include "gpio_driver.h"
 
 /* This files is used to control the HX711 module
 * 
@@ -18,6 +18,15 @@ public:
 	HX711(int pin_dout, int pin_pd_sck) : pin_{{pin_dout},{pin_pd_sck}} {
 		pin_[0].mode(0);	// set pin_dout as input
 		pin_[1].mode(1);	// set pin sck as output
+
+		
+		// gateConfig(pin_data, 0);		// data pin
+		// gateConfig(pin_sck, 1);			// sck pin
+		// gateConfig(pin_tare_HX711, 0);	// data pin
+		// gateConfig(pin_led, 1);			// led
+		// gateConfig(pin_beep, 1);		// beep
+		// pin_data_HX711 = pin_data;
+		// pin_sck_HX711 = pin_sck;
 	}
 	uint32_t read(void) {
 		uint32_t value = 0;
@@ -29,11 +38,11 @@ public:
 		for(int i=0; i<24; i++) {
 
 			// start new wave cycle
-			write_pin_sck(1);
-			_delay_us(HX711_time_protocol_us);
+			write_pin_sck_(1);
+			delay_us(HX711_time_protocol_us);
 
 			write_pin_sck_(0);
-			_delay_ms(HX711_time_protocol_us);
+			delay_ms(HX711_time_protocol_us);
 
 			// shift buffer left before add the new bit
 			value <<= 1;
@@ -46,16 +55,16 @@ public:
 		// value ^= 0x800000;
 
 		write_pin_sck_(1);
-		_delay_us(HX711_time_protocol_us);
+		delay_us(HX711_time_protocol_us);
 
 		write_pin_sck_(0);
-		_delay_us(HX711_time_protocol_us);
+		delay_us(HX711_time_protocol_us);
 
 		return value;
 	}
 	void power_down(void) {
 		write_pin_sck_(1);
-		_delay_us(65);
+		delay_us(65);
 	}
 	void reset(void) {
 		power_down();
@@ -64,7 +73,7 @@ public:
 
 private:
 
-	GPIO_driver pin_[2];
+	GPIO_DRIVER pin_[2];
 
 	void write_pin_sck_(int status) {
 		if(status) {
@@ -72,9 +81,9 @@ private:
 		}
 	}
 	uint32_t read_pin_data_(void) {
-		uin32_t value = 0;
+		uint32_t value = 0;
 		return value;
 	}
-}
+};
 
 #endif

@@ -1,6 +1,6 @@
-#include "gpio.hpp"
+#include "gpio_driver.h"
 
-GPIO_driver::GPIO_driver(int pin_number, int direction) : direction_(direction){
+GPIO_DRIVER::GPIO_DRIVER(int pin_number, int direction) : direction_(direction){
 	
 	GPIO_InitTypeDef GPIO_InitStruct;// = {0};
 	/* GPIO Ports Clock Enable */
@@ -269,11 +269,11 @@ GPIO_driver::GPIO_driver(int pin_number, int direction) : direction_(direction){
 	// this->num = num;
 	// gpio_set_direction(num,mode);
 }
-GPIO_driver::~GPIO_driver() {
+GPIO_DRIVER::~GPIO_DRIVER() {
 	// unregister_interrupt();
 	// void HAL_GPIO_DeInit(GPIO_TypeDef  *GPIOx, uint32_t GPIO_Pin)
 }
-void GPIO_driver::mode(int direction) {
+void GPIO_DRIVER::mode(int direction) {
 
 	GPIO_InitTypeDef GPIO_InitStruct;// = {0};
 
@@ -293,7 +293,7 @@ void GPIO_driver::mode(int direction) {
 
 	HAL_GPIO_Init(port_, &GPIO_InitStruct);
 }
-int GPIO_driver::read(void) {
+int GPIO_DRIVER::read(void) {
 
 	// GPIO_PinState HAL_GPIO_ReadPin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
 	if(!direction_) {
@@ -310,42 +310,42 @@ int GPIO_driver::read(void) {
 	// level = gpio_get_level(num);
 	return level_;
 }
-void GPIO_driver::write(int level) {
+void GPIO_DRIVER::write(int level) {
 	/*Configure GPIO pin Output Level into STM32*/
 	level_ = level;
 	HAL_GPIO_WritePin(port_, gpio_pin_mask_, static_cast<GPIO_PinState>(level_));
 	// gpio_set_level(num, level);
 }
-void GPIO_driver::toggle(void) {
+void GPIO_DRIVER::toggle(void) {
 	level_ = !level_;
 	// write(level);
 	HAL_GPIO_TogglePin(port_, gpio_pin_mask_);
 }
-void GPIO_driver::reset(void) noexcept
+void GPIO_DRIVER::reset(void) noexcept
 {
 	// gpio_reset_pin(num);
 }
-// void GPIO_driver::pull(gpio_pull_mode_t mode){
+// void GPIO_DRIVER::pull(gpio_pull_mode_t mode){
 // 	// gpio_set_pull_mode(num, mode);
 // }
-// void GPIO_driver::strength(gpio_drive_cap_t cap){
+// void GPIO_DRIVER::strength(gpio_drive_cap_t cap){
 // 	// gpio_set_drive_capability(num, cap);
 // }
-// void GPIO_driver::hold(bool hold){
+// void GPIO_DRIVER::hold(bool hold){
 // 	// if(hold){
 // 	// 	gpio_hold_en(num);
 // 	// } else {
 // 	// 	gpio_hold_dis(num);
 // 	// }
 // }
-// void GPIO_driver::deep_sleep_hold(bool hold){
+// void GPIO_DRIVER::deep_sleep_hold(bool hold){
 // 	// if(hold){
 // 	// 	gpio_deep_sleep_hold_en();
 // 	// } else {
 // 	// 	gpio_deep_sleep_hold_dis();
 // 	// }
 // }
-// void GPIO_driver::register_interrupt(gpio_isr_t handler, void* isr_args){
+// void GPIO_DRIVER::register_interrupt(gpio_isr_t handler, void* isr_args){
 // 	// if(driver_instaled == 0){
 // 	// 	gpio_install_isr_service(GPIO_INTERRUPT_FLAGS);
 // 	// 	driver_instaled++;
@@ -354,7 +354,7 @@ void GPIO_driver::reset(void) noexcept
 // 	// this->isr_args = isr_args;
 // 	// gpio_isr_handler_add(num, handler,this);
 // }
-// void GPIO_driver::unregister_interrupt(){
+// void GPIO_DRIVER::unregister_interrupt(){
 // 	// if(driver_instaled == 0){
 // 	// 	return;
 // 	// }
@@ -366,13 +366,13 @@ void GPIO_driver::reset(void) noexcept
 // 	// 	gpio_uninstall_isr_service();
 // 	// }
 // }
-// void GPIO_driver::enable_interrupt(gpio_int_type_t type){
+// void GPIO_DRIVER::enable_interrupt(gpio_int_type_t type){
 // 	// gpio_set_intr_type(num, type);
 // 	// gpio_intr_enable(num);
 // }
-// void GPIO_driver::disable_interrupt(){
+// void GPIO_DRIVER::disable_interrupt(){
 // 	// gpio_intr_disable(num);
 // }
-// void* GPIO_driver::get_isr_args(){
+// void* GPIO_DRIVER::get_isr_args(){
 // 	// return isr_args;
 // }
