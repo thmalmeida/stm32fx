@@ -15,7 +15,7 @@
 class HX711 {
 public:
 
-	HX711(int pin_dout, int pin_pd_sck) : pin_{{pin_dout},{pin_pd_sck}} {
+	HX711(int pin_dout, int pin_pd_sck) : pin_{{pin_dout, 0},{pin_pd_sck, 1}} {
 		pin_[0].mode(0);	// set pin_dout as input
 		pin_[1].mode(1);	// set pin sck as output
 
@@ -81,8 +81,7 @@ private:
 		}
 	}
 	uint32_t read_pin_data_(void) {
-		uint32_t value = 0;
-		return value;
+		return static_cast<uint32_t>(pin_[0].read());
 	}
 };
 

@@ -64,12 +64,16 @@ public:
 	// void drive_led_blink();
 	// void drive_led(uint8_t status);
 
+	LOAD_CELL(int pin_data, int pin_sck) : hx711_{pin_data, pin_sck} {
+
+	}
+
 	/* @brief initialize with pins and constants
 	* @param pin_data input pin to receive data on serial mode
 	* @param pin_sck clock output to hx711 module
 	*
 	*/
-	void init(uint8_t pin_data, uint8_t pin_sck, double _A, double _Kp) {
+	void init(double _A, double _Kp) {
 		A = _A;
 		Kp = _Kp;
 	}
@@ -168,7 +172,6 @@ public:
 
 		return Weight;
 }
-
 
 private:
 	HX711 hx711_;

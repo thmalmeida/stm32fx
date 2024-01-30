@@ -17,12 +17,19 @@
 class WEIGHING_SCALE {
 public:
 
-	WEIGHING_SCALE(void) {
+	WEIGHING_SCALE(int pin_data_1, int pin_sck_1,
+					int pin_data_2, int pin_sck_2,
+					int pin_data_3, int pin_sck_3,
+					int pin_data_4, int pin_sck_4) : load_cell_{{pin_data_1, pin_sck_1}, {pin_data_2, pin_sck_2}, {pin_data_3, pin_sck_3}, {pin_data_4, pin_sck_4}} {
 		init();
 	}
 
 	void init(void) {
 
+	}
+
+	void run(void) {
+		
 	}
 
     void tare_system3(void) {
@@ -32,6 +39,8 @@ public:
 		// }
 		// offset = Ssum/nWeight;
 	}
+private:
+	LOAD_CELL load_cell_[4];
 };
 
 #endif //__WEIGHING_SCALE_H__

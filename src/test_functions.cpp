@@ -74,6 +74,16 @@ void i2c_slave_pcy8575_orig(void) {
 		}
 	}
 }
+
+
+void weighing_scale(void) {
+	WEIGHING_SCALE ws(1, 2, 3, 4, 5, 6, 7, 8);
+
+	while(1) {
+		ws.run();
+	}
+}
+
 void test_adc_class(void) {
 	// Configure timer 3 to 1 Hertz frequency update into interrupt mode.
 	TIM_driver tim3(3, 1, timer_mode::timer_interrupt);
@@ -727,7 +737,7 @@ void test_time(void) {
 
 	const auto p1 = std::chrono::system_clock::now();
 
-	printf("Time since epoch: %d\n", std::chrono::duration_cast<std::chrono::seconds>(p1.time_since_epoch()).count());
+	printf("Time since epoch: %llu\n", std::chrono::duration_cast<std::chrono::seconds>(p1.time_since_epoch()).count());
 
 	printf("sizeof(t): %d\n", sizeof(t));
 

@@ -13,6 +13,9 @@ int main(void)
 	/* I2C to gpio main code. It works with Acionna0 */
 	// i2c_slave_pcy8575();
 
+	/* Weighing Scale System */
+	weighing_scale();
+
 	/* Test functions */
 	// test_adc_dma();
 	// test_adc_dma_tim_class();

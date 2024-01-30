@@ -18,11 +18,15 @@
 #include "backup.hpp"
 #include "reset_reason.hpp"
 
+// For weighing scale system only
+#include "weighing_scale.h"
+
 // time test
 #include <time.h>
 #include <chrono>
 
 void i2c_slave_pcy8575(void);
+void weighing_scale(void);
 
 void test_aht10(void);
 
