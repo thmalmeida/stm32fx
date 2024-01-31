@@ -75,9 +75,8 @@ void i2c_slave_pcy8575_orig(void) {
 	}
 }
 
-
 void weighing_scale(void) {
-	WEIGHING_SCALE ws(1, 2, 3, 4, 5, 6, 7, 8);
+	WEIGHING_SCALE ws;
 
 	while(1) {
 		ws.run();
