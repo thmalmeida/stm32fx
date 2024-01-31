@@ -10,7 +10,7 @@
 * 
 */
 
-#define HX711_time_protocol_us		1     // time delay protocol of HX711 interface [us];
+#define HX711_TIME_DELAY_PROTOCOL	1     // time delay (frequency) protocol of HX711 interface [us];
 
 class HX711 {
 public:
@@ -28,7 +28,7 @@ public:
 		// pin_data_HX711 = pin_data;
 		// pin_sck_HX711 = pin_sck;
 	}
-	uint32_t read(void) {
+	int read(void) {
 		uint32_t value = 0;
 
 		// wait pin data go low
@@ -39,10 +39,10 @@ public:
 
 			// start new wave cycle
 			write_pin_sck_(1);
-			delay_us(HX711_time_protocol_us);
+			delay_us(HX711_TIME_DELAY_PROTOCOL);
 
 			write_pin_sck_(0);
-			delay_ms(HX711_time_protocol_us);
+			delay_ms(HX711_TIME_DELAY_PROTOCOL);
 
 			// shift buffer left before add the new bit
 			value <<= 1;
@@ -55,10 +55,10 @@ public:
 		// value ^= 0x800000;
 
 		write_pin_sck_(1);
-		delay_us(HX711_time_protocol_us);
+		delay_us(HX711_TIME_DELAY_PROTOCOL);
 
 		write_pin_sck_(0);
-		delay_us(HX711_time_protocol_us);
+		delay_us(HX711_TIME_DELAY_PROTOCOL);
 
 		return value;
 	}
@@ -80,8 +80,8 @@ private:
 			pin_[1].write(1);
 		}
 	}
-	uint32_t read_pin_data_(void) {
-		return static_cast<uint32_t>(pin_[0].read());
+	int read_pin_data_(void) {
+		return pin_[0].read();
 	}
 };
 
