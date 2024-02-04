@@ -32,8 +32,8 @@ enum class timer_mode {
     Implemented modes:
 	General Purpose TIMERS. TIM2 to TIM5;
 
-    1- Timer with interrupt
-    2- PWM with output predefined
+    - Timer with interrupt
+    - PWM with output predefined
 
 	Predefined setup options
 
@@ -130,6 +130,13 @@ extern uint8_t tim4_flag_;
 extern uint32_t tim4_cnt_;
 // -----------------------------
 
+/* Timer can work into two ways now
+* 
+* 1- Interrupt
+*
+* 2- PWM output
+*/
+
 class TIM_driver {
 public:
 
@@ -189,18 +196,18 @@ public:
 		printf("Duty max: %lu\n", duty_max_);
 
 		htimX_->Instance = TIMX_;
-		htimX_->Init.Prescaler = div1-1;
+		htimX_->Init.Prescaler = div1-1;				// TIMx_PSC 16 bit register
 		htimX_->Init.CounterMode = TIM_COUNTERMODE_UP;
-		htimX_->Init.Period = div2-1;
+		htimX_->Init.Period = div2-1;					// TIMx_ARR register
 		htimX_->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
 		htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+		// htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
 
-		if (HAL_TIM_Base_Init(htimX_) != HAL_OK)
-		{	
-			printf("TIM%d: init error\n", timer_num_);
+		if (HAL_TIM_Base_Init(htimX_) != HAL_OK) {
+			printf("TIM%d: base init error!\n", timer_num_);
 			Error_Handler();
 		} else {
-			printf("TIM%d: initialized!\n", timer_num_);
+			printf("TIM%d: base init\n", timer_num_);
 		}
 
 		TIM_ClockConfigTypeDef sClockSourceConfig;
@@ -220,6 +227,7 @@ public:
 					Error_Handler();
 				} else {
 					printf("TIM%d: interrupt init!\n", timer_num_);
+				
 				}
 				break;
 			}
@@ -315,8 +323,11 @@ public:
 		} else
 			return 0;
 	}
+	void set_isr_flag(void) {
+		*tim_isr_flag_ = 1;
+	}
 
-private:
+// private:
 	// General timer parameters
 	int timer_num_;
 	int channel_;
@@ -327,11 +338,59 @@ private:
 	uint32_t* tim_cnt_;
 	uint8_t* tim_isr_flag_;
 
-	// STM32F103 specifics
-	TIM_HandleTypeDef *htimX_;
+
+	/* ----- STM32F103 specifics ----- */
 	// TIM_HandleTypeDef htimY_;
+	TIM_HandleTypeDef *htimX_;
     TIM_TypeDef *TIMX_;
 	uint32_t channel_addr_;
+
+	// STM32F103 16-bit timer module registers (stm32f101x6.h file)
+	uint16_t TIMX_CR1_, TIMX_CR2_;
+	uint16_t TIMX_DIER_, TIMX_EGR_, TIMX_SR_;
+	uint16_t TIMX_CNT_, TIMX_ARR_, TIMX_PSC_;
+
+	void update_registers_(void) {
+		TIMX_CR1_ = static_cast<uint16_t>(TIMX_->CR1);
+		TIMX_CR2_ = static_cast<uint16_t>(TIMX_->CR2);
+		TIMX_SR_ = static_cast<uint16_t>(TIMX_->SR);
+		TIMX_PSC_ = static_cast<uint16_t>(TIMX_->PSC);
+		TIMX_EGR_ = static_cast<uint16_t>(TIMX_->EGR);
+	}
+
+	// STM32F103 16-bit Reset and Clock Control 16-bit registers
+	uint16_t RCC_CR_;
+	uint16_t RCC_AHBENR_;
+	uint16_t RCC_APB1ENR_;
+	uint16_t RCC_APB2ENR_;
+
+	void get_TIM_CNT_(void) {
+		TIMX_CNT_ = static_cast<uint16_t>(TIMX_->CNT);
+		printf("TIMX_CNT_:%u\n", TIMX_CNT_);
+	}
+	void get_TIM_ARR_(void) {
+		TIMX_ARR_ = static_cast<uint16_t>(TIMX_->ARR);
+		printf("TIMX_ARR_:%u\n", TIMX_ARR_);
+	}
+	void get_TIM_PSC_(void) {
+		TIMX_PSC_ = static_cast<uint16_t>(TIMX_->PSC);
+		printf("TIMX_PSC_:%u\n", TIMX_PSC_);
+	}
+	void get_TIM_CR1_(void) {
+		TIMX_CR1_ = static_cast<uint16_t>(TIMX_->CR1);
+		printf("TIM%d_CR1:0x%04x\n", timer_num_, TIMX_CR1_);
+	}
+	void get_TIM_CR2_(void) {
+		TIMX_CR2_ = static_cast<uint16_t>(TIMX_->CR2);
+		printf("TIMX_CR2:0x%04x\n", TIMX_CR2_);
+	}
+	void get_TIM_SR_(void) {
+		TIMX_SR_ = static_cast<uint16_t>(TIMX_->SR);
+		printf("TIMX_SR_:0x%04x\n", TIMX_SR_);
+	}
+
+	//(UEV), 
+	// CR1 - UDIS/
 
 	void HAL_TIM_MspPostInit_(TIM_HandleTypeDef* timHandle, int channel) {
 		GPIO_InitTypeDef GPIO_InitStruct;
