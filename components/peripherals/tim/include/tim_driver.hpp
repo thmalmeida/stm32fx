@@ -196,12 +196,13 @@ public:
 		printf("Duty max: %lu\n", duty_max_);
 
 		htimX_->Instance = TIMX_;
-		htimX_->Init.Prescaler = div1-1;				// TIMx_PSC 16 bit register
-		htimX_->Init.CounterMode = TIM_COUNTERMODE_UP;
-		htimX_->Init.Period = div2-1;					// TIMx_ARR register
-		htimX_->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-		htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-		// htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+		htimX_->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;			// TIMx_CR1. Set CKD[1:0] bits
+		htimX_->Init.Prescaler = div1-1;								// TIMx_PSC 16 bit register
+		htimX_->Init.Period = div2-1;									// TIMx_ARR register
+		htimX_->Init.CounterMode = TIM_COUNTERMODE_UP;					// TIMx_CR1 set DIR bit
+		htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;	// TIMx_CR1 set ARPE bit 7
+
+		// htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 
 		if (HAL_TIM_Base_Init(htimX_) != HAL_OK) {
 			printf("TIM%d: base init error!\n", timer_num_);
@@ -302,6 +303,9 @@ public:
 	void set_cnt(uint32_t value) {
 		TIMX_->CNT = value;
 	}
+	uint32_t get_cnt(void) {
+		return TIMX_->CNT;
+	}
 	void set_duty_cycle(uint32_t value) {
 		uint32_t pulse_width = static_cast<uint32_t>(value*duty_max_/100.0);
 		__HAL_TIM_SET_COMPARE(htimX_, channel_addr_, pulse_width);
@@ -316,7 +320,8 @@ public:
 	uint32_t get_uptime(void) {
 		return *tim_cnt_;
 	}
-	int get_isr_flag(void) {
+	// This attribute force compile include this functions avoid optimization
+	int __attribute__((__used__)) get_isr_flag(void) {
 		if(*tim_isr_flag_) {
 			*tim_isr_flag_ = 0;
 			return 1;
@@ -327,7 +332,7 @@ public:
 		*tim_isr_flag_ = 1;
 	}
 
-// private:
+private:
 	// General timer parameters
 	int timer_num_;
 	int channel_;
@@ -361,8 +366,9 @@ public:
 	// STM32F103 16-bit Reset and Clock Control 16-bit registers
 	uint16_t RCC_CR_;
 	uint16_t RCC_AHBENR_;
-	uint16_t RCC_APB1ENR_;
 	uint16_t RCC_APB2ENR_;
+	uint32_t RCC_APB1RSTR_, RCC_APB1ENR_;
+	// RCC_TypeDef RCCx;
 
 	void get_TIM_CNT_(void) {
 		TIMX_CNT_ = static_cast<uint16_t>(TIMX_->CNT);
@@ -384,11 +390,30 @@ public:
 		TIMX_CR2_ = static_cast<uint16_t>(TIMX_->CR2);
 		printf("TIMX_CR2:0x%04x\n", TIMX_CR2_);
 	}
+	void get_TIM_EGR_(void) {
+		TIMX_EGR_ = static_cast<uint16_t>(TIMX_->EGR);
+		printf("TIMX_EGR:0x%04x\n", TIMX_EGR_);
+	}
 	void get_TIM_SR_(void) {
 		TIMX_SR_ = static_cast<uint16_t>(TIMX_->SR);
 		printf("TIMX_SR_:0x%04x\n", TIMX_SR_);
 	}
+	void get_TIM_DIER_(void) {
+		TIMX_DIER_ = static_cast<uint16_t>(TIMX_->DIER);
+		printf("TIMX_DIER_:0x%04x\n", TIMX_DIER_);
+	}
+	void get_RCC_APB1RSTR_(void) {
+		RCC_APB1RSTR_ = RCC->APB1RSTR;
+		printf("RCC_APB1RSTR_:0x%08lx\n", RCC_APB1RSTR_);
+	}
+	void get_RCC_APB1ENR_(void) {
+		RCC_APB1ENR_ = RCC->APB1ENR;
+		printf("RCC_APB1ENR_:0x%08lx\n", RCC_APB1ENR_);
+	}
 
+	void set_TIMx_EGR_UG(void) {
+		TIMX_->EGR |= (1<<0);
+	}
 	//(UEV), 
 	// CR1 - UDIS/
 

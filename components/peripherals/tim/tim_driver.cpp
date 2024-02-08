@@ -19,9 +19,8 @@ uint32_t tim4_cnt_;
 
 extern "C" {
 // STM32F weak initializers functions
-void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
-{
-	if(tim_baseHandle->Instance==TIM1) {
+void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle) {
+	if(tim_baseHandle->Instance == TIM1) {
 		/* TIM1 clock enable */
 		__HAL_RCC_TIM1_CLK_ENABLE();
 
@@ -29,21 +28,22 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
 		HAL_NVIC_EnableIRQ(TIM1_UP_IRQn);
 		HAL_NVIC_SetPriority(TIM1_CC_IRQn, 0, 0);
 		HAL_NVIC_EnableIRQ(TIM1_CC_IRQn);
-	} else if(tim_baseHandle->Instance==TIM2) {
+
+	} else if(tim_baseHandle->Instance == TIM2) {
 		/* TIM2 clock enable */
 		__HAL_RCC_TIM2_CLK_ENABLE();
 
 		/* TIM2 interrupt Init */
 		HAL_NVIC_SetPriority(TIM2_IRQn, 0, 0);
 		HAL_NVIC_EnableIRQ(TIM2_IRQn);
-	} else if(tim_baseHandle->Instance==TIM3) {
+	} else if(tim_baseHandle->Instance == TIM3) {
 		/* TIM3 clock enable */
 		__HAL_RCC_TIM3_CLK_ENABLE();
 
 		/* TIM3 interrupt Init */
 		HAL_NVIC_SetPriority(TIM3_IRQn, 0, 0);
 		HAL_NVIC_EnableIRQ(TIM3_IRQn);
-	} else if(tim_baseHandle->Instance==TIM4) {
+	} else if(tim_baseHandle->Instance == TIM4) {
 		/* TIM4 clock enable */
 		__HAL_RCC_TIM4_CLK_ENABLE();
 
