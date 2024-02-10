@@ -25,6 +25,7 @@
 enum class timer_mode {
     timer_default,
 	timer_interrupt,
+	timer_counter_only,
     pwm_output
 };
 
@@ -137,10 +138,10 @@ extern uint32_t tim4_cnt_;
 * 2- PWM output
 */
 
-class TIM_driver {
+class TIM_DRIVER {
 public:
 
-	TIM_driver(int timer_num, int freq, timer_mode mode, int channel = 1) : timer_num_(timer_num), channel_(channel) {
+	TIM_DRIVER(int timer_num, int freq, timer_mode mode, int channel = 1) : timer_num_(timer_num), channel_(channel) {
 
 		switch(timer_num) {
 			case 1: {
@@ -175,32 +176,38 @@ public:
 
 		init(freq, mode);
 	}
-	~TIM_driver(void) {}
+	~TIM_DRIVER(void) {}
 
 	void init(int freq, timer_mode mode) {
 
 		sys_clock_ = HAL_RCC_GetHCLKFreq();
 
-		uint32_t div1 = 1;
-		uint32_t div2 = sys_clock_/freq;
+		uint16_t div1 = sys_clock_/freq;
+		uint16_t div2 = 0;
 
-		// uint32_t div_remain = sys_clock_/freq;
-
-		if(div2 > 65535) {
-			div1 = 1000;
-			div2 = sys_clock_/div1/freq;
+		if(mode ==  timer_mode::timer_counter_only) {
+			div1 = sys_clock_/freq;
+			div2 = 65536;
+		} else {
+			if(div2 > 65535) {
+				div1 = 1000;
+				div2 = sys_clock_/div1/freq;
+			} else {
+				div2 = sys_clock_/freq;
+				// uint32_t div_remain = sys_clock_/freq;
+			}
 		}
 
 		duty_max_ = div2-1;
-		printf("sys_clock_: %lu, div1:%lu, freq:%d, div2:%lu", sys_clock_, div1, freq, div2);
+		printf("sys_clock_: %lu, div1:%u, freq:%d, div2(ARR):%u ", sys_clock_, div1, freq, div2);
 		printf("Duty max: %lu\n", duty_max_);
 
 		htimX_->Instance = TIMX_;
 		htimX_->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;			// TIMx_CR1. Set CKD[1:0] bits
-		htimX_->Init.Prescaler = div1-1;								// TIMx_PSC 16 bit register
-		htimX_->Init.Period = div2-1;									// TIMx_ARR register
+		htimX_->Init.Prescaler = div1-1;								// TIMx_PSC 16 bit register (clk division)
+		htimX_->Init.Period = div2-1;									// TIMx_ARR register (count up to this register value)
 		htimX_->Init.CounterMode = TIM_COUNTERMODE_UP;					// TIMx_CR1 set DIR bit
-		htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;	// TIMx_CR1 set ARPE bit 7
+		htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;// TIMx_CR1 set ARPE bit 7
 
 		// htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 
@@ -232,6 +239,20 @@ public:
 				}
 				break;
 			}
+			case timer_mode::timer_counter_only: {
+
+				// HAL_Delay(1000);
+				// get_TIM_ARR_();
+				// get_TIM_CR1_();
+				// get_TIM_CR2_();
+				// get_TIM_DIER_();
+				// get_TIM_EGR_();
+				// get_TIM_PSC_();
+				// get_TIM_SR_();
+				// printf("TIM%d: interrupt without interrupt!\n", timer_num_);
+				enable_cnt();
+				break;
+			}			
 			case timer_mode::pwm_output: {
 
 				switch (channel_) {
@@ -320,6 +341,9 @@ public:
 	uint32_t get_uptime(void) {
 		return *tim_cnt_;
 	}
+	void enable_cnt(void) {
+		TIMX_->CR1 |= (1<<0);
+	}
 	// This attribute force compile include this functions avoid optimization
 	int __attribute__((__used__)) get_isr_flag(void) {
 		if(*tim_isr_flag_) {
@@ -339,9 +363,12 @@ private:
 	uint32_t duty_max_;
     uint32_t sys_clock_;
 	uint32_t freq_;
+	uint32_t freq_cnt_;
 	uint32_t duty_cycle_;
-	uint32_t* tim_cnt_;
-	uint8_t* tim_isr_flag_;
+	uint32_t* tim_cnt_;		// The instant counter register value;
+	uint8_t* tim_isr_flag_;	// Handle flag to connect with ISR. Become 1 when interrupt occurs;
+	uint32_t cnt_clk_;		// The frequency of update the cnt register;
+	uint32_t timer_clk_;	// The frequency of timer. 1/T. T is the time to full cycle from 0 to max value;
 
 
 	/* ----- STM32F103 specifics ----- */
@@ -349,6 +376,11 @@ private:
 	TIM_HandleTypeDef *htimX_;
     TIM_TypeDef *TIMX_;
 	uint32_t channel_addr_;
+
+	// These prescalers are configured on RCC clock tree. MUST BE EQUAL ON REGISTER TREE!
+	uint8_t prescale_AHB_ = 1;
+	uint8_t prescale_APB1_ = 2;
+	uint8_t prescale_APB2_ = 2;
 
 	// STM32F103 16-bit timer module registers (stm32f101x6.h file)
 	uint16_t TIMX_CR1_, TIMX_CR2_;
@@ -414,8 +446,6 @@ private:
 	void set_TIMx_EGR_UG(void) {
 		TIMX_->EGR |= (1<<0);
 	}
-	//(UEV), 
-	// CR1 - UDIS/
 
 	void HAL_TIM_MspPostInit_(TIM_HandleTypeDef* timHandle, int channel) {
 		GPIO_InitTypeDef GPIO_InitStruct;
