@@ -31,7 +31,7 @@ extern "C" {
 
 /* Exported functions prototypes ---------------------------------------------*/
 void SystemClock_Config_8MHz_HSE(void);
-void SystemClock_Config_8MHZ_HSI(void);
+void SystemClock_Config_8MHz_HSI(void);
 void SystemClock_Config_48MHz_HSE_ADC(void);
 void SystemClock_Config_56MHz_HSE_ADC(void);
 void SystemClock_Config_72MHz(void);

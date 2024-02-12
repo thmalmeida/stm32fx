@@ -39,12 +39,12 @@ public:
 	}
 	int weight_kg(void) {
 
-		signal = read_hx711();						// Read the ADC channel from HX711 module;
-		double Vdig = (signal - offset_);			// Remove the offset on pure signal;
-		double a = (Kp_*A_*Vrange*Vdig)/scale_half_;	// Apply equation and obtain the weight in floating point format;
-		int WeightTemp = (int) Waccu*(a*Wmax/Vref);	// Amplifier the value to remove floating point and get an integer number;
+		signal = read_hx711();									// Read the ADC channel from HX711 module;
+		double Vdig = (signal - offset_);						// Remove the offset on pure signal;
+		double a = (Kp_*A_*Vrange*Vdig)/scale_half_;			// Apply equation and obtain the weight in floating point format;
+		int WeightTemp = static_cast<int>(Waccu*(a*Wmax/Vref));	// Amplifier the value to remove floating point and get an integer number;
 
-		error = WeightTemp - Weight;				// This process accelerate to the outcome convergence;
+		error = WeightTemp - Weight;							// This process accelerate to the outcome convergence;
 
 		if(abs(error) < 100) {
 			beta_ = beta_v_[beta_index_][0];
@@ -100,21 +100,21 @@ public:
 			//	Weight = Wsum/nWeight;
 		}
 
-		if(abs(error) < 1000) { // If weight found is less then stabWeight we take stable weight
-			stable = 1;
+		if(abs(error) < stabWeight) { // If weight found is less then stabWeight we take stable_ weight
+			stable_ = 1;
 			beta_index_ = 1;
 		}
-		else if((abs(error) > 20000) && stable == 1) { // else, if goes bigger than unstWeight we don't have the weight yet
+		else if((abs(error) > unstWeight) && stable_ == 1) { // else, if goes bigger than this we don't have the weight yet
 		//		convCount++;
-		//		if(convCount > 500)
-		//		{
+		//		if(convCount > 500) {
 		//			convCount = 0;
-			stable = 0;
+			stable_ = 0;
 			beta_index_ = 0;
 		//		}
 		}
 
-		Weight = beta_*WeightTemp + Weight - beta_*Weight;	// Low Pass Filter
+		// Low Pass Filter
+		Weight = beta_*WeightTemp + Weight - beta_*Weight;	
 
 		return Weight;
 }
@@ -138,11 +138,11 @@ private:
 								 {0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.1, 0.2, 0.3}};
 
 	int beta_index_ = 0;					// index of beta_ array values
-	double beta_ = 0.05;
+	double beta_ = 0.05;					// initial beta value for low pass filter calculation
 
-	int stabWeight = 501;					//
-	int unstWeight = 25000;					//
-	uint8_t stable = 0;						//
+	int stabWeight = 1000;					//
+	int unstWeight = 20000;					//
+	uint8_t stable_ = 0;					//
 
 	int Weight = 0;							// currently weight x10;
 	int P;									// currently weight found;

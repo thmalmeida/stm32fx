@@ -38,9 +38,12 @@ void test_adc_dma_tim_class(void);
 void test_adc_oneshot(void);
 void test_adc_stream(void);
 void test_adc_stream_reg(void);
+void test_gpio(void);
 void test_bkp(void);
 void test_pjb20(void);
-void test_timer_pwm(void);
 void test_time(void);
+void test_timer_counter(void);
+void test_timer_interrupt(void);
+void test_timer_pwm(void);
 
 #endif

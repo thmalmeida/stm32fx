@@ -34,6 +34,8 @@ public:
 		// wait pin data go low
 		// while(read_pin_data_());
 
+		printf("TESTE!\n");
+
 		// 24 bit read size. Should run 24 cycles
 		for(int i=0; i<24; i++) {
 
@@ -62,6 +64,7 @@ public:
 
 		return value;
 	}
+	
 	void power_down(void) {
 		write_pin_sck_(1);
 		delay_us(65);
@@ -76,9 +79,7 @@ private:
 	GPIO_DRIVER pin_[2];
 
 	void write_pin_sck_(int status) {
-		if(status) {
-			pin_[1].write(1);
-		}
+			pin_[1].write(status);
 	}
 	int read_pin_data_(void) {
 		return pin_[0].read();

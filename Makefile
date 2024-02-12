@@ -49,6 +49,7 @@ $(SRC_DIR)/system_main.c \
 $(SRC_DIR)/adc.c \
 $(SRC_DIR)/i2c.c \
 $(SRC_DIR)/iwdg.c \
+$(SRC_DIR)/tim.c \
 $(SRC_DIR)/stm32_log.c \
 $(SRC_DIR)/stm32f1xx_hal_msp.c \
 $(SRC_DIR)/stm32f1xx_it.c \
@@ -66,7 +67,6 @@ $(DRIVER_DIR)/stm32f1xx_hal_tim.c \
 $(DRIVER_DIR)/stm32f1xx_hal_iwdg.c \
 $(DRIVER_DIR)/stm32f1xx_hal_tim_ex.c \
 $(DRIVER_DIR)/stm32f1xx_hal_dma.c
-# $(SRC_DIR)/tim.c \
 
 # $(DRIVER_DIR)/stm32f1xx_hal_gpio_ex.c \
 # $(DRIVER_DIR)/stm32f1xx_hal_flash.c \
@@ -295,11 +295,11 @@ clean:
 
 flash: all
 	st-flash --reset --format ihex write $(BUILD_DIR)/$(TARGET).hex
-
-# --clock= 8 means 8 MHz of main clock source
+# --clock=48		, means 8 MHz of main clock source
+# --trace=20000		,  -tXX, --trace=XX      Specify the trace frequency in Hz
+#
 monitor: flash
 	st-trace --clock=48
-
 monitor2:
 	st-trace --clock=48
 

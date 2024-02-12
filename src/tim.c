@@ -21,22 +21,22 @@
 #include "tim.h"
 
 // For TIM1
-TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim1 = {0};
 uint8_t tim1_flag = 0;
 uint32_t tim1_cnt = 0;
 
 // For TIM2
-TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim2 = {0};
 uint8_t tim2_flag = 0;
 uint32_t tim2_cnt = 0;
 
 // For TIM3
-TIM_HandleTypeDef htim3;
+TIM_HandleTypeDef htim3 = {0};
 uint8_t tim3_flag = 0;
 uint32_t tim3_cnt = 0;
 
 // For TIM4
-TIM_HandleTypeDef htim4;
+TIM_HandleTypeDef htim4 = {0};
 uint8_t tim4_flag = 0;
 uint32_t tim4_cnt = 0;
 
@@ -145,27 +145,31 @@ void tim2_init(void) {
 void tim3_init(void) {
 
 	htim3.Instance = TIM3;
-	htim3.Init.Prescaler = 8000;									// 16 bit size value
-	htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim3.Init.Prescaler = 8000;									// 16 bit size value TIMx_PSC register
+	htim3.Init.CounterMode = TIM_COUNTERMODE_UP;					// TIMx_CR1 register - Bit 4 (DIR)
 	htim3.Init.Period = 1000-1;										// 12 bit size value
 	htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-	htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+	htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+	// htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
 
-	if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
-	{
+	if (HAL_TIM_Base_Init(&htim3) != HAL_OK) {
 		printf("TIM3: init error\n");
 		Error_Handler();
 	} else {
 		printf("TIM3: initialized!\n");
 	}
 
+	printf("TESTE 01\n");
 	TIM_ClockConfigTypeDef sClockSourceConfig;
 	sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-	if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
-	{
+	printf("TESTE 02\n");
+	if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK) {
 		printf("TIM3: clock config error!\n");
 		Error_Handler();
+	} else {
+		printf("TIM3: clock configured!\n");
 	}
+	printf("TESTE 03\n");
 
 	// TIM_MasterConfigTypeDef sMasterConfig;
 	// // sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
@@ -205,25 +209,35 @@ void tim3_init(void) {
 	6		TIE
 	0		UIE	- Uptade Interrupt enable
 */
-	HAL_TIM_Base_Start_IT(&htim3);		// update interrupt enable;
-	// TIM1 -> DIER |= TIM_DIER_UIE;
+	/*	Interruption Enable*/
+	printf("TESTE 04\n");
+	__HAL_RCC_TIM3_CLK_ENABLE();
 
+	/* TIM3 interrupt Init */
+	HAL_NVIC_SetPriority(TIM3_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(TIM3_IRQn);
+
+	if(HAL_TIM_Base_Start_IT(&htim3) != HAL_OK) {
+		/* Starting Error */
+		printf("TIM3: isr Error!\n");
+		Error_Handler();
+	} else {
+		printf("TIM3: interrupt enable");
+	}
+	// TIM3->DIER |= TIM_DIER_TIE;		// Trigger interrupt enable
+	printf("TESTE 05\n");
+	// TIM3->DIER |= TIM_DIER_UIE;		// update interrupt enable
+	printf("TESTE 06\n");
 /* Prescaler configuration */
 	// TIM3->PSC = 8000;				// Divide 8MHz by 8000 = 1000 Hz;
 	// TIM3->EGR |= (1<<0);			// Set or reset the UG Bit
 
 	// TIM3->ARR = 1000-1;				// Auto reload count to 1000. 1 second.
 
-	/*	Interruption set*/
-	// if (HAL_TIM_Base_Start_IT(&htim3) != HAL_OK)
-	// {
-	// 	/* Starting Error */
-	// 	Error_Handler();
-	// }
-	// TIM3->DIER |= TIM_DIER_UIE;		// update interrupt enable
 
 	/* TIM3 enable counter */
-	// TIM3 -> CR1 |=  TIM_CR1_CEN;	// TIM1 Counter Enable;
+	TIM3 -> CR1 |=  TIM_CR1_CEN;	// TIM1 Counter Enable;
+	printf("TESTE 07\n");
 }
 void tim4_pwm(void) {
 	

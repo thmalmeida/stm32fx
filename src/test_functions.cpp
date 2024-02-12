@@ -1,5 +1,5 @@
 #include "test_functions.hpp"
-
+#include "tim_driver.hpp"
 
 void i2c_slave_pcy8575(void) {
 	// Extender machine. Composed init of Timer 3 initialized with 1 Hz on interrupt mode. tim3_flag_ ISR variable;
@@ -76,21 +76,34 @@ void i2c_slave_pcy8575_orig(void) {
 }
 
 void weighing_scale(void) {
+
+	// TIM_DRIVER timer_(3, 1, timer_mode::timer_interrupt);
 	WEIGHING_SCALE ws;
 
+	// iwdg_init();
+
 	while(1) {
-		ws.run();
+
+		// 1 second flag
+		// printf("%lu\n", count++);
+		// if(timer_.get_isr_flag()) {
+			// ws.run();				// run this function every second
+			// ws.test();
+			// iwdg_refresh();			// clear wdt to prevent reset
+
+			printf("Peso: %d\n", ws.weight());
+			delay_ms(500);
+		// }
 	}
 }
 
 void test_adc_class(void) {
-	// Configure timer 3 to 1 Hertz frequency update into interrupt mode.
-	TIM_driver tim3(3, 1, timer_mode::timer_interrupt);
+	// Configure timer number 3 to 1 Hertz frequency update into interrupt mode.
+	TIM_DRIVER tim3(3, 1, timer_mode::timer_interrupt);
 
 	// Configure adc channel to using dma mode;
 	ADC_driver adc0(adc_mode::stream);
 	adc0.channel_config(3);
-
 
 	while(1) {
 
@@ -276,10 +289,10 @@ void test_adc_dma(void) {
 }
 void test_adc_dma_tim_class(void) {
 
-	TIM_driver tim1(1, 1, timer_mode::timer_interrupt);
-	TIM_driver tim2(2, 1, timer_mode::timer_interrupt);
-	TIM_driver tim3(3, 1, timer_mode::timer_interrupt);
-	TIM_driver tim4(4, 1, timer_mode::timer_interrupt);
+	TIM_DRIVER tim1(1, 1, timer_mode::timer_interrupt);
+	TIM_DRIVER tim2(2, 1, timer_mode::timer_interrupt);
+	TIM_DRIVER tim3(3, 1, timer_mode::timer_interrupt);
+	TIM_DRIVER tim4(4, 1, timer_mode::timer_interrupt);
 
 	// ADC_driver adc0;
 	// adc0.init();
@@ -440,7 +453,6 @@ void test_adc_dma_tim_class(void) {
 			}		
 		}
 	}
-
 }
 void test_adc_oneshot(void) {
 	ADC_driver adc0(adc_mode::oneshot);
@@ -656,7 +668,7 @@ void test_pjb20(void) {
 	// - implement PID controller. Slow response.
 	
 	// Using PB0
-	TIM_driver tim0(3, 800, timer_mode::pwm_output, 3);
+	TIM_DRIVER tim0(3, 800, timer_mode::pwm_output, 3);
 	ADC_driver adc3(adc_mode::oneshot);
 
 	uint16_t adc_value = 0;				// instant adc read input value
@@ -708,23 +720,6 @@ void test_pjb20(void) {
 		}
 	}
 }
-void test_timer_pwm(void) {
-	TIM_driver tim0(1, 40000, timer_mode::pwm_output, 1);
-
-	tim0.set_duty_cycle(50);
-
-	int i = 0;
-	while(1) {
-		// if(i>99) {
-		// 	i=0;
-		// }
-		// tim0.set_duty_cycle(i);
-		HAL_Delay(1000);
-		printf("Count:%d\n",i++);
-	}
-	
-}
-
 void test_time(void) {
 	struct tm *p;
 	time_t t;
@@ -732,7 +727,7 @@ void test_time(void) {
 	// t = time(NULL);		
 	// t = 10;
 
-	TIM_driver tim3(3, 1, timer_mode::timer_interrupt);
+	TIM_DRIVER tim3(3, 1, timer_mode::timer_interrupt);
 
 	const auto p1 = std::chrono::system_clock::now();
 
@@ -749,7 +744,103 @@ void test_time(void) {
 	}
 
 }
+void test_timer_interrupt(void) {
 
+	printf("- test_tim_class_interrupt_mode\n");
+
+	// tim3_init();
+	// TIM_DRIVER tim1(1, 1, timer_mode::timer_interrupt);
+	// TIM_DRIVER tim2(2, 1, timer_mode::timer_interrupt);
+	TIM_DRIVER tim2(2, 1, timer_mode::timer_counter);
+	// TIM_DRIVER tim4(4, 1, timer_mode::timer_interrupt);
+
+	uint32_t i = 0;
+
+	while(1) {
+
+		if(tim2.get_isr_flag()) { //tim3.get_isr_flag()) {
+			// tim3.set_TIMx_EGR_UG();
+			// TIM3->EGR |= (1<<0);
+			printf("TIM2: %lu\n", i++);
+			// printf("TIM%d\n", tim3.get_tim_number());
+		}
+
+		// 1 second flag to refresh watchdog timer
+		// if(tim1_flag_) {
+		// 	tim1_flag_ = 0;
+		// 	printf("TIM%d\n", tim1.get_tim_number());
+		// }
+
+		// if(tim2.get_isr_flag()) {
+		// 	i++;
+		// 	if(i<3)
+		// 		tim2.set_isr_flag();
+		// 	printf("TIM%d\n", tim2.get_tim_number());
+		// }
+
+		// NOP function. Just to compile avoid to discart the interruption that do nothing;
+		// if(i == 1000000) {
+		// 	i = 0;
+		// } else {
+		// 	i++;
+		// }
+
+		// if(tim4_flag_) {
+		// 	tim4_flag_ = 0;
+		// 	printf("TIM%d\n", tim4.get_tim_number());
+		// }
+	}
+}
+void test_timer_pwm(void) {
+	TIM_DRIVER tim0(1, 40000, timer_mode::pwm_output, 1);
+
+	tim0.set_duty_cycle(50);
+
+	int i = 0;
+	while(1) {
+		// if(i>99) {
+		// 	i=0;
+		// }
+		// tim0.set_duty_cycle(i);
+		HAL_Delay(1000);
+		printf("Count:%d\n",i++);
+	}
+	
+}
+void test_timer_counter(void) {
+	
+}
+void test_gpio(void) {
+	GPIO_DRIVER pin(6, 1);
+	// TPI->ACPR = HAL_RCC_GetHCLKFreq() / 2000000 - 1;
+	TIM_DRIVER tim2(2, 1000000,timer_mode::timer_counter);
+
+	// tim2.enable_cnt();
+
+	// tim2.get_TIM_ARR_();
+	// tim2.get_TIM_CR1_();
+	// tim2.get_TIM_CR2_();
+	// tim2.get_TIM_PSC_();
+	// uint32_t i =0, j = 0;
+	printf("GPIO test\n");
+	while(1) {
+		pin.write(1);
+		delay_us(1);
+		pin.write(0);
+		delay_us(1);
+
+		// if(i > 500000) {
+		// 	i = 0;
+		// 	printf("A:%lu\n", j++);
+		// } else {
+		// 	i++;
+		// }
+
+		// printf("CNT:%lu\n", i++);
+
+		// delay_ms(200);
+	}
+}
 // Example to declare an array of GPIO_DRIVER class
 // #include "gpio"
 // GPIO_DRIVER pin0[] = {

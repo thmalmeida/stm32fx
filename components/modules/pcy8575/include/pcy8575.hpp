@@ -537,7 +537,7 @@ private:
 	// const std::size_t pin_count_ = sizeof(pin_) / sizeof(pin_[0]);
 
 	// for uptime and 1 second flag
-	TIM_driver timer_;
+	TIM_DRIVER timer_;
 
 	// Digital Signal Processing (DSP) functions;
 	DSP s0_;
