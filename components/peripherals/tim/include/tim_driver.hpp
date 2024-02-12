@@ -25,7 +25,7 @@
 enum class timer_mode {
     timer_default,
 	timer_interrupt,
-	timer_counter_only,
+	timer_counter,
     pwm_output
 };
 
@@ -141,7 +141,7 @@ extern uint32_t tim4_cnt_;
 class TIM_DRIVER {
 public:
 
-	TIM_DRIVER(int timer_num, int freq, timer_mode mode, int channel = 1) : timer_num_(timer_num), channel_(channel) {
+	TIM_DRIVER(int timer_num, double freq, timer_mode mode, int channel = 1) : timer_num_(timer_num), channel_(channel) {
 
 		switch(timer_num) {
 			case 1: {
@@ -149,6 +149,7 @@ public:
 				htimX_ = &htim1_;
 				tim_isr_flag_ = &tim1_flag_;
 				tim_cnt_ = &tim1_cnt_;
+				// it uses APB2 prescaler
 				break;
 			}
 			case 2: {
@@ -178,34 +179,20 @@ public:
 	}
 	~TIM_DRIVER(void) {}
 
-	void init(int freq, timer_mode mode) {
+	void init(double freq, timer_mode mode) {
 
-		sys_clock_ = HAL_RCC_GetHCLKFreq();
+		// calculate PSC_ and ARR_ registers given a frequency
+		printf("TESTE01!\n");
+		timer_calculation_(freq);
 
-		uint16_t div1 = sys_clock_/freq;
-		uint16_t div2 = 0;
-
-		if(mode ==  timer_mode::timer_counter_only) {
-			div1 = sys_clock_/freq;
-			div2 = 65536;
-		} else {
-			if(div2 > 65535) {
-				div1 = 1000;
-				div2 = sys_clock_/div1/freq;
-			} else {
-				div2 = sys_clock_/freq;
-				// uint32_t div_remain = sys_clock_/freq;
-			}
-		}
-
-		duty_max_ = div2-1;
-		printf("sys_clock_: %lu, div1:%u, freq:%d, div2(ARR):%u ", sys_clock_, div1, freq, div2);
-		printf("Duty max: %lu\n", duty_max_);
+		// duty_max_ = div2-1;
+		printf("f_sys_: %lu, PSC_:%u, f_tim_:%f, ARR_:%u ", f_sys_, PSC_, f_tim_, ARR_);
+		// printf("Duty max: %lu\n", duty_max_);
 
 		htimX_->Instance = TIMX_;
 		htimX_->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;			// TIMx_CR1. Set CKD[1:0] bits
-		htimX_->Init.Prescaler = div1-1;								// TIMx_PSC 16 bit register (clk division)
-		htimX_->Init.Period = div2-1;									// TIMx_ARR register (count up to this register value)
+		htimX_->Init.Prescaler = PSC_;									// TIMx_PSC 16 bit register (clk division)
+		htimX_->Init.Period = ARR_;									// TIMx_ARR register (count up to this register value)
 		htimX_->Init.CounterMode = TIM_COUNTERMODE_UP;					// TIMx_CR1 set DIR bit
 		htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;// TIMx_CR1 set ARPE bit 7
 
@@ -235,12 +222,10 @@ public:
 					Error_Handler();
 				} else {
 					printf("TIM%d: interrupt init!\n", timer_num_);
-				
 				}
 				break;
 			}
-			case timer_mode::timer_counter_only: {
-
+			case timer_mode::timer_counter: {
 				// HAL_Delay(1000);
 				// get_TIM_ARR_();
 				// get_TIM_CR1_();
@@ -269,10 +254,10 @@ public:
 						channel_addr_ = TIM_CHANNEL_4;
 						break;
 					default:
-						channel_addr_ = TIM_CHANNEL_1;
+						printf("TIM Error!\n");
+						Error_Handler();
 						break;
 				}
-
 
 				if (HAL_TIM_PWM_Init(htimX_) != HAL_OK) {
 					printf("TIM%d: PWM init error!\n", timer_num_);					
@@ -322,10 +307,10 @@ public:
 		TIMX_->CNT = 0;
 	}
 	void set_cnt(uint32_t value) {
-		TIMX_->CNT = value;
+		__HAL_TIM_SET_COUNTER(htimX_, value);	// or TIMX_->CNT = value;
 	}
 	uint32_t get_cnt(void) {
-		return TIMX_->CNT;
+		return __HAL_TIM_GET_COUNTER(htimX_); // or return TIMX_->CNT;
 	}
 	void set_duty_cycle(uint32_t value) {
 		uint32_t pulse_width = static_cast<uint32_t>(value*duty_max_/100.0);
@@ -342,7 +327,10 @@ public:
 		return *tim_cnt_;
 	}
 	void enable_cnt(void) {
-		TIMX_->CR1 |= (1<<0);
+		__HAL_TIM_ENABLE(htimX_); // or TIMX_->CR1 |= TIM_CR1_CEN;
+	}
+	void disable_cnt(void) {
+		__HAL_TIM_DISABLE(htimX_);	// or TIMX_CR1 &= ~(TIM_CR1_CEN);
 	}
 	// This attribute force compile include this functions avoid optimization
 	int __attribute__((__used__)) get_isr_flag(void) {
@@ -361,31 +349,43 @@ private:
 	int timer_num_;
 	int channel_;
 	uint32_t duty_max_;
-    uint32_t sys_clock_;
-	uint32_t freq_;
-	uint32_t freq_cnt_;
-	uint32_t duty_cycle_;
-	uint32_t* tim_cnt_;		// The instant counter register value;
-	uint8_t* tim_isr_flag_;	// Handle flag to connect with ISR. Become 1 when interrupt occurs;
-	uint32_t cnt_clk_;		// The frequency of update the cnt register;
-	uint32_t timer_clk_;	// The frequency of timer. 1/T. T is the time to full cycle from 0 to max value;
-
+    uint32_t f_sys_;			// system clock frequency [Hz];
+	double f_bus_;				// bus frequency link to tim [Hz];
+	double f_cnt_;				// The frequency of update the cnt register;
+	double f_tim_;				// The frequency of timer. 1/T. T is the time to full cycle from 0 to max value;
+	double T_tim_;				// TIM time period [s];
+	uint32_t* tim_cnt_;			// The instant counter ((TIMX_CNT) register value;
+	uint8_t* tim_isr_flag_;		// Handle flag to connect with ISR. Become 1 when interrupt occurs;
+	// uint32_t duty_cycle_;
+	// uint32_t cnt_clk_;		
+	// uint32_t timer_clk_;	
 
 	/* ----- STM32F103 specifics ----- */
 	// TIM_HandleTypeDef htimY_;
-	TIM_HandleTypeDef *htimX_;
-    TIM_TypeDef *TIMX_;
-	uint32_t channel_addr_;
+	TIM_HandleTypeDef *htimX_;	// TIM structure handle;
+    TIM_TypeDef *TIMX_;			// TIM module number;
+	uint32_t channel_addr_;		// TIM addr number;
 
 	// These prescalers are configured on RCC clock tree. MUST BE EQUAL ON REGISTER TREE!
-	uint8_t prescale_AHB_ = 1;
-	uint8_t prescale_APB1_ = 2;
-	uint8_t prescale_APB2_ = 2;
+	uint16_t AHB_div_ = 1;		// RCC bus prescaler (1, 2, 4, 8, 16, 32, 64, 256 and 512)
+	uint8_t APB1_div_ = 2;		// RCC prescaler for TIM2, 3, 4 (divs: 1, 2, 4);
+	uint8_t APB2_div_ = 2;		// RCC prescaler for TIM1 (divs: 1, 2, 4);
+	uint8_t CKD_[3] = {1, 2, 4};// TIM clock division (1, 2 or 4) on CR1. CKD[1:0] bits 9 and 8;
+	uint16_t PSC_ = 1;			// TIM Prescaler register 16-bit value;
+	uint16_t ARR_ = 1;			// TIM Auto reload Register 16-bit value;
 
 	// STM32F103 16-bit timer module registers (stm32f101x6.h file)
 	uint16_t TIMX_CR1_, TIMX_CR2_;
 	uint16_t TIMX_DIER_, TIMX_EGR_, TIMX_SR_;
 	uint16_t TIMX_CNT_, TIMX_ARR_, TIMX_PSC_;
+
+	// STM32F103 16-bit Reset and Clock Control 16-bit registers
+	uint16_t RCC_CR_;			// RCC Control Register
+	uint16_t RCC_AHBENR_;
+	uint16_t RCC_APB2ENR_;
+	uint32_t RCC_APB1RSTR_, RCC_APB1ENR_, RCC_CFGR_;
+	// RCC_TypeDef RCCx;
+	/* ----- STM32F103 specifics ----- */
 
 	void update_registers_(void) {
 		TIMX_CR1_ = static_cast<uint16_t>(TIMX_->CR1);
@@ -393,15 +393,78 @@ private:
 		TIMX_SR_ = static_cast<uint16_t>(TIMX_->SR);
 		TIMX_PSC_ = static_cast<uint16_t>(TIMX_->PSC);
 		TIMX_EGR_ = static_cast<uint16_t>(TIMX_->EGR);
+		TIMX_DIER_ = static_cast<uint16_t>(TIMX_->DIER);
+		RCC_APB1RSTR_ = RCC->APB1RSTR;
+		RCC_APB1ENR_ = RCC->APB1ENR;
 	}
+	/*
+	* @param _f desired frequency
+	*/
+	void timer_calculation_(double _f) {
+		double _t = 1/_f;						// Desired time period [s];
 
-	// STM32F103 16-bit Reset and Clock Control 16-bit registers
-	uint16_t RCC_CR_;
-	uint16_t RCC_AHBENR_;
-	uint16_t RCC_APB2ENR_;
-	uint32_t RCC_APB1RSTR_, RCC_APB1ENR_;
-	// RCC_TypeDef RCCx;
+		// System clock frequency [Hz]
+		f_sys_ = HAL_RCC_GetHCLKFreq();
 
+		// Bus frequency
+		get_AHB_APBx_div_();					// update AHB and APB1 prescalers from RCC Register
+		f_bus_ =  f_sys_/(AHB_div_*APB1_div_);
+
+		// counter frequency [Hz];
+		f_cnt_ = f_bus_/(PSC_*CKD_[0]);
+
+		// timer frequency [Hz];
+		f_tim_ = f_cnt_/static_cast<double>(ARR_);
+
+		// double kt1 = AHB_div_*APB1_div_/f_sys_; // Time constant 1;
+		// double T_cnt_ = kt1*CKD_*PSC_/f_sys_;   // Counter period [s];
+		// double T_tim_ = (AHB_div_*APB1_div_/f_sys_)*CKD_*PSC_*ARR_/f_sys_;
+		T_tim_ = static_cast<double>(ARR_)/f_cnt_;              // Timer period [s];
+
+		printf("Start The Timer finder\n");
+		int a = 0;
+		uint32_t ARR_temp_ = 0;
+		for(uint16_t j=1; j<65535; j++) {
+			if(a == 1) {
+				break;
+			}
+			PSC_ = j;
+			// printf("PSC_:%u\n", PSC_);
+			f_cnt_ = f_bus_/(static_cast<double>(PSC_*CKD_[0]));
+
+			ARR_temp_ = f_cnt_*_t;
+			if(ARR_temp_ < 65536) {
+				printf("Found!\n");
+				a = 1;
+				ARR_ = static_cast<uint16_t>(ARR_temp_);
+				break;
+			}
+
+			// for(uint16_t i=1; i<65535; i++) {
+			// 	ARR_ = i;
+			// 	T_tim_ = static_cast<double>(ARR_)/f_cnt_;
+			// 	if(T_tim_ >= _t) {
+			// 		printf("Found!\n");
+			// 		a = 1;
+			// 		break;
+			// 	}
+			// }
+
+		}
+
+		printf("PSC_:%u\n", PSC_);
+		printf("ARR_:%u\n", ARR_);
+
+		// Counter frequency [Hz];
+		// double f_cnt_ = f_sys_/(AHB_div_*APB1_div_*PSC_*CKD_);
+
+		// timer frequency [Hz];
+		// double f_tim_ = f_cnt_/ARR_;    
+
+		printf("CNT frequency: %2.f Hz\n", f_cnt_);
+		printf("TIM frequency: %2.f Hz\n", f_tim_);
+		printf("TIM period: %f s\n", T_tim_);
+	}
 	void get_TIM_CNT_(void) {
 		TIMX_CNT_ = static_cast<uint16_t>(TIMX_->CNT);
 		printf("TIMX_CNT_:%u\n", TIMX_CNT_);
@@ -442,7 +505,83 @@ private:
 		RCC_APB1ENR_ = RCC->APB1ENR;
 		printf("RCC_APB1ENR_:0x%08lx\n", RCC_APB1ENR_);
 	}
+	void get_RCC_CFGR_(void) {
+		RCC_CFGR_ = RCC->CFGR;
+	}
+	void get_AHB_APBx_div_(void) {
+		get_RCC_CFGR_();
+		// Find AHB prescale
+		uint32_t AHB_div_t_ = ((RCC_CFGR_ &= ((1<<7) | (1<<6) | (1<<5) | (1<<4))) >> 4);
+		switch (AHB_div_t_) {
+			case 8:
+				AHB_div_ = 2;
+				break;
+			case 9:
+				AHB_div_ = 4;
+				break;
+			case 10:
+				AHB_div_ = 8;
+				break;
+			case 11:
+				AHB_div_ = 16;
+				break;
+			case 12:
+				AHB_div_ = 64;
+				break;
+			case 13:
+				AHB_div_ = 128;
+				break;
+			case 14:
+				AHB_div_ = 256;
+				break;
+			case 15:
+				AHB_div_ = 512;
+				break;
+			default:
+				AHB_div_ = 1;
+				break;
+		}
 
+		// Find APB1 prescale
+		uint32_t APB1_div_t_ = ((RCC_CFGR_ &= ((1<<10) | (1<<9) | (1<<8))) >> 8);
+		switch (APB1_div_t_) {
+			case 4:
+				AHB_div_ = 2;
+				break;
+			case 5: 
+				AHB_div_ = 4;
+				break;
+			case 6:
+				AHB_div_ = 6;
+				break;
+			case 7:
+				AHB_div_ = 16;
+				break;
+			default:
+				AHB_div_ = 0; // not divided
+				break;
+		}
+
+		// Find APB2 prescale
+		uint32_t APB2_div_t_ = ((RCC_CFGR_ &= ((1<<13) | (1<<12) | (1<<11))) >> 11);
+		switch (APB2_div_t_) {
+			case 4:
+				APB2_div_ = 2;
+				break;
+			case 5: 
+				APB2_div_ = 4;
+				break;
+			case 6:
+				APB2_div_ = 6;
+				break;
+			case 7:
+				APB2_div_ = 16;
+				break;
+			default:
+				APB2_div_ = 0; // not divided
+				break;
+		}
+	}
 	void set_TIMx_EGR_UG(void) {
 		TIMX_->EGR |= (1<<0);
 	}
