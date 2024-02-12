@@ -2,7 +2,7 @@
 
 static uint8_t tim1_state = 0;
 
-static TIM_DRIVER timer_1us(1, 500000, timer_mode::timer_counter);
+// static TIM_DRIVER timer_1us(1, 500000, timer_mode::timer_counter);
 
 void delay_ms(uint32_t milliseconds)
 {
@@ -20,9 +20,9 @@ void delay_us(uint32_t microseconds) {
 
 	// https://controllerstech.com/create-1-microsecond-delay-stm32/
 	// TIM1->CNT = 0;
-	timer_1us.reset_cnt();
+	// timer_1us.reset_cnt();
 
-	while(timer_1us.get_cnt() < microseconds);
+	// while(timer_1us.get_cnt() < microseconds);
 	// 	printf("v:%lu\n", timer_1us.get_cnt());
 	// }
 
@@ -31,9 +31,9 @@ void delay_us(uint32_t microseconds) {
 
 
 	// Old way;
-	// uint32_t a;
-	// for(uint32_t i=0; i<microseconds	; i++) {
-	// 	a++;
-	// }
+	uint32_t a;
+	for(uint32_t i=0; i<microseconds	; i++) {
+		a++;
+	}
 	// ets_delay_us(microseconds);
 }
