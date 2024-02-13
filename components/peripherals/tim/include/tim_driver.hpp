@@ -141,7 +141,7 @@ extern uint32_t tim4_cnt_;
 class TIM_DRIVER {
 public:
 
-	TIM_DRIVER(int timer_num, double freq, timer_mode mode, int channel = 1) : timer_num_(timer_num), channel_(channel) {
+	TIM_DRIVER(int timer_num, double f, timer_mode mode, int channel = 1) : timer_num_(timer_num), f_usr_(f), mode_(mode), channel_(channel) {
 
 		switch(timer_num) {
 			case 1: {
@@ -175,19 +175,14 @@ public:
 			}
 		}
 
-		init(freq, mode);
+		init();
 	}
 	~TIM_DRIVER(void) {}
 
-	void init(double freq, timer_mode mode) {
+	void init(void) {
 
 		// calculate PSC_ and ARR_ registers given a frequency
-		printf("TESTE01!\n");
-		timer_calculation_(freq);
-
-		// duty_max_ = div2-1;
-		printf("f_sys_: %lu, PSC_:%u, f_tim_:%f, ARR_:%u ", f_sys_, PSC_, f_tim_, ARR_);
-		// printf("Duty max: %lu\n", duty_max_);
+		timer_calculation_();
 
 		htimX_->Instance = TIMX_;
 		htimX_->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;			// TIMx_CR1. Set CKD[1:0] bits
@@ -195,7 +190,6 @@ public:
 		htimX_->Init.Period = ARR_;									// TIMx_ARR register (count up to this register value)
 		htimX_->Init.CounterMode = TIM_COUNTERMODE_UP;					// TIMx_CR1 set DIR bit
 		htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;// TIMx_CR1 set ARPE bit 7
-
 		// htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 
 		if (HAL_TIM_Base_Init(htimX_) != HAL_OK) {
@@ -207,15 +201,14 @@ public:
 
 		TIM_ClockConfigTypeDef sClockSourceConfig;
 		sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-		if (HAL_TIM_ConfigClockSource(htimX_, &sClockSourceConfig) != HAL_OK)
-		{
+		if (HAL_TIM_ConfigClockSource(htimX_, &sClockSourceConfig) != HAL_OK) {
 			printf("TIM%d: clock config error!\n", timer_num_);
 			Error_Handler();
 		} else {
 			printf("TIM%d: clock config!\n", timer_num_);
 		}
 
-		switch(mode) {
+		switch(mode_) {
 			case timer_mode::timer_interrupt: {
 				if(HAL_TIM_Base_Start_IT(htimX_) != HAL_OK) {	// update interrupt enable;
 					printf("TIM%d: interrupt error!\n", timer_num_);
@@ -333,20 +326,22 @@ public:
 		__HAL_TIM_DISABLE(htimX_);	// or TIMX_CR1 &= ~(TIM_CR1_CEN);
 	}
 	// This attribute force compile include this functions avoid optimization
-	int __attribute__((__used__)) get_isr_flag(void) {
+	int __attribute__((__used__)) isr_flag(void) {
 		if(*tim_isr_flag_) {
 			*tim_isr_flag_ = 0;
 			return 1;
 		} else
 			return 0;
 	}
-	void set_isr_flag(void) {
-		*tim_isr_flag_ = 1;
-	}
+	// void reset_isr_flag(void) {
+	// 	*tim_isr_flag_ = 1;
+	// }
 
 private:
 	// General timer parameters
 	int timer_num_;
+	double f_usr_;				// user frequency requested [Hz];
+	timer_mode mode_;			// working mode
 	int channel_;
 	uint32_t duty_max_;
     uint32_t f_sys_;			// system clock frequency [Hz];
@@ -359,6 +354,7 @@ private:
 	// uint32_t duty_cycle_;
 	// uint32_t cnt_clk_;		
 	// uint32_t timer_clk_;	
+
 
 	/* ----- STM32F103 specifics ----- */
 	// TIM_HandleTypeDef htimY_;
@@ -400,28 +396,23 @@ private:
 	/*
 	* @param _f desired frequency
 	*/
-	void timer_calculation_(double _f) {
-		double _t = 1/_f;						// Desired time period [s];
+	void timer_calculation_(void) {
+
+		// Desired time period [s];
+		double _t = 1/f_usr_;
 
 		// System clock frequency [Hz]
 		f_sys_ = HAL_RCC_GetHCLKFreq();
 
 		// Bus frequency
 		get_AHB_APBx_div_();					// update AHB and APB1 prescalers from RCC Register
-		f_bus_ =  f_sys_/(AHB_div_*APB1_div_);
-
-		// counter frequency [Hz];
-		f_cnt_ = f_bus_/(PSC_*CKD_[0]);
-
-		// timer frequency [Hz];
-		f_tim_ = f_cnt_/static_cast<double>(ARR_);
+		f_bus_ =  static_cast<double>(f_sys_/(AHB_div_*APB1_div_));
 
 		// double kt1 = AHB_div_*APB1_div_/f_sys_; // Time constant 1;
 		// double T_cnt_ = kt1*CKD_*PSC_/f_sys_;   // Counter period [s];
 		// double T_tim_ = (AHB_div_*APB1_div_/f_sys_)*CKD_*PSC_*ARR_/f_sys_;
-		T_tim_ = static_cast<double>(ARR_)/f_cnt_;              // Timer period [s];
-
-		printf("Start The Timer finder\n");
+	
+		// printf("Start The Timer finder\n");
 		int a = 0;
 		uint32_t ARR_temp_ = 0;
 		for(uint16_t j=1; j<65535; j++) {
@@ -430,11 +421,13 @@ private:
 			}
 			PSC_ = j;
 			// printf("PSC_:%u\n", PSC_);
-			f_cnt_ = f_bus_/(static_cast<double>(PSC_*CKD_[0]));
+			
+			// counter frequency [Hz];
+			f_cnt_ = f_bus_/(PSC_*CKD_[0]);
 
 			ARR_temp_ = f_cnt_*_t;
 			if(ARR_temp_ < 65536) {
-				printf("Found!\n");
+				// printf("Found!\n");
 				a = 1;
 				ARR_ = static_cast<uint16_t>(ARR_temp_);
 				break;
@@ -452,18 +445,22 @@ private:
 
 		}
 
-		printf("PSC_:%u\n", PSC_);
-		printf("ARR_:%u\n", ARR_);
-
-		// Counter frequency [Hz];
-		// double f_cnt_ = f_sys_/(AHB_div_*APB1_div_*PSC_*CKD_);
-
 		// timer frequency [Hz];
-		// double f_tim_ = f_cnt_/ARR_;    
+		f_tim_ = f_cnt_/static_cast<double>(ARR_);
 
-		printf("CNT frequency: %2.f Hz\n", f_cnt_);
-		printf("TIM frequency: %2.f Hz\n", f_tim_);
-		printf("TIM period: %f s\n", T_tim_);
+		// Timer period [s];
+		T_tim_ = static_cast<double>(ARR_)/f_cnt_;
+
+		printf("f_sys_: %.0lu MHz\n", f_sys_/1000000);
+		printf("f_bus_: %.0f kHz\n", f_bus_/1000);
+		printf("f_cnt_: %.0f Hz\n", f_cnt_);
+		printf("f_tim_: %.3f Hz\n", f_tim_);
+		printf("T_tim_: %.2f s\n", T_tim_);
+		printf("PSC_:%u, ARR_:%u ", PSC_, ARR_);
+
+		// printf("CNT frequency: %2.f Hz\n", f_cnt_);
+		// printf("TIM frequency: %2.f Hz\n", f_tim_);
+		// printf("TIM period: %f s\n", T_tim_);
 	}
 	void get_TIM_CNT_(void) {
 		TIMX_CNT_ = static_cast<uint16_t>(TIMX_->CNT);
@@ -510,7 +507,7 @@ private:
 	}
 	void get_AHB_APBx_div_(void) {
 		get_RCC_CFGR_();
-		// Find AHB prescale
+		// Find AHB prescale - HPRE[3:0] bits - 7 to 4 bits of CFGR
 		uint32_t AHB_div_t_ = ((RCC_CFGR_ &= ((1<<7) | (1<<6) | (1<<5) | (1<<4))) >> 4);
 		switch (AHB_div_t_) {
 			case 8:
@@ -546,19 +543,19 @@ private:
 		uint32_t APB1_div_t_ = ((RCC_CFGR_ &= ((1<<10) | (1<<9) | (1<<8))) >> 8);
 		switch (APB1_div_t_) {
 			case 4:
-				AHB_div_ = 2;
+				APB1_div_ = 2;
 				break;
 			case 5: 
-				AHB_div_ = 4;
+				APB1_div_ = 4;
 				break;
 			case 6:
-				AHB_div_ = 6;
+				APB1_div_ = 8;
 				break;
 			case 7:
-				AHB_div_ = 16;
+				APB1_div_ = 16;
 				break;
 			default:
-				AHB_div_ = 0; // not divided
+				APB1_div_ = 1; // not divided
 				break;
 		}
 
@@ -572,13 +569,13 @@ private:
 				APB2_div_ = 4;
 				break;
 			case 6:
-				APB2_div_ = 6;
+				APB2_div_ = 8;
 				break;
 			case 7:
 				APB2_div_ = 16;
 				break;
 			default:
-				APB2_div_ = 0; // not divided
+				APB2_div_ = 1; // not divided
 				break;
 		}
 	}

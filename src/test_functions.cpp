@@ -751,14 +751,16 @@ void test_timer_interrupt(void) {
 	// tim3_init();
 	// TIM_DRIVER tim1(1, 1, timer_mode::timer_interrupt);
 	// TIM_DRIVER tim2(2, 1, timer_mode::timer_interrupt);
-	TIM_DRIVER tim2(2, 1, timer_mode::timer_counter);
+
+	double T = 1; // Timer period [s];
+	TIM_DRIVER tim2(2, 1/T, timer_mode::timer_interrupt);
 	// TIM_DRIVER tim4(4, 1, timer_mode::timer_interrupt);
 
 	uint32_t i = 0;
 
 	while(1) {
 
-		if(tim2.get_isr_flag()) { //tim3.get_isr_flag()) {
+		if(tim2.isr_flag()) { //tim3.get_isr_flag()) {
 			// tim3.set_TIMx_EGR_UG();
 			// TIM3->EGR |= (1<<0);
 			printf("TIM2: %lu\n", i++);
@@ -808,7 +810,14 @@ void test_timer_pwm(void) {
 	
 }
 void test_timer_counter(void) {
-	
+	TIM_DRIVER tim2(2, 1, timer_mode::timer_counter);
+
+	uint32_t i = 0;
+	while(1) {
+		if(tim2.isr_flag()) {
+			printf("TIM2:%lu\n", i++);
+		}
+	}
 }
 void test_gpio(void) {
 	GPIO_DRIVER pin(6, 1);

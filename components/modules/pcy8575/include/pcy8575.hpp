@@ -327,7 +327,7 @@ public:
 		// print_samples();
 
 		// 1 second flag
-		if(timer_.get_isr_flag()) {
+		if(timer_.isr_flag()) {
 			if(config_ & 0x0001) {
 				process();				// start adc dma stream each one second;
 			}
