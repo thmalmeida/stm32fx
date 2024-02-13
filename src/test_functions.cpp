@@ -763,6 +763,11 @@ void test_timer_interrupt(void) {
 		if(tim2.isr_flag()) { //tim3.get_isr_flag()) {
 			// tim3.set_TIMx_EGR_UG();
 			// TIM3->EGR |= (1<<0);
+			// tim2.get_AHB_APBx_div_();
+			// tim2.get_TIM_ARR_();
+			// tim2.get_TIM_PSC_();
+			// tim2.get_TIM_CKD_();
+			// tim2.get_TIM_CR1_();
 			printf("TIM2: %lu\n", i++);
 			// printf("TIM%d\n", tim3.get_tim_number());
 		}

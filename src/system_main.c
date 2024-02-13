@@ -47,7 +47,7 @@ void SystemClock_Config_48MHz_HSE_ADC(void)
 	PeriphClkInit.AdcClockSelection = RCC_ADCPCLK2_DIV8;
 	if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) {
 		Error_Handler();
-	}
+	}	
 }
 // PLL clk = 56 MHz, ADC clk = 14 MHz
 void SystemClock_Config_56MHz_HSE_ADC(void)

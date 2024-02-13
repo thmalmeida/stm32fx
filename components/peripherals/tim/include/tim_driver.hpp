@@ -185,12 +185,25 @@ public:
 		timer_calculation_();
 
 		htimX_->Instance = TIMX_;
-		htimX_->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;			// TIMx_CR1. Set CKD[1:0] bits
+		switch(CKD_) {
+			case 1:
+				htimX_->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;			// TIMx_CR1. Set CKD[1:0] bits
+				break;
+			case 2:
+				htimX_->Init.ClockDivision = TIM_CLOCKDIVISION_DIV2;			// TIMx_CR1. Set CKD[1:0] bits
+				break;
+			case 4:
+				htimX_->Init.ClockDivision = TIM_CLOCKDIVISION_DIV4;			// TIMx_CR1. Set CKD[1:0] bits
+				break;
+			default:
+				htimX_->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;			// TIMx_CR1. Set CKD[1:0] bits
+				break;
+		}
 		htimX_->Init.Prescaler = PSC_;									// TIMx_PSC 16 bit register (clk division)
 		htimX_->Init.Period = ARR_;									// TIMx_ARR register (count up to this register value)
 		htimX_->Init.CounterMode = TIM_COUNTERMODE_UP;					// TIMx_CR1 set DIR bit
-		htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;// TIMx_CR1 set ARPE bit 7
-		// htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+		// htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;// TIMx_CR1 set ARPE bit 7
+		htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
 
 		if (HAL_TIM_Base_Init(htimX_) != HAL_OK) {
 			printf("TIM%d: base init error!\n", timer_num_);
@@ -339,41 +352,40 @@ public:
 
 private:
 	// General timer parameters
-	int timer_num_;
-	double f_usr_;				// user frequency requested [Hz];
-	timer_mode mode_;			// working mode
-	int channel_;
-	uint32_t duty_max_;
-    uint32_t f_sys_;			// system clock frequency [Hz];
-	double f_bus_;				// bus frequency link to tim [Hz];
-	double f_cnt_;				// The frequency of update the cnt register;
-	double f_tim_;				// The frequency of timer. 1/T. T is the time to full cycle from 0 to max value;
-	double T_tim_;				// TIM time period [s];
-	uint32_t* tim_cnt_;			// The instant counter ((TIMX_CNT) register value;
-	uint8_t* tim_isr_flag_;		// Handle flag to connect with ISR. Become 1 when interrupt occurs;
+	int timer_num_;					// timer number;
+	double f_usr_;					// user frequency requested [Hz];
+	timer_mode mode_;				// working mode
+	int channel_;					// user channel selected;
+	uint32_t duty_max_;				// max duty cycle [%];
+    uint32_t f_sys_;				// system clock frequency [Hz];
+	double f_bus_;					// bus frequency link to tim [Hz];
+	double f_cnt_;					// The frequency of update the cnt register;
+	double f_tim_;					// The frequency of timer. 1/T. T is the time to full cycle from 0 to max value;
+	double T_tim_;					// TIM time period [s];
+	uint32_t* tim_cnt_;				// The instant counter ((TIMX_CNT) register value;
+	uint8_t* tim_isr_flag_;			// Handle flag to connect with ISR. Become 1 when interrupt occurs;
 	// uint32_t duty_cycle_;
 	// uint32_t cnt_clk_;		
 	// uint32_t timer_clk_;	
 
-
 	/* ----- STM32F103 specifics ----- */
-	// TIM_HandleTypeDef htimY_;
-	TIM_HandleTypeDef *htimX_;	// TIM structure handle;
-    TIM_TypeDef *TIMX_;			// TIM module number;
-	uint32_t channel_addr_;		// TIM addr number;
+	TIM_HandleTypeDef *htimX_;		// TIM structure handle;
+    TIM_TypeDef *TIMX_;				// TIM module number;
+	uint32_t channel_addr_;			// TIM addr number;
 
 	// These prescalers are configured on RCC clock tree. MUST BE EQUAL ON REGISTER TREE!
-	uint16_t AHB_div_ = 1;		// RCC bus prescaler (1, 2, 4, 8, 16, 32, 64, 256 and 512)
-	uint8_t APB1_div_ = 2;		// RCC prescaler for TIM2, 3, 4 (divs: 1, 2, 4);
-	uint8_t APB2_div_ = 2;		// RCC prescaler for TIM1 (divs: 1, 2, 4);
-	uint8_t CKD_[3] = {1, 2, 4};// TIM clock division (1, 2 or 4) on CR1. CKD[1:0] bits 9 and 8;
-	uint16_t PSC_ = 1;			// TIM Prescaler register 16-bit value;
-	uint16_t ARR_ = 1;			// TIM Auto reload Register 16-bit value;
+	uint16_t AHB_div_ = 1;			// RCC bus prescaler (1, 2, 4, 8, 16, 32, 64, 256 and 512)
+	uint8_t APB1_div_ = 2;			// RCC prescaler for TIM2, 3, 4 (divs: 1, 2, 4);
+	uint8_t APB2_div_ = 2;			// RCC prescaler for TIM1 (divs: 1, 2, 4);
+	uint8_t CKD_v_[3] = {1, 2, 4};	// TIM clock division (1, 2 or 4) on CR1. CKD[1:0] bits 9 and 8;
+	uint8_t CKD_ = 1;				// TIM counter divider
+	uint16_t PSC_ = 1;				// TIM Prescaler register 16-bit value;
+	uint16_t ARR_ = 1;				// TIM Auto reload Register 16-bit value;
 
 	// STM32F103 16-bit timer module registers (stm32f101x6.h file)
 	uint16_t TIMX_CR1_, TIMX_CR2_;
 	uint16_t TIMX_DIER_, TIMX_EGR_, TIMX_SR_;
-	uint16_t TIMX_CNT_, TIMX_ARR_, TIMX_PSC_;
+	uint16_t TIMX_CNT_, TIMX_ARR_, TIMX_PSC_, TIMX_CKD_;
 
 	// STM32F103 16-bit Reset and Clock Control 16-bit registers
 	uint16_t RCC_CR_;			// RCC Control Register
@@ -406,43 +418,59 @@ private:
 
 		// Bus frequency
 		get_AHB_APBx_div_();					// update AHB and APB1 prescalers from RCC Register
-		f_bus_ =  static_cast<double>(f_sys_/(AHB_div_*APB1_div_));
+		if(APB1_div_ == 1)
+			f_bus_ =  static_cast<double>(f_sys_/(AHB_div_*APB1_div_));
+		else
+			f_bus_ =  static_cast<double>(2*f_sys_/(AHB_div_*APB1_div_));
+
 
 		// double kt1 = AHB_div_*APB1_div_/f_sys_; // Time constant 1;
 		// double T_cnt_ = kt1*CKD_*PSC_/f_sys_;   // Counter period [s];
 		// double T_tim_ = (AHB_div_*APB1_div_/f_sys_)*CKD_*PSC_*ARR_/f_sys_;
 	
+		double T_tim_max = static_cast<double>(CKD_v_[2])*65535*65535/f_bus_;
+
+		if(_t > T_tim_max) {
+			printf("Max tim period is: %.1f\n", T_tim_max);
+			return;
+		}
+
 		// printf("Start The Timer finder\n");
 		int a = 0;
 		uint32_t ARR_temp_ = 0;
-		for(uint16_t j=1; j<65535; j++) {
+		for(uint8_t k=0; k<3; k++) {
 			if(a == 1) {
-				break;
-			}
-			PSC_ = j;
-			// printf("PSC_:%u\n", PSC_);
-			
-			// counter frequency [Hz];
-			f_cnt_ = f_bus_/(PSC_*CKD_[0]);
-
-			ARR_temp_ = f_cnt_*_t;
-			if(ARR_temp_ < 65536) {
-				// printf("Found!\n");
-				a = 1;
-				ARR_ = static_cast<uint16_t>(ARR_temp_);
+				// printf("a = 1 break!\n");
 				break;
 			}
 
-			// for(uint16_t i=1; i<65535; i++) {
-			// 	ARR_ = i;
-			// 	T_tim_ = static_cast<double>(ARR_)/f_cnt_;
-			// 	if(T_tim_ >= _t) {
-			// 		printf("Found!\n");
-			// 		a = 1;
-			// 		break;
-			// 	}
-			// }
+			CKD_ = CKD_v_[k];
+			// printf("CKD_:%u\n", CKD_);
+			for(uint16_t j=1; j<65535; j++) {
+				PSC_ = j;
+				// printf("PSC_:%u\n", PSC_);
+				
+				// counter frequency [Hz];
+				f_cnt_ = f_bus_/(PSC_*CKD_);
 
+				ARR_temp_ = f_cnt_*_t;
+				if(ARR_temp_ < 65536) {
+					// printf("Found!\n");
+					a = 1;
+					ARR_ = static_cast<uint16_t>(ARR_temp_);
+					break;
+				}
+
+				// for(uint16_t i=1; i<65535; i++) {
+				// 	ARR_ = i;
+				// 	T_tim_ = static_cast<double>(ARR_)/f_cnt_;
+				// 	if(T_tim_ >= _t) {
+				// 		printf("Found!\n");
+				// 		a = 1;
+				// 		break;
+				// 	}
+				// }
+			}
 		}
 
 		// timer frequency [Hz];
@@ -456,11 +484,7 @@ private:
 		printf("f_cnt_: %.0f Hz\n", f_cnt_);
 		printf("f_tim_: %.3f Hz\n", f_tim_);
 		printf("T_tim_: %.2f s\n", T_tim_);
-		printf("PSC_:%u, ARR_:%u ", PSC_, ARR_);
-
-		// printf("CNT frequency: %2.f Hz\n", f_cnt_);
-		// printf("TIM frequency: %2.f Hz\n", f_tim_);
-		// printf("TIM period: %f s\n", T_tim_);
+		printf("CKD_:%u, PSC_:%u, ARR_:%u\n", CKD_, PSC_, ARR_);
 	}
 	void get_TIM_CNT_(void) {
 		TIMX_CNT_ = static_cast<uint16_t>(TIMX_->CNT);
@@ -469,6 +493,10 @@ private:
 	void get_TIM_ARR_(void) {
 		TIMX_ARR_ = static_cast<uint16_t>(TIMX_->ARR);
 		printf("TIMX_ARR_:%u\n", TIMX_ARR_);
+	}
+	void get_TIM_CKD_(void) {
+		TIMX_CKD_ = static_cast<uint16_t>((TIMX_->CR1 >> 8) & 0x00000003);
+		printf("TIMX_CKD_:%u\n", TIMX_CKD_);
 	}
 	void get_TIM_PSC_(void) {
 		TIMX_PSC_ = static_cast<uint16_t>(TIMX_->PSC);
@@ -508,7 +536,8 @@ private:
 	void get_AHB_APBx_div_(void) {
 		get_RCC_CFGR_();
 		// Find AHB prescale - HPRE[3:0] bits - 7 to 4 bits of CFGR
-		uint32_t AHB_div_t_ = ((RCC_CFGR_ &= ((1<<7) | (1<<6) | (1<<5) | (1<<4))) >> 4);
+
+		uint32_t AHB_div_t_ = (RCC_CFGR_ >> 4) & 0x0000000F;
 		switch (AHB_div_t_) {
 			case 8:
 				AHB_div_ = 2;
@@ -539,8 +568,8 @@ private:
 				break;
 		}
 
-		// Find APB1 prescale
-		uint32_t APB1_div_t_ = ((RCC_CFGR_ &= ((1<<10) | (1<<9) | (1<<8))) >> 8);
+		// Find APB1 prescale PPRE1[2:0] starting at bit 8 to bit 10 on RCC CFGR register
+		uint32_t APB1_div_t_ = (RCC_CFGR_ >> 8) & 0x00000007;
 		switch (APB1_div_t_) {
 			case 4:
 				APB1_div_ = 2;
@@ -560,7 +589,7 @@ private:
 		}
 
 		// Find APB2 prescale
-		uint32_t APB2_div_t_ = ((RCC_CFGR_ &= ((1<<13) | (1<<12) | (1<<11))) >> 11);
+		uint32_t APB2_div_t_ = (RCC_CFGR_ >> 11) & 0x00000007;
 		switch (APB2_div_t_) {
 			case 4:
 				APB2_div_ = 2;
@@ -578,6 +607,7 @@ private:
 				APB2_div_ = 1; // not divided
 				break;
 		}
+		printf("AHB_div_:%u, APB1_div_:%u, APB2_div_:%u\n", AHB_div_, APB1_div_, APB2_div_);
 	}
 	void set_TIMx_EGR_UG(void) {
 		TIMX_->EGR |= (1<<0);
