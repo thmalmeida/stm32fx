@@ -299,9 +299,9 @@ flash: all
 # --trace=20000		,  -tXX, --trace=XX      Specify the trace frequency in Hz
 #
 monitor: flash
-	st-trace --clock=48
+	st-trace --clock=72
 monitor2:
-	st-trace --clock=48
+	st-trace --clock=72
 
 size:
 	$(SZ) $(BUILD_DIR)/$(TARGET).hex

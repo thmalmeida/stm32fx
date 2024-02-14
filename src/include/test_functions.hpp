@@ -18,6 +18,8 @@
 #include "backup.hpp"
 #include "reset_reason.hpp"
 
+#include "delay.hpp"
+
 // For weighing scale system only
 #include "weighing_scale.h"
 

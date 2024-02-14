@@ -174,12 +174,13 @@ public:
 				break;
 			}
 		}
-
 		init();
 	}
 	~TIM_DRIVER(void) {}
 
 	void init(void) {
+
+		printf("TIM%d initializing...\n", timer_num_);
 
 		// calculate PSC_ and ARR_ registers given a frequency
 		timer_calculation_();
@@ -226,9 +227,8 @@ public:
 				if(HAL_TIM_Base_Start_IT(htimX_) != HAL_OK) {	// update interrupt enable;
 					printf("TIM%d: interrupt error!\n", timer_num_);
 					Error_Handler();
-				} else {
+				} else
 					printf("TIM%d: interrupt init!\n", timer_num_);
-				}
 				break;
 			}
 			case timer_mode::timer_counter: {
@@ -241,7 +241,8 @@ public:
 				// get_TIM_PSC_();
 				// get_TIM_SR_();
 				// printf("TIM%d: interrupt without interrupt!\n", timer_num_);
-				enable_cnt();
+				HAL_TIM_Base_Start(htimX_);
+				// enable_cnt();
 				break;
 			}			
 			case timer_mode::pwm_output: {
@@ -316,7 +317,8 @@ public:
 		__HAL_TIM_SET_COUNTER(htimX_, value);	// or TIMX_->CNT = value;
 	}
 	uint32_t get_cnt(void) {
-		return __HAL_TIM_GET_COUNTER(htimX_); // or return TIMX_->CNT;
+		return __HAL_TIM_GET_COUNTER(htimX_); // or
+		// return TIMX_->CNT;
 	}
 	void set_duty_cycle(uint32_t value) {
 		uint32_t pulse_width = static_cast<uint32_t>(value*duty_max_/100.0);
@@ -416,20 +418,20 @@ private:
 		// System clock frequency [Hz]
 		f_sys_ = HAL_RCC_GetHCLKFreq();
 
-		// Bus frequency
-		get_AHB_APBx_div_();					// update AHB and APB1 prescalers from RCC Register
-		if(APB1_div_ == 1)
-			f_bus_ =  static_cast<double>(f_sys_/(AHB_div_*APB1_div_));
-		else
-			f_bus_ =  static_cast<double>(2*f_sys_/(AHB_div_*APB1_div_));
+		// Bus frequency - update AHB and APB1 prescalers from RCC Register
+		get_AHB_APBx_div_();
 
+		// According with RCC clock tree into datasheet on page 93;
+		if(APB1_div_ == 1)
+			f_bus_ =  f_sys_/(static_cast<double>(AHB_div_)*static_cast<double>(APB1_div_));
+		else
+			f_bus_ =  2*f_sys_/(static_cast<double>(AHB_div_)*static_cast<double>(APB1_div_));
 
 		// double kt1 = AHB_div_*APB1_div_/f_sys_; // Time constant 1;
 		// double T_cnt_ = kt1*CKD_*PSC_/f_sys_;   // Counter period [s];
 		// double T_tim_ = (AHB_div_*APB1_div_/f_sys_)*CKD_*PSC_*ARR_/f_sys_;
 	
 		double T_tim_max = static_cast<double>(CKD_v_[2])*65535*65535/f_bus_;
-
 		if(_t > T_tim_max) {
 			printf("Max tim period is: %.1f\n", T_tim_max);
 			return;
@@ -437,7 +439,7 @@ private:
 
 		// printf("Start The Timer finder\n");
 		int a = 0;
-		uint32_t ARR_temp_ = 0;
+		int ARR_temp_ = 0;
 		for(uint8_t k=0; k<3; k++) {
 			if(a == 1) {
 				// printf("a = 1 break!\n");
@@ -446,12 +448,12 @@ private:
 
 			CKD_ = CKD_v_[k];
 			// printf("CKD_:%u\n", CKD_);
-			for(uint16_t j=1; j<65535; j++) {
+			for(int j=1; j<65536; j++) {
 				PSC_ = j;
 				// printf("PSC_:%u\n", PSC_);
 				
 				// counter frequency [Hz];
-				f_cnt_ = f_bus_/(PSC_*CKD_);
+				f_cnt_ = f_bus_/(static_cast<double>(CKD_)*static_cast<double>(PSC_));
 
 				ARR_temp_ = f_cnt_*_t;
 				if(ARR_temp_ < 65536) {
@@ -477,13 +479,13 @@ private:
 		f_tim_ = f_cnt_/static_cast<double>(ARR_);
 
 		// Timer period [s];
-		T_tim_ = static_cast<double>(ARR_)/f_cnt_;
+		T_tim_ = (static_cast<double>(ARR_))/f_cnt_;
 
 		printf("f_sys_: %.0lu MHz\n", f_sys_/1000000);
 		printf("f_bus_: %.0f kHz\n", f_bus_/1000);
 		printf("f_cnt_: %.0f Hz\n", f_cnt_);
 		printf("f_tim_: %.3f Hz\n", f_tim_);
-		printf("T_tim_: %.2f s\n", T_tim_);
+		printf("T_tim_: %.3f ms\n", T_tim_*1000);
 		printf("CKD_:%u, PSC_:%u, ARR_:%u\n", CKD_, PSC_, ARR_);
 	}
 	void get_TIM_CNT_(void) {
