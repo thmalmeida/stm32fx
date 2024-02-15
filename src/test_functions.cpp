@@ -826,40 +826,35 @@ void test_timer_counter(void) {
 }
 void test_gpio(void) {
 
-	double T_us = 0.001;
-	TIM_DRIVER timer_us(2, 1/T_us, timer_mode::timer_counter);
+	double T_us = 1;
+	TIM_DRIVER timer0(1, 1/T_us, timer_mode::timer_interrupt);
 
-	GPIO_DRIVER pin[2]{{6,1}, {1,1}};
+	// GPIO_DRIVER pin[2]{{6,1}, {1,1}};
+	GPIO_DRIVER pin(6,1);
 	// TPI->ACPR = HAL_RCC_GetHCLKFreq() / 2000000 - 1;
 	// TIM_DRIVER tim2(2, 1000000,timer_mode::timer_counter);
 
-	// tim2.enable_cnt();
-	// tim2.get_TIM_ARR_();
-	// tim2.get_TIM_CR1_();
-	// tim2.get_TIM_CR2_();
-	// tim2.get_TIM_PSC_();
-	// uint32_t i =0, j = 0;
 	printf("GPIO test\n");
-	// uint32_t microseconds = 1;
 
-	uint32_t count = 0, count2 = 0;
+	uint32_t count = 0;
 	uint32_t v = 1/T_us;
 	printf("v:%lu", v);
 	while(1) {
 
-		timer_us.reset_cnt();
-		while(timer_us.get_cnt() < 360);
-
+		// timer_us.reset_cnt();
+		// while(timer_us.get_cnt() < 180);
 		// pin[0].toggle();
-		pin[0].toggle();
+
+
 		// HAL_Delay(500);
 		// if(timer_us.get_cnt()) {
 
 		// }
 
-		// if(timer_us.isr_flag()) {
-			// pin.toggle();
-
+		if(timer0.isr_flag()) {
+			pin.toggle();
+			// printf("CNT:%lu\n", count++);
+		}
 			// if(count > v) {
 			// 	count = 0;
 			// 	printf("CNT:%lu\n", count2++);

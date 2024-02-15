@@ -5,6 +5,23 @@ uint8_t tim1_state = 0;
 // double T_us = 0.000001;
 // TIM_DRIVER timer_us(4, 0.001, timer_mode::timer_counter);
 
+
+// #define SYSTICK_LOAD (SystemCoreClock/1000000U)
+// #define SYSTICK_DELAY_CALIB (SYSTICK_LOAD >> 1)
+ 
+// #define DELAY_US(us) \
+//     do { \
+//          uint32_t start = SysTick->VAL; \
+//          uint32_t ticks = (us * SYSTICK_LOAD)-SYSTICK_DELAY_CALIB;  \
+//          while((start - SysTick->VAL) < ticks); \
+//     } while (0)
+// #define DELAY_MS(ms) \
+//     do { \
+//         for (uint32_t i = 0; i < ms; ++i) { \
+//             DELAY_US(1000); \
+//         } \
+//     } while (0)
+
 void delay_ms(uint32_t milliseconds)
 {
 	HAL_Delay(milliseconds);

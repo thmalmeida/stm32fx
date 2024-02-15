@@ -5,10 +5,12 @@ int main(void)
 {
 	/* System must initializes */
 	HAL_Init();								// Reset of all peripherals, Initializes the Flash interface and the Systick. */
-	// SystemClock_Config_48MHz_HSE_ADC();		// Configure the system clock
+	HAL_Delay(10);							// little delay after peripheral 
 	SystemClock_Config_72MHz_HSE_LSI_ADC();
-	HAL_Delay(100);							// little delay after peripheral reset;
+	// SystemClock_Config_48MHz_HSE_ADC();		// Configure the system clock
 	// SystemClock_Config_8MHz_HSI();
+	HAL_Delay(10);							// little delay after peripheral reset;
+
 	// printf("\nSystem reset...\n");		// Beautiful welcome message;
 
 	/* I2C to gpio main code. It works with Acionna0 */

@@ -422,10 +422,20 @@ private:
 		get_AHB_APBx_div_();
 
 		// According with RCC clock tree into datasheet on page 93;
-		if(APB1_div_ == 1)
-			f_bus_ =  f_sys_/(static_cast<double>(AHB_div_)*static_cast<double>(APB1_div_));
-		else
-			f_bus_ =  2*f_sys_/(static_cast<double>(AHB_div_)*static_cast<double>(APB1_div_));
+		if(timer_num_ > 1) {
+			if(APB1_div_ == 1)
+				f_bus_ =  f_sys_/(static_cast<double>(AHB_div_)*static_cast<double>(APB1_div_));
+			else {
+				f_bus_ =  2*f_sys_/(static_cast<double>(AHB_div_)*static_cast<double>(APB1_div_));
+			}
+		} else {
+			// TIM1 uses APB2 high speed
+			if(APB2_div_ == 1)
+				f_bus_ =  f_sys_/(static_cast<double>(AHB_div_)*static_cast<double>(APB2_div_));
+			else {
+				f_bus_ =  2*f_sys_/(static_cast<double>(AHB_div_)*static_cast<double>(APB2_div_));
+			}
+		}		
 
 		// double kt1 = AHB_div_*APB1_div_/f_sys_; // Time constant 1;
 		// double T_cnt_ = kt1*CKD_*PSC_/f_sys_;   // Counter period [s];

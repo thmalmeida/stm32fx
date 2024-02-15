@@ -352,7 +352,7 @@ public:
 		// 2- another reason to use adc0 class outside pcy8575 is to keep adc_array_raw vector allocated.
 		// 
 		// Sampling parameters for STM32F103C8T6 device
-		float F_clk = 48000000;							// Main clock system [Hz]
+		float F_clk = 72000000;							// Main clock system [Hz]
 		float div_1 = 1;								// Advanced High-performance Bus (AHB) prescale;
 		float div_2 = 2;								// Advanced Peripheral Bus (APB2) prescale;
 		float div_3 = 8;								// ADC prescale
@@ -360,7 +360,7 @@ public:
 		float T_conv = 12.5 + 239.5;					// Number of clock cycles to make one conversion
 		float Fs_adc = adc_clk/T_conv;					// Sample rate calculation [Samples/s];
 
-		float f_signal = 60.0;							// signal frequency [Hz]
+		float f_signal = 60.0;							// input signal frequency [Hz]
 		float n_points_cycle = Fs_adc/f_signal;			// number of points per cycle or period time
 
 		int n_cycles = 2;								// Number of cycles desired to analyze
@@ -370,7 +370,9 @@ public:
 		// uint16_t *adc_array_raw;
 
 		#ifdef PCY8575_DEBUG_PRINT	
-		printf("Sample rate: %f\n", Fs_adc);
+		printf("adc clk: %f kHz\n", adc_clk/1000);
+		printf("Sample rate: %f kS/s\n", Fs_adc/1000);
+		printf("Sample period: %f ms\n", (1/Fs_adc)*1000);
 		printf("points/cycle: %f\n", n_points_cycle);
 		printf("n cycles: %d\n", n_cycles);
 		printf("total points: %d\n", n_points);
