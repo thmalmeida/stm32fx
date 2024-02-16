@@ -43,6 +43,7 @@ void test_adc_stream_reg(void);
 void test_gpio(void);
 void test_bkp(void);
 void test_pjb20(void);
+void test_pwm(void);
 void test_time(void);
 void test_timer_counter(void);
 void test_timer_interrupt(void);

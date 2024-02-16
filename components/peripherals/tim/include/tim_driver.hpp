@@ -68,10 +68,10 @@ enum class timer_mode {
 	
 		b) PWM:
 			TIM2_CH1:
-				- PA0 pin 10;
+				- PA0 (4) - pin 10;
 				- PA15 pin 38 (REMAP);
 			TIM2_CH2:
-				- PA1 pin 11;
+				- PA1 (5) - pin 11;
 				- PB3 (traceswo) pin 39 (REMAP);
 			TIM2_CH3:
 				- PA2 pin 12;
@@ -188,23 +188,23 @@ public:
 		htimX_->Instance = TIMX_;
 		switch(CKD_) {
 			case 1:
-				htimX_->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;			// TIMx_CR1. Set CKD[1:0] bits
+				htimX_->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;	// TIMx_CR1. Set CKD[1:0] bits
 				break;
 			case 2:
-				htimX_->Init.ClockDivision = TIM_CLOCKDIVISION_DIV2;			// TIMx_CR1. Set CKD[1:0] bits
+				htimX_->Init.ClockDivision = TIM_CLOCKDIVISION_DIV2;	// TIMx_CR1. Set CKD[1:0] bits
 				break;
 			case 4:
-				htimX_->Init.ClockDivision = TIM_CLOCKDIVISION_DIV4;			// TIMx_CR1. Set CKD[1:0] bits
+				htimX_->Init.ClockDivision = TIM_CLOCKDIVISION_DIV4;	// TIMx_CR1. Set CKD[1:0] bits
 				break;
 			default:
-				htimX_->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;			// TIMx_CR1. Set CKD[1:0] bits
+				htimX_->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;	// TIMx_CR1. Set CKD[1:0] bits
 				break;
 		}
 		htimX_->Init.Prescaler = PSC_;									// TIMx_PSC 16 bit register (clk division)
-		htimX_->Init.Period = ARR_;									// TIMx_ARR register (count up to this register value)
+		htimX_->Init.Period = static_cast<uint32_t>(ARR_);										// TIMx_ARR register (count up to this register value)
 		htimX_->Init.CounterMode = TIM_COUNTERMODE_UP;					// TIMx_CR1 set DIR bit
-		// htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;// TIMx_CR1 set ARPE bit 7
-		htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+		htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;// TIMx_CR1 set ARPE bit 7
+		// htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
 
 		if (HAL_TIM_Base_Init(htimX_) != HAL_OK) {
 			printf("TIM%d: base init error!\n", timer_num_);
@@ -279,21 +279,24 @@ public:
 				if (HAL_TIMEx_MasterConfigSynchronization(htimX_, &sMasterConfig) != HAL_OK) {
 					printf("TIM%d: PWM sync error!\n", timer_num_);										
 					Error_Handler();
+				} else {
+					printf("TIME master sync done!\n");
 				}
 
 				TIM_OC_InitTypeDef sConfigOC;
 				sConfigOC.OCMode = TIM_OCMODE_PWM1;
-				sConfigOC.Pulse = 0;
+				sConfigOC.Pulse = 11250;
 				sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-				sConfigOC.OCNPolarity = TIM_OCNPOLARITY_LOW;
-				sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
-				sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
 				sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
 
-				if (HAL_TIM_PWM_ConfigChannel(htimX_, &sConfigOC, channel_addr_) != HAL_OK)
-				{
+				// sConfigOC.OCNPolarity = TIM_OCNPOLARITY_LOW;
+				// sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
+				// sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+				if (HAL_TIM_PWM_ConfigChannel(htimX_, &sConfigOC, channel_addr_) != HAL_OK) {
 					printf("TIM%d: PWM channel config error!\n", timer_num_);					
 					Error_Handler();
+				} else {
+					printf("TIM%d: PWM channel configured\n", timer_num_);
 				}
 
 				HAL_TIM_MspPostInit_(htimX_, channel_);
@@ -352,7 +355,11 @@ public:
 	// 	*tim_isr_flag_ = 1;
 	// }
 
-private:
+	uint16_t get_ARR(void) {
+		return ARR_;
+	}
+
+// private:
 	// General timer parameters
 	int timer_num_;					// timer number;
 	double f_usr_;					// user frequency requested [Hz];
@@ -389,6 +396,8 @@ private:
 	uint16_t TIMX_DIER_, TIMX_EGR_, TIMX_SR_;
 	uint16_t TIMX_CNT_, TIMX_ARR_, TIMX_PSC_, TIMX_CKD_;
 
+	uint8_t TIMX_EGR_UG_bit = 0;
+
 	// STM32F103 16-bit Reset and Clock Control 16-bit registers
 	uint16_t RCC_CR_;			// RCC Control Register
 	uint16_t RCC_AHBENR_;
@@ -402,6 +411,7 @@ private:
 		TIMX_CR2_ = static_cast<uint16_t>(TIMX_->CR2);
 		TIMX_SR_ = static_cast<uint16_t>(TIMX_->SR);
 		TIMX_PSC_ = static_cast<uint16_t>(TIMX_->PSC);
+		TIMX_ARR_ = static_cast<uint16_t>(TIMX_->ARR);
 		TIMX_EGR_ = static_cast<uint16_t>(TIMX_->EGR);
 		TIMX_DIER_ = static_cast<uint16_t>(TIMX_->DIER);
 		RCC_APB1RSTR_ = RCC->APB1RSTR;
@@ -418,30 +428,32 @@ private:
 		// System clock frequency [Hz]
 		f_sys_ = HAL_RCC_GetHCLKFreq();
 
-		// Bus frequency - update AHB and APB1 prescalers from RCC Register
+		// Bus frequency - update AHB, APB1 and APB2 prescalers from RCC Register
 		get_AHB_APBx_div_();
 
 		// According with RCC clock tree into datasheet on page 93;
+		uint8_t APBx_div = 0;
 		if(timer_num_ > 1) {
-			if(APB1_div_ == 1)
-				f_bus_ =  f_sys_/(static_cast<double>(AHB_div_)*static_cast<double>(APB1_div_));
-			else {
-				f_bus_ =  2*f_sys_/(static_cast<double>(AHB_div_)*static_cast<double>(APB1_div_));
-			}
-		} else {
+			// TIM2, 3, 4 uses APB1 low speed
+			APBx_div = APB1_div_;
+		} else
 			// TIM1 uses APB2 high speed
-			if(APB2_div_ == 1)
-				f_bus_ =  f_sys_/(static_cast<double>(AHB_div_)*static_cast<double>(APB2_div_));
-			else {
-				f_bus_ =  2*f_sys_/(static_cast<double>(AHB_div_)*static_cast<double>(APB2_div_));
-			}
-		}		
+			APBx_div = APB2_div_;
+
+		if(APBx_div == 1) {
+			f_bus_ =  1.0*static_cast<double>(f_sys_)/(static_cast<double>(AHB_div_)*static_cast<double>(APBx_div));
+			printf("1x freq select\n");
+		}
+		else {
+			f_bus_ = 2.0*static_cast<double>(f_sys_)/(static_cast<double>(AHB_div_)*static_cast<double>(APBx_div));	// suppose to 2x
+			printf("2x freq select\n");
+		}	
 
 		// double kt1 = AHB_div_*APB1_div_/f_sys_; // Time constant 1;
 		// double T_cnt_ = kt1*CKD_*PSC_/f_sys_;   // Counter period [s];
 		// double T_tim_ = (AHB_div_*APB1_div_/f_sys_)*CKD_*PSC_*ARR_/f_sys_;
 	
-		double T_tim_max = static_cast<double>(CKD_v_[2])*65535*65535/f_bus_;
+		double T_tim_max = static_cast<double>(CKD_v_[2])*65535.0*65535.0/f_bus_;
 		if(_t > T_tim_max) {
 			printf("Max tim period is: %.1f\n", T_tim_max);
 			return;
@@ -459,14 +471,14 @@ private:
 			CKD_ = CKD_v_[k];
 			// printf("CKD_:%u\n", CKD_);
 			for(int j=1; j<65536; j++) {
-				PSC_ = j;
+				PSC_ = static_cast<uint16_t>(j);
 				// printf("PSC_:%u\n", PSC_);
 				
 				// counter frequency [Hz];
-				f_cnt_ = f_bus_/(static_cast<double>(CKD_)*static_cast<double>(PSC_));
+				f_cnt_ = f_bus_/(static_cast<double>(CKD_)*static_cast<double>(PSC_+1));
 
 				ARR_temp_ = f_cnt_*_t;
-				if(ARR_temp_ < 65536) {
+				if(ARR_temp_ < 65536.0) {
 					// printf("Found!\n");
 					a = 1;
 					ARR_ = static_cast<uint16_t>(ARR_temp_);
@@ -498,6 +510,11 @@ private:
 		printf("T_tim_: %.3f ms\n", T_tim_*1000);
 		printf("CKD_:%u, PSC_:%u, ARR_:%u\n", CKD_, PSC_, ARR_);
 	}
+
+	void set_TIM_EGR_UG_bit(void) {
+		TIMX_EGR_ |= (1<<0);
+	}
+
 	void get_TIM_CNT_(void) {
 		TIMX_CNT_ = static_cast<uint16_t>(TIMX_->CNT);
 		printf("TIMX_CNT_:%u\n", TIMX_CNT_);

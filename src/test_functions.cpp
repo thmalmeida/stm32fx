@@ -720,6 +720,25 @@ void test_pjb20(void) {
 		}
 	}
 }
+void test_pwm(void) {
+
+	// GPIO_DRIVER pin(10, 1);
+	// TIM 3 on channel 1 use the pin PA6;
+	pwm_tim3_ch1();
+	// MX_TIM3_Init();
+
+	uint16_t TIMX_SMCR = TIM3->SMCR;
+	// tim2_pwm_init(500);
+	printf("TIMX_SMCR:0x%04x\n", TIMX_SMCR);
+	printf("TIMX_CR1:0x%04x\n", TIM3->CR1);
+	printf("TIMX_CR2:0x%04x\n", TIM3->CR2);
+	while(1) {
+		// pin.toggle();
+		// printf("TIM3_CH1\n");
+		printf("TIM2_CH3\n");
+		HAL_Delay(1000);
+	}
+}
 void test_time(void) {
 	struct tm *p;
 	time_t t;
@@ -799,7 +818,8 @@ void test_timer_interrupt(void) {
 	}
 }
 void test_timer_pwm(void) {
-	TIM_DRIVER tim0(1, 40000, timer_mode::pwm_output, 1);
+	TIM_DRIVER tim0(3, 800, timer_mode::pwm_output, 3);
+
 
 	tim0.set_duty_cycle(50);
 
@@ -826,35 +846,37 @@ void test_timer_counter(void) {
 }
 void test_gpio(void) {
 
-	double T_us = 1;
-	TIM_DRIVER timer0(1, 1/T_us, timer_mode::timer_interrupt);
+	double T_us = 0.000002;
+	// TIM_DRIVER timer0(2, 1/T_us, timer_mode::timer_interrupt);
 
-	// GPIO_DRIVER pin[2]{{6,1}, {1,1}};
-	GPIO_DRIVER pin(6,1);
+	TIM_DRIVER timer0(3, 1/T_us, timer_mode::timer_counter);
+
+	// GPIO_DRIVER pin[2]{{4,1}, {5,1}};
+	GPIO_DRIVER pin(10,1);
 	// TPI->ACPR = HAL_RCC_GetHCLKFreq() / 2000000 - 1;
 	// TIM_DRIVER tim2(2, 1000000,timer_mode::timer_counter);
 
 	printf("GPIO test\n");
 
-	uint32_t count = 0;
-	uint32_t v = 1/T_us;
-	printf("v:%lu", v);
+	// timer0.set_TIM_EGR_UG_bit();
+
+	// const uint32_t p_cnt = static_cast<uint32_t>(timer0.get_ARR()/(1/T_us)-4);
+	const uint32_t p_cnt = static_cast<uint32_t>(timer0.get_ARR()-5);
+	// printf("p_cnt: %lu\n", p_cnt);
 	while(1) {
 
-		// timer_us.reset_cnt();
-		// while(timer_us.get_cnt() < 180);
-		// pin[0].toggle();
-
-
-		// HAL_Delay(500);
-		// if(timer_us.get_cnt()) {
-
-		// }
-
-		if(timer0.isr_flag()) {
+		// if(timer0.isr_flag()) {
+			// timer0.reset_cnt();
+		while(timer0.get_cnt() < p_cnt);			
+			// pin[0].toggle();
 			pin.toggle();
 			// printf("CNT:%lu\n", count++);
-		}
+		// }
+		// printf("PWM test\n");
+		// HAL_Delay(1000);
+
+
+
 			// if(count > v) {
 			// 	count = 0;
 			// 	printf("CNT:%lu\n", count2++);

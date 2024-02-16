@@ -49,14 +49,16 @@ void tim2_init(void);
 void tim2_pwm_init(uint32_t freq);
 void tim3_init(void);
 void tim4_init(void);
-void tim4_pwm(void);
+void pwm_tim3_ch1(void);
 
 void tim2_config_2(void);
 void Delay_us(uint16_t us);
 void Delay_ms(uint16_t ms);
 
+void MX_TIM3_Init(void);
 void MX_TIM4_Init(void);
-void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle);
+// void HAL_TIM_MspPostInit_2(TIM_HandleTypeDef* timHandle);
+void HAL_TIM_MspPostInit_2(TIM_HandleTypeDef* timHandle);
 
 
 #ifdef __cplusplus

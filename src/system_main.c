@@ -121,13 +121,14 @@ void SystemClock_Config_72MHz_HSE_LSI_ADC(void) {
 	|RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
 	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
 	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV8;
+	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV8;
 	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK) {
 		Error_Handler();
 	}
 
-	// Enable ADC clock - 72/6 = 12 MHz < 14 MHz (max freq. for ADC);
+	// Enable ADC clock - 72/8 = 9 MHz < 14 MHz (max freq. for ADC);
+	// It uses the APB2 clock peripheral.
 	PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
 	PeriphClkInit.AdcClockSelection = RCC_ADCPCLK2_DIV8;
 	if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) {

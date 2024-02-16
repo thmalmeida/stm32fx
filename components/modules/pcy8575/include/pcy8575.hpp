@@ -38,7 +38,7 @@
 
 
 
-// #define PCY8575_DEBUG_PRINT		1
+#define PCY8575_DEBUG_PRINT		1
 
 /* PCY8575 protocol will works always in a slave mode. 
 The master uC has the control over the SCL clock.
@@ -354,7 +354,7 @@ public:
 		// Sampling parameters for STM32F103C8T6 device
 		float F_clk = 72000000;							// Main clock system [Hz]
 		float div_1 = 1;								// Advanced High-performance Bus (AHB) prescale;
-		float div_2 = 2;								// Advanced Peripheral Bus (APB2) prescale;
+		float div_2 = 8;								// Advanced Peripheral Bus (APB2) prescale;
 		float div_3 = 8;								// ADC prescale
 		float adc_clk = F_clk/div_1/div_2/div_3;		// ADC clock after all prescalers
 		float T_conv = 12.5 + 239.5;					// Number of clock cycles to make one conversion
