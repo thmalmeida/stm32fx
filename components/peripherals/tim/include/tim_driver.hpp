@@ -203,8 +203,7 @@ public:
 		htimX_->Init.Prescaler = PSC_;									// TIMx_PSC 16 bit register (clk division)
 		htimX_->Init.Period = static_cast<uint32_t>(ARR_);										// TIMx_ARR register (count up to this register value)
 		htimX_->Init.CounterMode = TIM_COUNTERMODE_UP;					// TIMx_CR1 set DIR bit
-		htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;// TIMx_CR1 set ARPE bit 7
-		// htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+		htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;	// TIMx_CR1 set ARPE bit 7
 
 		if (HAL_TIM_Base_Init(htimX_) != HAL_OK) {
 			printf("TIM%d: base init error!\n", timer_num_);
@@ -285,13 +284,13 @@ public:
 
 				TIM_OC_InitTypeDef sConfigOC;
 				sConfigOC.OCMode = TIM_OCMODE_PWM1;
-				sConfigOC.Pulse = 11250;
+				sConfigOC.Pulse = static_cast<uint16_t>(ARR_/2.0);
 				sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
 				sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
 
-				// sConfigOC.OCNPolarity = TIM_OCNPOLARITY_LOW;
-				// sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
-				// sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+				sConfigOC.OCNPolarity = TIM_OCNPOLARITY_LOW;
+				sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
+				sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
 				if (HAL_TIM_PWM_ConfigChannel(htimX_, &sConfigOC, channel_addr_) != HAL_OK) {
 					printf("TIM%d: PWM channel config error!\n", timer_num_);					
 					Error_Handler();
@@ -359,7 +358,7 @@ public:
 		return ARR_;
 	}
 
-// private:
+private:
 	// General timer parameters
 	int timer_num_;					// timer number;
 	double f_usr_;					// user frequency requested [Hz];

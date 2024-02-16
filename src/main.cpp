@@ -25,13 +25,13 @@ int main(void)
 	// test_adc_oneshot();
 	// test_adc_stream();
 	// test_adc_stream_re	g();
-	test_gpio();
+	// test_gpio();
 	// printf("TESTE00!\n");
 	// test_timer_interrupt();
 	// test_timer_counter();
 	// test_timer_pwm();
 	// test_pjb20();
-	// test_aht10();
+	test_aht10();
 	// test_bkp();
 	// test_pwm();
 	// test_time();
