@@ -47,8 +47,6 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle) {
 		/* TIM4 clock enable */
 		__HAL_RCC_TIM4_CLK_ENABLE();
 
-		printf("TIM4 CLOCK ENABLE!\n");
-
 		/* TIM4 interrupt Init */
 		HAL_NVIC_SetPriority(TIM4_IRQn, 0, 0);
 		HAL_NVIC_EnableIRQ(TIM4_IRQn);

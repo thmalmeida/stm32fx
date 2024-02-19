@@ -486,7 +486,7 @@ void test_adc_oneshot(void) {
 		for(auto i=0; i<n_channels; i++) {
 			printf("adc_data_raw[%d]:%d\n", i, adc_data_raw[i]);
 		}
-		HAL_Delay(100);
+		delay_ms(100);
 	}
 }
 void test_adc_stream(void) {
@@ -609,7 +609,7 @@ void test_adc_stream_reg(void) {
 
 			adc_dma_set_addr_cnt(n_points);
 		}
-		HAL_Delay(1000);
+		delay_ms(1000);
 	}
 }
 void test_aht10(void) {
@@ -707,8 +707,8 @@ void test_pjb20(void) {
 					pwm_pid--;
 				}
 				tim0.set_duty_cycle(pwm_pid);
-				// HAL_Delay(1);
-				delay_us(2000);		
+				// delay_ms(1);
+				delay_ms(2);		
 			}
 
 			if(adc_value < min_adc_value) {
@@ -736,7 +736,7 @@ void test_pwm(void) {
 		// pin.toggle();
 		// printf("TIM3_CH1\n");
 		printf("TIM2_CH3\n");
-		HAL_Delay(1000);
+		delay_ms(1000);
 	}
 }
 void test_time(void) {
@@ -827,7 +827,7 @@ void test_timer_pwm(void) {
 
 	int i = 0;
 	while(1) {
-		HAL_Delay(1000);
+		delay_ms(1000);
 		printf("Count:%d\n",i++);
 	}
 }
@@ -860,22 +860,25 @@ void test_gpio(void) {
 
 	printf("GPIO test!\n");
 
+	delay_init();
+	// delay_us(10);
+
 	// timer0.set_TIM_EGR_UG_bit();
 	// printf("p_cnt: %lu\n", p_cnt);
-	uint32_t i=0;
+	// uint32_t i=0;
 	while(1) {
 
 		// if(timer0.isr_flag()) {
 			// timer0.reset_cnt();
 		// while(timer0.get_cnt() < p_cnt);			
-		pin[0].toggle();
-		pin[1].toggle();
+		// pin[0].toggle();
+		// pin[1].toggle();
 		pin0.toggle();
-		printf("%lu\n", i++);
+		// printf("%lu\n", i++);
 			// printf("CNT:%lu\n", count++);
 		// }
 		// printf("PWM test\n");
-		HAL_Delay(1000);
+		delay_us(1000);
 
 
 

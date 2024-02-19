@@ -7,6 +7,7 @@
 #include "stm32f1xx_hal.h"
 #include "tim_driver.hpp"
 
+void delay_init(void);
 void delay_ms(uint32_t milliseconds);
 void delay_us(uint32_t microseconds);
 

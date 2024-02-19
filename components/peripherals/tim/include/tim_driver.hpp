@@ -22,6 +22,8 @@
 #include "stm32_log.h"
 // ---------------------------
 
+#define DEBUG_TIM_DRIVER 1
+
 enum class timer_mode {
     timer_default,
 	timer_interrupt,
@@ -180,8 +182,9 @@ public:
 
 	void init(void) {
 
+		#ifdef DEBUG_TIM_DRIVER
 		printf("TIM%d initializing...\n", timer_num_);
-
+		#endif
 		// calculate PSC_ and ARR_ registers given a frequency
 		timer_calculation_();
 
@@ -206,7 +209,7 @@ public:
 		htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;	// TIMx_CR1 set ARPE bit 7
 
 		if (HAL_TIM_Base_Init(htimX_) != HAL_OK) {
-			printf("TIM%d: base init error!\n", timer_num_);
+			printf("TIM%d: base init error\n", timer_num_);
 			Error_Handler();
 		} else {
 			printf("TIM%d: base init\n", timer_num_);
@@ -215,33 +218,24 @@ public:
 		TIM_ClockConfigTypeDef sClockSourceConfig;
 		sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
 		if (HAL_TIM_ConfigClockSource(htimX_, &sClockSourceConfig) != HAL_OK) {
-			printf("TIM%d: clock config error!\n", timer_num_);
+			printf("TIM%d: clk config error\n", timer_num_);
 			Error_Handler();
 		} else {
-			printf("TIM%d: clock config!\n", timer_num_);
+			printf("TIM%d: clk config\n", timer_num_);
 		}
 
 		switch(mode_) {
 			case timer_mode::timer_interrupt: {
 				if(HAL_TIM_Base_Start_IT(htimX_) != HAL_OK) {	// update interrupt enable;
-					printf("TIM%d: interrupt error!\n", timer_num_);
+					printf("TIM%d: interrupt error\n", timer_num_);
 					Error_Handler();
 				} else
-					printf("TIM%d: interrupt init!\n", timer_num_);
+					printf("TIM%d: interrupt init\n", timer_num_);
 				break;
 			}
 			case timer_mode::timer_counter: {
-				// HAL_Delay(1000);
-				// get_TIM_ARR_();
-				// get_TIM_CR1_();
-				// get_TIM_CR2_();
-				// get_TIM_DIER_();
-				// get_TIM_EGR_();
-				// get_TIM_PSC_();
-				// get_TIM_SR_();
 				// printf("TIM%d: interrupt without interrupt!\n", timer_num_);
-				HAL_TIM_Base_Start(htimX_);
-				// enable_cnt();
+				HAL_TIM_Base_Start(htimX_);	// Enable the counter. Or use enable_cnt();
 				break;
 			}			
 			case timer_mode::pwm_output: {
@@ -260,13 +254,13 @@ public:
 						channel_addr_ = TIM_CHANNEL_4;
 						break;
 					default:
-						printf("TIM Error!\n");
+						printf("TIM ch Error\n");
 						Error_Handler();
 						break;
 				}
 
 				if (HAL_TIM_PWM_Init(htimX_) != HAL_OK) {
-					printf("TIM%d: PWM init error!\n", timer_num_);					
+					printf("TIM%d: PWM init error\n", timer_num_);					
 					Error_Handler();
 				} else {
 					printf("TIM%d PWM init\n", timer_num_);
@@ -276,10 +270,10 @@ public:
 				sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
 				sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
 				if (HAL_TIMEx_MasterConfigSynchronization(htimX_, &sMasterConfig) != HAL_OK) {
-					printf("TIM%d: PWM sync error!\n", timer_num_);										
+					printf("TIM%d: PWM sync error\n", timer_num_);										
 					Error_Handler();
 				} else {
-					printf("TIME master sync done!\n");
+					printf("TIME master sync done\n");
 				}
 
 				TIM_OC_InitTypeDef sConfigOC;
@@ -292,7 +286,7 @@ public:
 				sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
 				sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
 				if (HAL_TIM_PWM_ConfigChannel(htimX_, &sConfigOC, channel_addr_) != HAL_OK) {
-					printf("TIM%d: PWM channel config error!\n", timer_num_);					
+					printf("TIM%d: PWM channel config error\n", timer_num_);					
 					Error_Handler();
 				} else {
 					printf("TIM%d: PWM channel configured\n", timer_num_);
@@ -301,7 +295,7 @@ public:
 				HAL_TIM_MspPostInit_(htimX_, channel_);
 
 				if(HAL_TIM_PWM_Start(htimX_, channel_addr_) != HAL_OK) {
-					printf("TIM%d: PWM init error!\n", timer_num_);					
+					printf("TIM%d: PWM init error\n", timer_num_);					
 					Error_Handler();
 				} else {
 					printf("TIM%d PWM channel %d init\n", timer_num_, channel_);
@@ -313,7 +307,8 @@ public:
 		}
 	}
 	void reset_cnt(void) {
-		TIMX_->CNT = 0;
+		// TIMX_->CNT = 0;
+		__HAL_TIM_SET_COUNTER(htimX_, 0);
 	}
 	void set_cnt(uint32_t value) {
 		__HAL_TIM_SET_COUNTER(htimX_, value);	// or TIMX_->CNT = value;
@@ -441,11 +436,11 @@ private:
 
 		if(APBx_div == 1) {
 			f_bus_ =  1.0*static_cast<double>(f_sys_)/(static_cast<double>(AHB_div_)*static_cast<double>(APBx_div));
-			printf("1x freq select\n");
+			printf("1x freq\n");
 		}
 		else {
 			f_bus_ = 2.0*static_cast<double>(f_sys_)/(static_cast<double>(AHB_div_)*static_cast<double>(APBx_div));	// suppose to 2x
-			printf("2x freq select\n");
+			printf("2x freq\n");
 		}	
 
 		// double kt1 = AHB_div_*APB1_div_/f_sys_; // Time constant 1;
@@ -454,7 +449,7 @@ private:
 	
 		double T_tim_max = static_cast<double>(CKD_v_[2])*65535.0*65535.0/f_bus_;
 		if(_t > T_tim_max) {
-			printf("Max tim period is: %.1f\n", T_tim_max);
+			printf("Max tim period: %.1f s\n", T_tim_max);
 			return;
 		}
 
@@ -516,6 +511,7 @@ private:
 
 	void get_TIM_CNT_(void) {
 		TIMX_CNT_ = static_cast<uint16_t>(TIMX_->CNT);
+
 		printf("TIMX_CNT_:%u\n", TIMX_CNT_);
 	}
 	void get_TIM_ARR_(void) {
@@ -714,7 +710,6 @@ private:
 					GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
 					GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 					HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-					printf("HOLLA!\n");
 					break;
 				}
 				default:
@@ -775,7 +770,6 @@ private:
 					GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
 					GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 					HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-					printf("TIM4_CH2!!!!\n");
 					break;
 				}
 				case 3: {

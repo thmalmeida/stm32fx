@@ -5,8 +5,9 @@ int main(void)
 {
 	/* System must initializes */
 	HAL_Init();								// Reset of all peripherals, Initializes the Flash interface and the Systick. */
-	// HAL_Delay(10);							// little delay after peripheral 
+	// HAL_Delay(10);							// little delay after peripheral
 	SystemClock_Config_72MHz_HSE_LSI_ADC();
+
 	// SystemClock_Config_48MHz_HSE_ADC();		// Configure the system clock
 	// SystemClock_Config_8MHz_HSI();
 	// HAL_Delay(10);							// little delay after peripheral reset;
