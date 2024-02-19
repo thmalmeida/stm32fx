@@ -771,15 +771,14 @@ void test_timer_interrupt(void) {
 	// TIM_DRIVER tim1(1, 1, timer_mode::timer_interrupt);
 	// TIM_DRIVER tim2(2, 1, timer_mode::timer_interrupt);
 
-	double T = 1; // Timer period [s];
-	TIM_DRIVER tim2(2, 1/T, timer_mode::timer_interrupt);
-	// TIM_DRIVER tim4(4, 1, timer_mode::timer_interrupt);
+	// Timer period [s];
+	double Tp = 1;
+	TIM_DRIVER timer0(2, 1/Tp, timer_mode::timer_interrupt);
 
 	uint32_t i = 0;
-
 	while(1) {
 
-		if(tim2.isr_flag()) { //tim3.get_isr_flag()) {
+		if(timer0.isr_flag()) { //tim3.get_isr_flag()) {
 			// tim3.set_TIMx_EGR_UG();
 			// TIM3->EGR |= (1<<0);
 			// tim2.get_AHB_APBx_div_();
@@ -818,62 +817,65 @@ void test_timer_interrupt(void) {
 	}
 }
 void test_timer_pwm(void) {
-	TIM_DRIVER tim0(3, 800, timer_mode::pwm_output, 3);
 
+	// time period [s];
+	double Tp = 1.0/40000;
 
-	tim0.set_duty_cycle(50);
+	// Select timer module 3, f = 1/Tp, pwm output mode and channel 1 (TIM3_CH1 --> PA6)
+	TIM_DRIVER timer0(3, 1/Tp, timer_mode::pwm_output, 1);
+	timer0.set_duty_cycle(50);
 
 	int i = 0;
 	while(1) {
-		// if(i>99) {
-		// 	i=0;
-		// }
-		// tim0.set_duty_cycle(i);
 		HAL_Delay(1000);
 		printf("Count:%d\n",i++);
 	}
-	
 }
 void test_timer_counter(void) {
-	TIM_DRIVER tim2(2, 1, timer_mode::timer_counter);
+
+	// time period [s];
+	double Tp = 1.0/1000;
+	TIM_DRIVER timer0(3, 1/Tp, timer_mode::timer_counter);
+	GPIO_DRIVER pin(1,1);
+
+	// const uint32_t p_cnt = static_cast<uint32_t>(timer0.get_ARR()/(1/T_us)-4);
+	const uint32_t p_cnt = static_cast<uint32_t>(timer0.get_ARR()-5);
 
 	uint32_t i = 0;
 	while(1) {
-		if(tim2.isr_flag()) {
-			printf("TIM2:%lu\n", i++);
-		}
+
+		timer0.reset_cnt();
+		while(timer0.get_cnt() < p_cnt);			
+
+		pin.toggle();
+		printf("CNT:%lu\n", i++);
+		
 	}
 }
 void test_gpio(void) {
 
-	double T_us = 1.0/40000;
-	// TIM_DRIVER timer0(2, 1/T_us, timer_mode::timer_interrupt);
-
-	TIM_DRIVER timer0(3, 1/T_us, timer_mode::pwm_output, 1);
-
-	// GPIO_DRIVER pin[2]{{4,1}, {5,1}};
-	// GPIO_DRIVER pin(10,1);
+	GPIO_DRIVER pin[2]{{4,1}, {5,1}};
+	GPIO_DRIVER pin0(1,1);
 	// TPI->ACPR = HAL_RCC_GetHCLKFreq() / 2000000 - 1;
-	// TIM_DRIVER tim2(2, 1000000,timer_mode::timer_counter);
 
 	printf("GPIO test!\n");
 
 	// timer0.set_TIM_EGR_UG_bit();
-
-	// const uint32_t p_cnt = static_cast<uint32_t>(timer0.get_ARR()/(1/T_us)-4);
-	// const uint32_t p_cnt = static_cast<uint32_t>(timer0.get_ARR()-5);
 	// printf("p_cnt: %lu\n", p_cnt);
+	uint32_t i=0;
 	while(1) {
 
 		// if(timer0.isr_flag()) {
 			// timer0.reset_cnt();
 		// while(timer0.get_cnt() < p_cnt);			
-			// pin[0].toggle();
-			// pin.toggle();
+		pin[0].toggle();
+		pin[1].toggle();
+		pin0.toggle();
+		printf("%lu\n", i++);
 			// printf("CNT:%lu\n", count++);
 		// }
 		// printf("PWM test\n");
-		// HAL_Delay(1000);
+		HAL_Delay(1000);
 
 
 
