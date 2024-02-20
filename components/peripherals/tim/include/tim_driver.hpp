@@ -209,28 +209,44 @@ public:
 		htimX_->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;	// TIMx_CR1 set ARPE bit 7
 
 		if (HAL_TIM_Base_Init(htimX_) != HAL_OK) {
+			#ifdef DEBUG_TIM_DRIVER
 			printf("TIM%d: base init error\n", timer_num_);
+			#endif
 			Error_Handler();
-		} else {
+		}
+		#ifdef DEBUG_TIM_DRIVER
+		else {
+			
 			printf("TIM%d: base init\n", timer_num_);
 		}
+		#endif
 
 		TIM_ClockConfigTypeDef sClockSourceConfig;
 		sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
 		if (HAL_TIM_ConfigClockSource(htimX_, &sClockSourceConfig) != HAL_OK) {
+			#ifdef DEBUG_TIM_DRIVER
 			printf("TIM%d: clk config error\n", timer_num_);
+			#endif
 			Error_Handler();
-		} else {
+		}
+		#ifdef DEBUG_TIM_DRIVER
+		else {
 			printf("TIM%d: clk config\n", timer_num_);
 		}
+		#endif
 
 		switch(mode_) {
 			case timer_mode::timer_interrupt: {
 				if(HAL_TIM_Base_Start_IT(htimX_) != HAL_OK) {	// update interrupt enable;
+					#ifdef DEBUG_TIM_DRIVER
 					printf("TIM%d: interrupt error\n", timer_num_);
+					#endif
 					Error_Handler();
-				} else
+				}
+				#ifdef DEBUG_TIM_DRIVER
+				else
 					printf("TIM%d: interrupt init\n", timer_num_);
+				#endif
 				break;
 			}
 			case timer_mode::timer_counter: {
@@ -239,7 +255,6 @@ public:
 				break;
 			}			
 			case timer_mode::pwm_output: {
-
 				switch (channel_) {
 					case 1:
 						channel_addr_ = TIM_CHANNEL_1;
@@ -254,27 +269,39 @@ public:
 						channel_addr_ = TIM_CHANNEL_4;
 						break;
 					default:
+						#ifdef DEBUG_TIM_DRIVER
 						printf("TIM ch Error\n");
+						#endif
 						Error_Handler();
 						break;
 				}
 
 				if (HAL_TIM_PWM_Init(htimX_) != HAL_OK) {
+					#ifdef DEBUG_TIM_DRIVER
 					printf("TIM%d: PWM init error\n", timer_num_);					
+					#endif
 					Error_Handler();
-				} else {
+				}
+				#ifdef DEBUG_TIM_DRIVER 
+				else {
 					printf("TIM%d PWM init\n", timer_num_);
 				}
+				#endif
 
 				TIM_MasterConfigTypeDef sMasterConfig;
 				sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
 				sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
 				if (HAL_TIMEx_MasterConfigSynchronization(htimX_, &sMasterConfig) != HAL_OK) {
+					#ifdef DEBUG_TIM_DRIVER
 					printf("TIM%d: PWM sync error\n", timer_num_);										
+					#endif
 					Error_Handler();
-				} else {
+				}
+				#ifdef DEBUG_TIM_DRIVER
+				else {
 					printf("TIME master sync done\n");
 				}
+				#endif
 
 				TIM_OC_InitTypeDef sConfigOC;
 				sConfigOC.OCMode = TIM_OCMODE_PWM1;
@@ -286,20 +313,30 @@ public:
 				sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
 				sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
 				if (HAL_TIM_PWM_ConfigChannel(htimX_, &sConfigOC, channel_addr_) != HAL_OK) {
+					#ifdef DEBUG_TIM_DRIVER
 					printf("TIM%d: PWM channel config error\n", timer_num_);					
+					#endif
 					Error_Handler();
-				} else {
+				}
+				#ifdef DEBUG_TIM_DRIVER
+				else {
 					printf("TIM%d: PWM channel configured\n", timer_num_);
 				}
+				#endif
 
 				HAL_TIM_MspPostInit_(htimX_, channel_);
 
 				if(HAL_TIM_PWM_Start(htimX_, channel_addr_) != HAL_OK) {
+					#ifdef DEBUG_TIM_DRIVER
 					printf("TIM%d: PWM init error\n", timer_num_);					
+					#endif
 					Error_Handler();
-				} else {
+				}
+				#ifdef DEBUG_TIM_DRIVER
+				else {
 					printf("TIM%d PWM channel %d init\n", timer_num_, channel_);
 				}
+				#endif
 				break;
 			}
 			default:
@@ -427,20 +464,20 @@ private:
 
 		// According with RCC clock tree into datasheet on page 93;
 		uint8_t APBx_div = 0;
-		if(timer_num_ > 1) {
+		if(timer_num_ > 1)
 			// TIM2, 3, 4 uses APB1 low speed
 			APBx_div = APB1_div_;
-		} else
+		else
 			// TIM1 uses APB2 high speed
 			APBx_div = APB2_div_;
 
+		f_bus_ = 2.0*static_cast<double>(f_sys_)/(static_cast<double>(AHB_div_)*static_cast<double>(APBx_div));	// suppose to 2x
+
 		if(APBx_div == 1) {
-			f_bus_ =  1.0*static_cast<double>(f_sys_)/(static_cast<double>(AHB_div_)*static_cast<double>(APBx_div));
-			printf("1x freq\n");
-		}
-		else {
-			f_bus_ = 2.0*static_cast<double>(f_sys_)/(static_cast<double>(AHB_div_)*static_cast<double>(APBx_div));	// suppose to 2x
+			f_bus_ *= 2.0*f_bus_;
+			#ifdef DEBUG_TIM_DRIVER
 			printf("2x freq\n");
+			#endif
 		}	
 
 		// double kt1 = AHB_div_*APB1_div_/f_sys_; // Time constant 1;
@@ -449,7 +486,9 @@ private:
 	
 		double T_tim_max = static_cast<double>(CKD_v_[2])*65535.0*65535.0/f_bus_;
 		if(_t > T_tim_max) {
+			#ifdef DEBUG_TIM_DRIVER
 			printf("Max tim period: %.1f s\n", T_tim_max);
+			#endif
 			return;
 		}
 
@@ -497,12 +536,14 @@ private:
 		// Timer period [s];
 		T_tim_ = (static_cast<double>(ARR_))/f_cnt_;
 
+		#ifdef DEBUG_TIM_DRIVER
 		printf("f_sys_: %.0lu MHz\n", f_sys_/1000000);
 		printf("f_bus_: %.0f kHz\n", f_bus_/1000);
 		printf("f_cnt_: %.0f Hz\n", f_cnt_);
 		printf("f_tim_: %.3f Hz\n", f_tim_);
 		printf("T_tim_: %.3f ms\n", T_tim_*1000);
 		printf("CKD_:%u, PSC_:%u, ARR_:%u\n", CKD_, PSC_, ARR_);
+		#endif
 	}
 
 	void set_TIM_EGR_UG_bit(void) {
@@ -512,47 +553,69 @@ private:
 	void get_TIM_CNT_(void) {
 		TIMX_CNT_ = static_cast<uint16_t>(TIMX_->CNT);
 
+		#ifdef DEBUG_TIM_DRIVER
 		printf("TIMX_CNT_:%u\n", TIMX_CNT_);
+		#endif
 	}
 	void get_TIM_ARR_(void) {
 		TIMX_ARR_ = static_cast<uint16_t>(TIMX_->ARR);
+		#ifdef DEBUG_TIM_DRIVER
 		printf("TIMX_ARR_:%u\n", TIMX_ARR_);
+		#endif
 	}
 	void get_TIM_CKD_(void) {
 		TIMX_CKD_ = static_cast<uint16_t>((TIMX_->CR1 >> 8) & 0x00000003);
+		#ifdef DEBUG_TIM_DRIVER
 		printf("TIMX_CKD_:%u\n", TIMX_CKD_);
+		#endif
 	}
 	void get_TIM_PSC_(void) {
 		TIMX_PSC_ = static_cast<uint16_t>(TIMX_->PSC);
+		#ifdef DEBUG_TIM_DRIVER
 		printf("TIMX_PSC_:%u\n", TIMX_PSC_);
+		#endif
 	}
 	void get_TIM_CR1_(void) {
 		TIMX_CR1_ = static_cast<uint16_t>(TIMX_->CR1);
+		#ifdef DEBUG_TIM_DRIVER
 		printf("TIM%d_CR1:0x%04x\n", timer_num_, TIMX_CR1_);
+		#endif
 	}
 	void get_TIM_CR2_(void) {
 		TIMX_CR2_ = static_cast<uint16_t>(TIMX_->CR2);
+		#ifdef DEBUG_TIM_DRIVER
 		printf("TIMX_CR2:0x%04x\n", TIMX_CR2_);
+		#endif
 	}
 	void get_TIM_EGR_(void) {
 		TIMX_EGR_ = static_cast<uint16_t>(TIMX_->EGR);
+		#ifdef DEBUG_TIM_DRIVER
 		printf("TIMX_EGR:0x%04x\n", TIMX_EGR_);
+		#endif
 	}
 	void get_TIM_SR_(void) {
 		TIMX_SR_ = static_cast<uint16_t>(TIMX_->SR);
+		#ifdef DEBUG_TIM_DRIVER
 		printf("TIMX_SR_:0x%04x\n", TIMX_SR_);
+		#endif
 	}
 	void get_TIM_DIER_(void) {
 		TIMX_DIER_ = static_cast<uint16_t>(TIMX_->DIER);
+		#ifdef DEBUG_TIM_DRIVER
 		printf("TIMX_DIER_:0x%04x\n", TIMX_DIER_);
+		#endif
 	}
 	void get_RCC_APB1RSTR_(void) {
 		RCC_APB1RSTR_ = RCC->APB1RSTR;
+		#ifdef DEBUG_TIM_DRIVER
 		printf("RCC_APB1RSTR_:0x%08lx\n", RCC_APB1RSTR_);
+		#endif
 	}
 	void get_RCC_APB1ENR_(void) {
 		RCC_APB1ENR_ = RCC->APB1ENR;
+		#ifdef DEBUG_TIM_DRIVER
 		printf("RCC_APB1ENR_:0x%08lx\n", RCC_APB1ENR_);
+		#endif
 	}
 	void get_RCC_CFGR_(void) {
 		RCC_CFGR_ = RCC->CFGR;
@@ -631,7 +694,9 @@ private:
 				APB2_div_ = 1; // not divided
 				break;
 		}
+		#ifdef DEBUG_TIM_DRIVER
 		printf("AHB_div_:%u, APB1_div_:%u, APB2_div_:%u\n", AHB_div_, APB1_div_, APB2_div_);
+		#endif
 	}
 	void set_TIMx_EGR_UG(void) {
 		TIMX_->EGR |= (1<<0);
@@ -674,9 +739,6 @@ private:
 					HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 					break;
 				}
-				default:
-					printf("TIM PWM channel error\n");
-					break;
 			}			
 		} else if(timHandle->Instance==TIM2) {
 			switch(channel) {
@@ -712,9 +774,6 @@ private:
 					HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 					break;
 				}
-				default:
-					printf("TIM PWM channel error\n");
-					break;
 			}
 		} else if(timHandle->Instance==TIM3) {
 			switch(channel) {
@@ -750,9 +809,6 @@ private:
 					HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 					break;
 				}
-				default:
-					printf("TIM PWM channel error\n");
-					break;
 			}
 		} else if(timHandle->Instance==TIM4) {
 			switch(channel) {
@@ -788,9 +844,6 @@ private:
 					HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 					break;
 				}
-				default:
-					printf("TIM PWM channel error\n");
-					break;
 			}
 		}
 	}
