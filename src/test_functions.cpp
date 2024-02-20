@@ -77,23 +77,11 @@ void i2c_slave_pcy8575_orig(void) {
 
 void weighing_scale(void) {
 
-	// TIM_DRIVER timer_(3, 1, timer_mode::timer_interrupt);
 	WEIGHING_SCALE ws;
 
-	// iwdg_init();
-
 	while(1) {
-
-		// 1 second flag
-		// printf("%lu\n", count++);
-		// if(timer_.get_isr_flag()) {
-			// ws.run();				// run this function every second
-			// ws.test();
-			// iwdg_refresh();			// clear wdt to prevent reset
-
-			printf("Peso: %d\n", ws.weight());
-			delay_ms(500);
-		// }
+		ws.run();
+		delay_ms(200);
 	}
 }
 
@@ -878,7 +866,7 @@ void test_gpio(void) {
 			// printf("CNT:%lu\n", count++);
 		// }
 		// printf("PWM test\n");
-		delay_us(1000);
+		delay_ms(500);
 
 
 

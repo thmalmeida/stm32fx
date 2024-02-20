@@ -34,7 +34,7 @@ public:
 	void Kp(double _Kp) {
 		Kp_ = _Kp;
 	}
-	int read_hx711() {
+	uint32_t read_hx711() {
 		return hx711_.read();
 	}
 	int weight_kg(void) {
@@ -123,6 +123,9 @@ public:
 	}
 	int offset(void) {
 		return offset_;
+	}
+	void tare(void) {
+		offset_ = read_hx711();
 	}
 
 private:

@@ -20,9 +20,11 @@
 * Pt: 1522.65 kg
 */
 
+#define DEBUG_WEIGHING_SCALE 1
+
 /* Load cell pins definition */
-#define PIN_DATA_1	5
-#define PIN_SCK_1	6
+#define PIN_DATA_1	27
+#define PIN_SCK_1	28
 #define PIN_DATA_2	31
 #define PIN_SCK_2	32
 #define PIN_DATA_3	24
@@ -85,12 +87,29 @@ public:
 			load_cell_[i].Kp(Kp_[i]);
 		}
 
+		#ifdef DEBUG_WEIGHING_SCALE
+		printf("Weighing scale init\n");
+		#endif
+
+		#ifdef DEBUG_WEIGHING_SCALE
+		printf("Weighing scale: tare process\n");
+		#endif
+		delay_ms(1000);
+		for(int i=0; i<N_SENSORS_;i++) {
+			load_cell_[i].tare();
+		}
+
+
 	}
 	void run(void) {
 		// Get weight and print to lcd
+		printf("W:%.2f kg, RAW:%lu\n", static_cast<double>(weight()/1000.0), raw());
 	}
 	void test(void) {
 
+	}
+	uint32_t raw(void) {
+		return load_cell_[0].read_hx711();
 	}
 	int weight(void) {
 		int P = 0;
@@ -98,7 +117,6 @@ public:
 		for(int i=0; i<N_SENSORS_; i++) {
 			P +=load_cell_[i].weight_kg();
 		}
-
 		return P;
 	}
     void tare_system3(void) {
