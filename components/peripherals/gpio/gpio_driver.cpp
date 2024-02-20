@@ -3,22 +3,16 @@
 GPIO_DRIVER::GPIO_DRIVER(int pin_number, int direction) : direction_(direction){
 	
 	GPIO_InitTypeDef GPIO_InitStruct;// = {0};
-	/* GPIO Ports Clock Enable */
-	// __HAL_RCC_GPIOA_CLK_ENABLE();
-	// __HAL_RCC_GPIOB_CLK_ENABLE();
 
-	if(direction_)
-	{
+	if(direction_) {
 		// GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;	// Push pull
 //		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;	// open drain
 		// GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-
 		GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 		GPIO_InitStruct.Pull = GPIO_NOPULL;
 		GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH; //GPIO_SPEED_FREQ_LOW;
 	}
-	else
-	{
+	else {
 		GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
 		GPIO_InitStruct.Pull = GPIO_PULLUP;
 	}
@@ -260,12 +254,12 @@ GPIO_DRIVER::GPIO_DRIVER(int pin_number, int direction) : direction_(direction){
 		// 	break;
 
 	}
+	
 	HAL_GPIO_Init(port_, &GPIO_InitStruct);
-
+	
 	if(direction_) {
 		write(0);
 	}
-
 	// this->num = num;
 	// gpio_set_direction(num,mode);
 }
@@ -296,7 +290,7 @@ void GPIO_DRIVER::mode(int direction) {
 int GPIO_DRIVER::read(void) {
 
 	// GPIO_PinState HAL_GPIO_ReadPin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
-	if(!direction_) {
+	if(direction_) {
 		// read the ODR output register
 		if(port_->ODR & gpio_pin_mask_)
 			level_ = 1;
