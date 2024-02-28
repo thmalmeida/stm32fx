@@ -1,5 +1,4 @@
 #include "test_functions.hpp"
-#include "tim_driver.hpp"
 
 void i2c_slave_pcy8575(void) {
 	// Extender machine. Composed init of Timer 3 initialized with 1 Hz on interrupt mode. tim3_flag_ ISR variable;
@@ -650,6 +649,25 @@ void test_bkp(void) {
 
 	}
 }
+void test_lcd(void) {
+	LCD_DRIVER lcd0;
+
+	char c = '0';
+	
+	char str[10];
+	sprintf(str, "Benjamin");
+	lcd0.print(str, 1, 2);
+
+	while(1) {
+		lcd0.position(1, 15);
+		lcd0.write(c);
+		printf("write:%c\n", c);
+		c++;
+		// lcd0.home();
+		delay_ms(1000);
+	}
+
+}
 void test_pjb20(void) {
 	// This repoduces the behavior or PJB-20 electric panel
 	// TODO list:
@@ -674,7 +692,7 @@ void test_pjb20(void) {
 	states fsm0 = states::off;			// Finite state machine state initialize;
 	uint16_t pwm_set_point = 0, pwm_pid = 0;
 	int error = 0;
-	tim0.set_duty_cycle(0);
+	tim0.duty(0);
 
 	while(1) {
 		adc_value = adc3.read(3);
@@ -694,7 +712,7 @@ void test_pjb20(void) {
 				} else if(error < 0) {
 					pwm_pid--;
 				}
-				tim0.set_duty_cycle(pwm_pid);
+				tim0.duty(pwm_pid);
 				// delay_ms(1);
 				delay_ms(2);		
 			}
@@ -702,7 +720,7 @@ void test_pjb20(void) {
 			if(adc_value < min_adc_value) {
 				fsm0 = states::off;
 				pwm_pid = 0;
-				tim0.set_duty_cycle(pwm_pid);
+				tim0.duty(pwm_pid);
 			}
 		// printf("ADC3_: %u\n", adc_value);
 		}
@@ -811,7 +829,7 @@ void test_timer_pwm(void) {
 
 	// Select timer module 3, f = 1/Tp, pwm output mode and channel 1 (TIM3_CH1 --> PA6)
 	TIM_DRIVER timer0(3, 1/Tp, timer_mode::pwm_output, 1);
-	timer0.set_duty_cycle(50);
+	timer0.duty(50);
 
 	int i = 0;
 	while(1) {
@@ -848,7 +866,6 @@ void test_gpio(void) {
 
 	printf("GPIO test!\n");
 
-	delay_init();
 	// delay_us(10);
 
 	// timer0.set_TIM_EGR_UG_bit();
@@ -914,6 +931,58 @@ void test_gpio(void) {
 		// delay_ms(200);
 	}
 }
+
+void test_lcd_aht10_pwm(void) {
+	
+	TIM_DRIVER pwm(2, 500, timer_mode::pwm_output, 2);
+
+	pwm.duty(5);
+
+	LCD_DRIVER lcd;
+
+	I2C_Master i2c;
+	i2c.init(I2C_NORMAL_SPEED_HZ);
+
+	i2c.deinit();
+	delay_ms(100);
+	i2c.init(I2C_NORMAL_SPEED_HZ);
+	
+	aht10 sensor0(&i2c);
+	sensor0.init(aht10_mode::NORMAL_MODE);
+
+	GPIO_DRIVER led0(1, 1);
+
+	uint32_t count = 0;
+	char str[16];
+
+	while(1) {
+		// AHT10 test sensor
+		if(sensor0.probe())
+		{
+			// printf("Sensor found!\n");
+			sensor0.trig_meas();
+			// sensor0.print_raw_data();
+			// printf("Count: %d, Humidity: %.2f %%, Temperature: %.2f C\n", count++, sensor0.get_humidity(), sensor0.get_temperature());
+			sprintf(str, "H: %d %%, T: %d C\n", static_cast<int>(sensor0.get_humidity()), static_cast<int>(sensor0.get_temperature()));
+			lcd.print(str, 0, 0);
+
+			sprintf(str, "%lu", count++);
+			lcd.print(str, 1, 0);
+
+			led0.write(0);
+			delay_ms(500);
+			led0.write(1);
+		}
+		else {
+			i2c.deinit();
+			delay_ms(100);
+			i2c.init(I2C_NORMAL_SPEED_HZ);
+		}
+		// HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+		delay_ms(9500);
+	}
+}
+
 // Example to declare an array of GPIO_DRIVER class
 // #include "gpio"
 // GPIO_DRIVER pin0[] = {

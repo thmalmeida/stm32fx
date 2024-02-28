@@ -20,6 +20,9 @@
 
 #include "delay.hpp"
 
+// lcd character
+#include "lcd.h"
+
 // For weighing scale system only
 #include "weighing_scale.h"
 
@@ -42,11 +45,14 @@ void test_adc_stream(void);
 void test_adc_stream_reg(void);
 void test_gpio(void);
 void test_bkp(void);
+void test_lcd(void);
 void test_pjb20(void);
 void test_pwm(void);
 void test_time(void);
 void test_timer_counter(void);
 void test_timer_interrupt(void);
 void test_timer_pwm(void);
+
+void test_lcd_aht10_pwm(void);
 
 #endif
