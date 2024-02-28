@@ -79,9 +79,7 @@ void TIM4_IRQHandler(void) {
 	tim4_flag_ = 1;
 	// tim4_cnt_++;
 }
-
 }
-
 void tim4_pwm_reg_config(void) {
 	
 	/* ----- CR1 register ----- */
