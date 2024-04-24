@@ -89,11 +89,13 @@ components/math/dsp.cpp \
 components/modules/pcy8575/pcy8575.cpp \
 components/peripherals/adc/adc_driver.cpp \
 components/modules/aht10/aht10.cpp \
+components/modules/ks0066/ks0066.cpp \
+components/modules/lcd/lcd.cpp \
 components/modules/hx711/hx711.cpp \
 components/peripherals/gpio/gpio_driver.cpp \
 components/peripherals/backup/backup.cpp \
 components/peripherals/backup/reset_reason.cpp \
-components/peripherals/i2c_master/i2c_master.cpp \
+components/peripherals/i2c/i2c_driver.cpp \
 components/peripherals/tim/tim_driver.cpp \
 components/systems/weighing_controller/weighing_scale.cpp \
 components/systems/weighing_controller/load_cell/load_cell.cpp
@@ -180,11 +182,13 @@ CXX_INCLUDES = \
 -Icomponents/math/include \
 -Icomponents/modules/aht10/include \
 -Icomponents/modules/hx711/include \
+-Icomponents/modules/ks0066/include \
+-Icomponents/modules/lcd/include \
 -Icomponents/modules/pcy8575/include \
 -Icomponents/peripherals/adc/include \
 -Icomponents/peripherals/backup/include \
 -Icomponents/peripherals/gpio/include \
--Icomponents/peripherals/i2c_master/include \
+-Icomponents/peripherals/i2c/include \
 -Icomponents/peripherals/tim/include \
 -Icomponents/systems/weighing_controller/include \
 -Icomponents/systems/weighing_controller/load_cell/include

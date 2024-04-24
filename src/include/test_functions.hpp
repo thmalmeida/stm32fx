@@ -21,10 +21,10 @@
 #include "delay.hpp"
 
 // lcd character
-#include "lcd.h"
+#include "lcd.hpp"
 
 // For weighing scale system only
-#include "weighing_scale.h"
+#include "weighing_scale.hpp"
 
 // time test
 #include <time.h>

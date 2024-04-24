@@ -38,7 +38,7 @@ void i2c_slave_pcy8575_adc(void) {
 	printf("n cycles: %d\n", n_cycles);
 	printf("total points: %d\n", n_points);
 
-	ADC_driver adc0(adc_mode::stream);
+	ADC_Driver adc0(adc_mode::stream);
 	adc0.stream_init();
 	adc0.channel_config(3);
 	// adc0.stream_addr_config(adc_array_raw);
@@ -76,7 +76,9 @@ void i2c_slave_pcy8575_orig(void) {
 
 void weighing_scale(void) {
 
-	WEIGHING_SCALE ws;
+	Weighing_Scale ws;
+
+	printf("Teste\n");
 
 	while(1) {
 		ws.run();
@@ -86,10 +88,10 @@ void weighing_scale(void) {
 
 void test_adc_class(void) {
 	// Configure timer number 3 to 1 Hertz frequency update into interrupt mode.
-	TIM_DRIVER tim3(3, 1, timer_mode::timer_interrupt);
+	TIM_Driver tim3(3, 1, timer_mode::timer_interrupt);
 
 	// Configure adc channel to using dma mode;
-	ADC_driver adc0(adc_mode::stream);
+	ADC_Driver adc0(adc_mode::stream);
 	adc0.channel_config(3);
 
 	while(1) {
@@ -100,7 +102,7 @@ void test_adc_dma(void) {
 
 	tim3_init();
 
-	// ADC_driver adc0;
+	// ADC_Driver adc0;
 	// adc0.init();
 	// adc_dma_begin((uint32_t*)&adc_buffer[0], ADC_BUFLEN);
 	adc_dma_begin(&adc_buffer[0], ADC_BUFLEN);
@@ -276,12 +278,12 @@ void test_adc_dma(void) {
 }
 void test_adc_dma_tim_class(void) {
 
-	TIM_DRIVER tim1(1, 1, timer_mode::timer_interrupt);
-	TIM_DRIVER tim2(2, 1, timer_mode::timer_interrupt);
-	TIM_DRIVER tim3(3, 1, timer_mode::timer_interrupt);
-	TIM_DRIVER tim4(4, 1, timer_mode::timer_interrupt);
+	TIM_Driver tim1(1, 1, timer_mode::timer_interrupt);
+	TIM_Driver tim2(2, 1, timer_mode::timer_interrupt);
+	TIM_Driver tim3(3, 1, timer_mode::timer_interrupt);
+	TIM_Driver tim4(4, 1, timer_mode::timer_interrupt);
 
-	// ADC_driver adc0;
+	// ADC_Driver adc0;
 	// adc0.init();
 	// adc_dma_begin((uint32_t*)&adc_buffer[0], ADC_BUFLEN);
 	adc_dma_begin(&adc_buffer[0], ADC_BUFLEN);
@@ -442,7 +444,7 @@ void test_adc_dma_tim_class(void) {
 	}
 }
 void test_adc_oneshot(void) {
-	ADC_driver adc0(adc_mode::oneshot);
+	ADC_Driver adc0(adc_mode::oneshot);
 
 	adc0.channel_config(3);
 	// adc0.oneshot_channel_config(3);
@@ -499,7 +501,7 @@ void test_adc_stream(void) {
 	printf("n cycles: %d\n", n_cycles);
 	printf("total points: %d\n", n_points);
 
-	ADC_driver adc0(adc_mode::stream);
+	ADC_Driver adc0(adc_mode::stream);
 	adc0.channel_config(3);
 	adc0.stream_addr_config(&adc_array_raw[0]);
 	adc0.stream_length_config(n_points);
@@ -549,7 +551,7 @@ void test_adc_stream_reg(void) {
 	printf("n cycles: %d\n", n_cycles);
 	printf("total points: %d\n", n_points);
 
-	ADC_driver adc0(adc_mode::stream);
+	ADC_Driver adc0(adc_mode::stream);
 	adc0.channel_config(3);
 
 	// adc_dma_begin((uint32_t*)&adc_array_raw[0], n_points);
@@ -601,7 +603,7 @@ void test_adc_stream_reg(void) {
 }
 void test_aht10(void) {
 	
-	I2C_Master i2c;
+	I2C_Driver i2c;
 	i2c.init(I2C_NORMAL_SPEED_HZ);
 
 	i2c.deinit();
@@ -611,7 +613,7 @@ void test_aht10(void) {
 	aht10 sensor0(&i2c);
 	sensor0.init(aht10_mode::NORMAL_MODE);
 
-	GPIO_DRIVER led0(1, 1);
+	GPIO_Driver led0(1, 1);
 	led0.write(1);
 	int count = 0;
 
@@ -650,21 +652,22 @@ void test_bkp(void) {
 	}
 }
 void test_lcd(void) {
-	LCD_DRIVER lcd0;
+	LCD_Driver lcd0;
 
 	char c = '0';
 	
 	char str[10];
 	sprintf(str, "Benjamin");
-	lcd0.print(str, 1, 2);
+	lcd0.print(str, 0, 0);
 
 	while(1) {
-		lcd0.position(1, 15);
+		lcd0.position(1, 10);
 		lcd0.write(c);
-		printf("write:%c\n", c);
+		lcd0.write(0xdf);
+		printf("write:%c 0x%02x\n", c, 0xde);
 		c++;
 		// lcd0.home();
-		delay_ms(1000);
+		delay_ms(500);
 	}
 
 }
@@ -674,8 +677,8 @@ void test_pjb20(void) {
 	// - implement PID controller. Slow response.
 	
 	// Using PB0
-	TIM_DRIVER tim0(3, 800, timer_mode::pwm_output, 3);
-	ADC_driver adc3(adc_mode::oneshot);
+	TIM_Driver tim0(3, 800, timer_mode::pwm_output, 3);
+	ADC_Driver adc3(adc_mode::oneshot);
 
 	uint16_t adc_value = 0;				// instant adc read input value
 
@@ -728,7 +731,7 @@ void test_pjb20(void) {
 }
 void test_pwm(void) {
 
-	// GPIO_DRIVER pin(10, 1);
+	// GPIO_Driver pin(10, 1);
 	// TIM 3 on channel 1 use the pin PA6;
 	pwm_tim3_ch1();
 	// MX_TIM3_Init();
@@ -752,7 +755,7 @@ void test_time(void) {
 	// t = time(NULL);		
 	// t = 10;
 
-	TIM_DRIVER tim3(3, 1, timer_mode::timer_interrupt);
+	TIM_Driver tim3(3, 1, timer_mode::timer_interrupt);
 
 	const auto p1 = std::chrono::system_clock::now();
 
@@ -774,12 +777,12 @@ void test_timer_interrupt(void) {
 	printf("- test_tim_class_interrupt_mode\n");
 
 	// tim3_init();
-	// TIM_DRIVER tim1(1, 1, timer_mode::timer_interrupt);
-	// TIM_DRIVER tim2(2, 1, timer_mode::timer_interrupt);
+	// TIM_Driver tim1(1, 1, timer_mode::timer_interrupt);
+	// TIM_Driver tim2(2, 1, timer_mode::timer_interrupt);
 
 	// Timer period [s];
 	double Tp = 1;
-	TIM_DRIVER timer0(2, 1/Tp, timer_mode::timer_interrupt);
+	TIM_Driver timer0(2, 1/Tp, timer_mode::timer_interrupt);
 
 	uint32_t i = 0;
 	while(1) {
@@ -828,7 +831,7 @@ void test_timer_pwm(void) {
 	double Tp = 1.0/40000;
 
 	// Select timer module 3, f = 1/Tp, pwm output mode and channel 1 (TIM3_CH1 --> PA6)
-	TIM_DRIVER timer0(3, 1/Tp, timer_mode::pwm_output, 1);
+	TIM_Driver timer0(3, 1/Tp, timer_mode::pwm_output, 1);
 	timer0.duty(50);
 
 	int i = 0;
@@ -841,8 +844,8 @@ void test_timer_counter(void) {
 
 	// time period [s];
 	double Tp = 1.0/1000;
-	TIM_DRIVER timer0(3, 1/Tp, timer_mode::timer_counter);
-	GPIO_DRIVER pin(1,1);
+	TIM_Driver timer0(3, 1/Tp, timer_mode::timer_counter);
+	GPIO_Driver pin(1,1);
 
 	// const uint32_t p_cnt = static_cast<uint32_t>(timer0.get_ARR()/(1/T_us)-4);
 	const uint32_t p_cnt = static_cast<uint32_t>(timer0.get_ARR()-5);
@@ -860,8 +863,8 @@ void test_timer_counter(void) {
 }
 void test_gpio(void) {
 
-	GPIO_DRIVER pin[2]{{4,1}, {5,1}};
-	GPIO_DRIVER pin0(1,1);
+	GPIO_Driver pin[2]{{4,1}, {5,1}};
+	GPIO_Driver pin0(1,1);
 	// TPI->ACPR = HAL_RCC_GetHCLKFreq() / 2000000 - 1;
 
 	printf("GPIO test!\n");
@@ -933,14 +936,10 @@ void test_gpio(void) {
 }
 
 void test_lcd_aht10_pwm(void) {
-	
-	TIM_DRIVER pwm(2, 500, timer_mode::pwm_output, 2);
-
+	TIM_Driver pwm(2, 500, timer_mode::pwm_output, 2);
 	pwm.duty(5);
 
-	LCD_DRIVER lcd;
-
-	I2C_Master i2c;
+	I2C_Driver i2c;
 	i2c.init(I2C_NORMAL_SPEED_HZ);
 
 	i2c.deinit();
@@ -950,7 +949,9 @@ void test_lcd_aht10_pwm(void) {
 	aht10 sensor0(&i2c);
 	sensor0.init(aht10_mode::NORMAL_MODE);
 
-	GPIO_DRIVER led0(1, 1);
+	LCD_Driver lcd;
+
+	GPIO_Driver led0(1, 1);
 
 	uint32_t count = 0;
 	char str[16];
@@ -963,7 +964,9 @@ void test_lcd_aht10_pwm(void) {
 			sensor0.trig_meas();
 			// sensor0.print_raw_data();
 			// printf("Count: %d, Humidity: %.2f %%, Temperature: %.2f C\n", count++, sensor0.get_humidity(), sensor0.get_temperature());
-			sprintf(str, "H: %d %%, T: %d C\n", static_cast<int>(sensor0.get_humidity()), static_cast<int>(sensor0.get_temperature()));
+			// sprintf(str, "H:%.1f %% T:%.1f C\n", static_cast<int>(sensor0.get_humidity()), static_cast<int>(sensor0.get_temperature()));
+			sprintf(str, "T:%.1f%cC H:%.1f%%", sensor0.get_temperature(), 0xdf, sensor0.get_humidity());
+			printf("%s\n", str);
 			lcd.print(str, 0, 0);
 
 			sprintf(str, "%lu", count++);
@@ -979,14 +982,14 @@ void test_lcd_aht10_pwm(void) {
 			i2c.init(I2C_NORMAL_SPEED_HZ);
 		}
 		// HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-		delay_ms(9500);
+		delay_ms(4500);
 	}
 }
 
-// Example to declare an array of GPIO_DRIVER class
+// Example to declare an array of GPIO_Driver class
 // #include "gpio"
-// GPIO_DRIVER pin0[] = {
-// 	GPIO_DRIVER{3, 1}, GPIO_DRIVER{4, 1}, GPIO_DRIVER{5, 1}, GPIO_DRIVER{6, 1},
-// 	GPIO_DRIVER{7, 1}, GPIO_DRIVER{8, 1}, GPIO_DRIVER{9, 1}, GPIO_DRIVER{10,1},
-// 	GPIO_DRIVER{11,1}, GPIO_DRIVER{12,1}, GPIO_DRIVER{13,1}, GPIO_DRIVER{14,1},
-// 	GPIO_DRIVER{15,1}, GPIO_DRIVER{16,1}, GPIO_DRIVER{17,1}};
+// GPIO_Driver pin0[] = {
+// 	GPIO_Driver{3, 1}, GPIO_Driver{4, 1}, GPIO_Driver{5, 1}, GPIO_Driver{6, 1},
+// 	GPIO_Driver{7, 1}, GPIO_Driver{8, 1}, GPIO_Driver{9, 1}, GPIO_Driver{10,1},
+// 	GPIO_Driver{11,1}, GPIO_Driver{12,1}, GPIO_Driver{13,1}, GPIO_Driver{14,1},
+// 	GPIO_Driver{15,1}, GPIO_Driver{16,1}, GPIO_Driver{17,1}};
