@@ -38,8 +38,7 @@
 #define LCDWIDTH						84	// Pixels
 #define LCDHEIGHT						48
 
-#define PCD8544_POWERDOWN				0x04
-//#define PCD8544_POWER_DOWN            (1<<2)
+#define PCD8544_POWERDOWN				0x04	// or
 #define PCD8544_ENTRYMODE				0x02
 #define PCD8544_EXTENDEDINSTRUCTION		0x01
 

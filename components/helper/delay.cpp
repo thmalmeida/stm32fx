@@ -5,7 +5,7 @@
 * last updated: 20240219
 */
 
-// static TIM_DRIVER timer_us(4, 0.001, timer_mode::timer_counter);
+// static TIM_Driver timer_us(4, 0.001, timer_mode::timer_counter);
 // #define SYSTICK_LOAD (SystemCoreClock/1000000U)
 // #define SYSTICK_DELAY_CALIB (SYSTICK_LOAD >> 1)
 // void delay_us(uint32_t us) {
@@ -16,15 +16,15 @@
 //     } while (0)
 // }
 
-// static TIM_DRIVER timer_us(3, 0.001, timer_mode::timer_counter);
+// static TIM_Driver timer_us(3, 0.001, timer_mode::timer_counter);
 // static bool tim1_state = false;
 
-// static TIM_DRIVER *timer_us;
+// static TIM_Driver *timer_us;
 
-// static TIM_DRIVER timer_us(4, 1/0.002, timer_mode::timer_counter);
+// static TIM_Driver timer_us(4, 1/0.002, timer_mode::timer_counter);
 
 void delay_init(void) {
-	TIM_DRIVER timer0(4, 1/0.002, timer_mode::timer_counter);
+	TIM_Driver timer0(4, 1/0.002, timer_mode::timer_counter);
 	// timer_us = &timer0;
 
 	printf("delay timer init\n");
@@ -48,7 +48,7 @@ void delay_us(uint32_t microseconds) {
 	// another way
 	// if(tim1_state == false) {
 	// 	tim1_state = true;
-	// 	TIM_DRIVER timer_us(1, 1/0.002, timer_mode::timer_counter);
+	// 	TIM_Driver timer_us(1, 1/0.002, timer_mode::timer_counter);
 	// 	timer1 = &timer_us;
 	// }
 

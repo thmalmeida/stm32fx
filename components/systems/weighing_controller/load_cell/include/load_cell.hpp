@@ -1,18 +1,18 @@
 /*
- * LOAD_CELL.h
+ * load_cell.hpp
  *
  *  Created on: 23 de mai de 2017
  *      Author: titi
  * 	Modified: 19/01/2024
  */
 
-#ifndef __LOAD_CELL_H_
-#define __LOAD_CELL_H_
+#ifndef LOAD_CELL_HPP_
+#define LOAD_CELL_HPP_
 
-#include "hx711.h"
-#include "math.h"
+#include "hx711.hpp"
+#include "math.h"			// for pow function
 
-class LOAD_CELL {
+class Load_Cell {
 public:
 
 	// void drive_beep(uint8_t beeps, uint8_t timeH, uint8_t timeL);
@@ -24,7 +24,7 @@ public:
 	* @param pin_sck clock output to hx711 module
 	*
 	*/
-	LOAD_CELL(int pin_data, int pin_sck) : hx711_{pin_data, pin_sck} {
+	Load_Cell(int pin_data, int pin_sck) : hx711_{pin_data, pin_sck} {
 
 	}
 
@@ -143,7 +143,7 @@ private:
 	int beta_index_ = 0;					// index of beta_ array values
 	double beta_ = 0.05;					// initial beta value for low pass filter calculation
 
-	int stabWeight = 1000;					//
+	int stabWeight = 1000;					// 
 	int unstWeight = 20000;					//
 	uint8_t stable_ = 0;					//
 
@@ -170,7 +170,7 @@ private:
 
 #endif /* __LOAD_CELL_H_ */
 
-//void LOAD_CELL::tareSystem()
+//void Load_Cell::tareSystem()
 //{
 //	int i, n = 100;
 //
@@ -180,7 +180,7 @@ private:
 //	}
 //	offset = offset/n;
 //}
-//void LOAD_CELL::tareSystem2()
+//void Load_Cell::tareSystem2()
 //{
 //	while(get_weight() != 0)
 //	{
@@ -194,7 +194,7 @@ private:
 //		offset = Ssum/nWeight;
 //	}
 //}
-// void LOAD_CELL::example1(void)
+// void Load_Cell::example1(void)
 // {
 // 	P = get_weight();
 

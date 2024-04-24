@@ -2,7 +2,7 @@
 
 const char* TAG_AHT10 = "AHT10";
 
-aht10::aht10(I2C_Master *i2c) : i2c_(i2c) {
+aht10::aht10(I2C_Driver *i2c) : i2c_(i2c) {
 
 }
 void aht10::init(aht10_mode mode) {

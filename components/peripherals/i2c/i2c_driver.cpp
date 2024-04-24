@@ -1,11 +1,11 @@
-#include "i2c_master.hpp"
+#include "i2c_driver.hpp"
 
 //#define I2C_WRITE_FLAG	0
 //#define I2C_READ_FLAG		1
 
 // static const char *TAG_I2C = "I2C";
 
-// I2C_Master::I2C_Master(int port, int scl, int sda, uint32_t freq, bool pull_up /* = false */) : i2c_master_port_(port) {
+// I2C_Driver::I2C_Driver(int port, int scl, int sda, uint32_t freq, bool pull_up /* = false */) : i2c_master_port_(port) {
 	// // Configuration
 	// i2c_config_t conf = {};
 	// conf.mode = I2C_MODE_MASTER;
@@ -28,7 +28,7 @@
 	// 	ESP_LOGE(TAG_I2C, "I2C install error [%d/%s]\n", err, esp_err_to_name(err));
 	// }
 // }
-void I2C_Master::init(uint32_t freq) {
+void I2C_Driver::init(uint32_t freq) {
 	freq_ = freq;
 	i2c_master_port_ = 1;
 	// Initialize the I2C low level resources by implementing the @ref HAL_I2C_MspInit()
@@ -85,7 +85,7 @@ void I2C_Master::init(uint32_t freq) {
 	}
 	// I2C1->CR1 |=(1<<15);
 }
-void I2C_Master::deinit(void) {
+void I2C_Driver::deinit(void) {
 
 	// if(hi2c2_.Instance == I2C2)
 	{
@@ -99,21 +99,21 @@ void I2C_Master::deinit(void) {
 		HAL_GPIO_DeInit(GPIOB, GPIO_PIN_11);
 	}
 }
-void I2C_Master::log_show(void) {
+void I2C_Driver::log_show(void) {
 	state_ = HAL_I2C_GetState(&hi2c2_);
 	error_ = HAL_I2C_GetError(&hi2c2_);
 	mode_ = HAL_I2C_GetMode(&hi2c2_);
 
 	printf("i2c-- state: 0x%02x, mode: 0x%02x, error: 0x%04lx\n", static_cast<uint8_t>(state_), static_cast<uint8_t>(mode_), error_);
 }
-int I2C_Master::write(uint8_t slave_addr, uint8_t reg, uint8_t data, bool ack_check /* = true */){
+int I2C_Driver::write(uint8_t slave_addr, uint8_t reg, uint8_t data, bool ack_check /* = true */){
 	return write(slave_addr, reg, &data, 1, ack_check);
 }
-int I2C_Master::write(uint8_t slave_addr, uint8_t reg, bool ack_check /* = true */){
+int I2C_Driver::write(uint8_t slave_addr, uint8_t reg, bool ack_check /* = true */){
 	uint8_t data = 0x00;
 	return write(slave_addr, reg, &data, 0, ack_check);
 }
-int I2C_Master::write(uint8_t slave_addr, uint8_t reg, uint8_t* data, size_t len, bool ack_check /* = true */) {
+int I2C_Driver::write(uint8_t slave_addr, uint8_t reg, uint8_t* data, size_t len, bool ack_check /* = true */) {
 	// ESP32
 	// esp_err_t ret;
 	// i2c_cmd_handle_t cmd_handle = i2c_cmd_link_create();
@@ -142,7 +142,7 @@ int I2C_Master::write(uint8_t slave_addr, uint8_t reg, uint8_t* data, size_t len
 
 	return I2C_ERR_OK;
 }
-int I2C_Master::write(uint8_t slave_addr, uint8_t *data, uint8_t data_len) {
+int I2C_Driver::write(uint8_t slave_addr, uint8_t *data, uint8_t data_len) {
 	
 	// esp_err_t ret = i2c_master_write_to_device(i2c_master_port_, slave_addr, data, data_len, I2C_COMMAND_WAIT_MS / portTICK_PERIOD_MS);
 
@@ -156,7 +156,7 @@ int I2C_Master::write(uint8_t slave_addr, uint8_t *data, uint8_t data_len) {
 
 	return I2C_ERR_OK;
 }
-int I2C_Master::set_mask(uint8_t slave_addr, uint8_t reg, uint8_t data, uint8_t mask, bool ack_check /* = true */) {
+int I2C_Driver::set_mask(uint8_t slave_addr, uint8_t reg, uint8_t data, uint8_t mask, bool ack_check /* = true */) {
 	uint8_t content;
 
 	int ret = read(slave_addr, reg, &content, ack_check);
@@ -169,7 +169,7 @@ int I2C_Master::set_mask(uint8_t slave_addr, uint8_t reg, uint8_t data, uint8_t 
 
 	return write(slave_addr, reg, content, ack_check);
 }
-int I2C_Master::read(uint8_t slave_addr, uint8_t reg, uint8_t* data, size_t len, bool ack_check) {
+int I2C_Driver::read(uint8_t slave_addr, uint8_t reg, uint8_t* data, size_t len, bool ack_check) {
 
 	// ESP32
 	// esp_err_t ret;
@@ -221,10 +221,10 @@ int I2C_Master::read(uint8_t slave_addr, uint8_t reg, uint8_t* data, size_t len,
 
 	return I2C_ERR_OK;
 }
-int I2C_Master::read(uint8_t slave_addr, uint8_t reg, uint8_t* data, bool ack_check /* = true */) {
+int I2C_Driver::read(uint8_t slave_addr, uint8_t reg, uint8_t* data, bool ack_check /* = true */) {
 	return read(slave_addr, reg, data, 1, ack_check);
 }
-int I2C_Master::read_only(uint8_t slave_addr, uint8_t* data, size_t len, bool ack_check) {
+int I2C_Driver::read_only(uint8_t slave_addr, uint8_t* data, size_t len, bool ack_check) {
 	// ESP32
 	// // Read only: read start	
 	// i2c_cmd_handle_t cmd_handle = i2c_cmd_link_create();
@@ -253,7 +253,7 @@ int I2C_Master::read_only(uint8_t slave_addr, uint8_t* data, size_t len, bool ac
 
 	return I2C_ERR_OK;
 }
-int I2C_Master::read(uint8_t slave_address, const uint8_t *write_buffer, size_t write_buffer_len, uint8_t *read_buffer, size_t read_buffer_len) {
+int I2C_Driver::read(uint8_t slave_address, const uint8_t *write_buffer, size_t write_buffer_len, uint8_t *read_buffer, size_t read_buffer_len) {
 
 	// esp_err_t ret = i2c_master_write_read_device(i2c_master_port_, slave_address, write_buffer, write_buffer_len, read_buffer, read_buffer_len, I2C_COMMAND_WAIT_MS / portTICK_PERIOD_MS);
 
@@ -267,7 +267,7 @@ int I2C_Master::read(uint8_t slave_address, const uint8_t *write_buffer, size_t 
 
 	return I2C_ERR_OK;
 }
-bool I2C_Master::probe(uint8_t addr) noexcept
+bool I2C_Driver::probe(uint8_t addr) noexcept
 {
 	// HAL_I2C_IsDeviceReady
 	uint8_t data;
@@ -275,7 +275,7 @@ bool I2C_Master::probe(uint8_t addr) noexcept
 		return true;
 	return false;
 }
-uint8_t I2C_Master::probe_addr(uint8_t addr_init /* = 0 */){
+uint8_t I2C_Driver::probe_addr(uint8_t addr_init /* = 0 */){
 	uint8_t data;
 	for(uint8_t i = addr_init; i < 127; i++){
 		if(read(i, 0x00, &data) > 0){
@@ -286,7 +286,7 @@ uint8_t I2C_Master::probe_addr(uint8_t addr_init /* = 0 */){
 	}
 	return 0xFF;
 }
-bool I2C_Master::probe2(uint8_t addr) {
+bool I2C_Driver::probe2(uint8_t addr) {
 
 	if(HAL_I2C_IsDeviceReady(&hi2c2_, addr, 2, 1000) != HAL_OK) {
 		printf("not found!\n");
@@ -301,7 +301,7 @@ bool I2C_Master::probe2(uint8_t addr) {
 /*
  *	Slave member functions
  */
-void I2C_Master::listen_enable(void) {
+void I2C_Driver::listen_enable(void) {
 	printf("I2C: enabling listen...   ");
 	if(HAL_I2C_EnableListen_IT(&hi2c2_) != HAL_OK)
 	{
@@ -313,7 +313,7 @@ void I2C_Master::listen_enable(void) {
 		printf("Done!\n");
 	}
 }
-void I2C_Master::listen(void) {
+void I2C_Driver::listen(void) {
 
 	// if (Xfer_Complete ==1)
 	// {

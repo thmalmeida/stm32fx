@@ -1,8 +1,8 @@
-#ifndef LCD_H__
-#define LCD_H__
+#ifndef LCD_HPP__
+#define LCD_HPP__
 
-#include "gpio_driver.h"
-#include "ks0066.h"
+#include "gpio_driver.hpp"
+#include "ks0066.hpp"
 
 #define PIN_RS			27
 #define PIN_RW			28
@@ -16,13 +16,13 @@
 
 #define LCD_DEBUG 1
 
-class LCD_DRIVER {
+class LCD_Driver {
 public:
-	LCD_DRIVER(void) : controller_(PIN_RS, PIN_RW, PIN_EN, PIN_D4, PIN_D5, PIN_D6, PIN_D7) {
+	LCD_Driver(void) : controller_(PIN_RS, PIN_RW, PIN_EN, PIN_D4, PIN_D5, PIN_D6, PIN_D7) {
 		init();
 		// controller_.test_pins();
 	}
-	~LCD_DRIVER(void) {}
+	~LCD_Driver(void) {}
 
 	void write(char c) {
 		controller_.write(c);

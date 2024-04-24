@@ -6,19 +6,18 @@
  * modified on: 2023-03-01
  */
 
-#ifndef GPIO_DRIVER_H__
-#define GPIO_DRIVER_H__
+#ifndef GPIO_DRIVER_HPP__
+#define GPIO_DRIVER_HPP__
 
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
 
-#include "delay.hpp"
-
 // STM32----------------------
 #include "stm32_log.h"
 #include "stm32f1xx_hal.h"
+#include "delay.hpp"
 // -----------------------
 
 
@@ -28,22 +27,23 @@
  *
  * Usage example:
  * 1- Object instance
- * GPIO_DRIVER pin0(3, 0)
+ * GPIO_Driver pin0(3, 0)
  * 
  * 2- Configure the mode of operation
  * pin0.mode()
  */
 
-class GPIO_DRIVER{
+class GPIO_Driver{
 	public:
-		GPIO_DRIVER(int pin_number);
-		GPIO_DRIVER(int pin_number, int direction);
-
+		GPIO_Driver(int pin_number, int direction);
+		
 		void mode(int direction);
 		int read(void);
 		void write(int level);
 		void toggle(void);
 		void reset(void) noexcept;
+
+		~GPIO_Driver();
 
 		// void register_interrupt(gpio_isr_t handler, void* isr_args);
 		// void unregister_interrupt();
@@ -58,7 +58,6 @@ class GPIO_DRIVER{
 		// static void deep_sleep_hold(bool hold);
 
 		// void* get_isr_args();
-		~GPIO_DRIVER();
 
 	// protected:
 		// int level = 0;
@@ -66,19 +65,20 @@ class GPIO_DRIVER{
 		// void* isr_args = NULL;
 		// static unsigned int driver_instaled;
 	private:
-		uint16_t gpio_pin_mask_;
+		int pin_number_;
 		int level_ = 0;
 		int direction_ = 0;
 
+		uint16_t gpio_pin_mask_;
 		GPIO_TypeDef *port_;
 };
 
 // typedef struct {
-// 	GPIO_DRIVER* esse;
+// 	GPIO_Driver* esse;
 // 	void* args;
 // }gpio_isr_args_t;
 
-#endif /* GPIO_HPP__ */
+#endif /* GPIO_DRIVER_HPP__ */
 
 
 

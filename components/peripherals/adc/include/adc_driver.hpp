@@ -55,9 +55,9 @@ struct pattern_s {
 	uint16_t data_raw;
 };
 
-class ADC_driver {
+class ADC_Driver {
 public:
-	ADC_driver(adc_mode mode = adc_mode::oneshot) {
+	ADC_Driver(adc_mode mode = adc_mode::oneshot) {
 		hadc1_ = &hadc1;
 		mode_ = mode;
 	
@@ -75,7 +75,7 @@ public:
 			}
 		}
 	}
-	~ADC_driver(void) {}
+	~ADC_Driver(void) {}
 
 	// Oneshot functions - ADC single mode
 	void oneshot_init(void) {

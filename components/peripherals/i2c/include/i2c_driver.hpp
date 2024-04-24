@@ -37,12 +37,12 @@
 #define I2C_COMMAND_WAIT_MS	500
 #endif /* CONFIG_I2C_COMMAND_WAIT */
 
-class I2C_Master{
+class I2C_Driver{
 	public:
-		// I2C_Master(int port, int scl, int sda, uint32_t freq, bool pull_up = false);
-		I2C_Master(int port, uint32_t freq) : i2c_master_port_(port), freq_(freq)  {};
-		I2C_Master(void) {};
-		~I2C_Master() {};
+		// I2C_Driver(int port, int scl, int sda, uint32_t freq, bool pull_up = false);
+		I2C_Driver(int port, uint32_t freq) : i2c_master_port_(port), freq_(freq)  {};
+		I2C_Driver(void) {};
+		~I2C_Driver() {};
 
 		// void init(int intr_alloc_flags = 0);
 		// void deinit();
@@ -93,4 +93,4 @@ class I2C_Master{
 		uint32_t freq_;
 };
 
-#endif /* I2C_MASTER_HPP__ */
+#endif /* I2C_DRIVER_HPP__ */

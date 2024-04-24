@@ -1,1 +1,1 @@
-#include "weighing_scale.h"
+#include "weighing_scale.hpp"

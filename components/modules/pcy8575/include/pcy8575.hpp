@@ -3,7 +3,7 @@
 
 #include "i2c.h"
 // #include "tim.h"						
-#include "gpio_driver.h"
+#include "gpio_driver.hpp"
 #include "stm32_log.h"
 #include "backup.hpp"
 #include "reset_reason.hpp"
@@ -44,7 +44,9 @@
 The master uC has the control over the SCL clock.
 
 There are 16 controlled pins
-____________.________.________.
+
+ 7-bit + R/W. 8-bits . 8-bits
+____________|________|________.
 slave_addr|0| opcode | byte 1
 
 opcode:
@@ -377,7 +379,7 @@ public:
 		printf("n cycles: %d\n", n_cycles);
 		printf("total points: %d\n", n_points);
 		#endif
-		// ADC_driver adc0(adc_mode::stream);
+		// ADC_Driver adc0(adc_mode::stream);
 		adc0.stream_init();
 		adc0.channel_config(3);
 
@@ -388,7 +390,7 @@ public:
 		// memset(adc_array_raw, 0, sizeof(adc_array_raw));
 		// ---- end	
 	}
-	// void adc_config(ADC_driver* adc) {
+	// void adc_config(ADC_Driver* adc) {
 		// adc0_ = adc;
 	// }
 	void adc_malloc(int length) {
@@ -507,7 +509,7 @@ public:
 private:
 
 	uint8_t reg_addr_ = 0;			// i2c protocol: register to read
-	GPIO_DRIVER pin_[num_pins];
+	GPIO_Driver pin_[num_pins];
 	uint16_t output_ = 0;
 	uint16_t port_config_ = 0xFFFF;
 	uint16_t temp_ = 0;
@@ -539,13 +541,13 @@ private:
 	// const std::size_t pin_count_ = sizeof(pin_) / sizeof(pin_[0]);
 
 	// for uptime and 1 second flag
-	TIM_DRIVER timer_;
+	TIM_Driver timer_;
 
 	// Digital Signal Processing (DSP) functions;
 	DSP s0_;
 
 	// ADC sensors
-	ADC_driver adc0;
+	ADC_Driver adc0;
 	uint16_t *adc_array16_raw_;
 	uint8_t adc_alloc_flag_ = 0;
 };

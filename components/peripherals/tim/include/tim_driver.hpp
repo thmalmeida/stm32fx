@@ -140,10 +140,10 @@ extern uint32_t tim4_cnt_;
 * 2- PWM output
 */
 
-class TIM_DRIVER {
+class TIM_Driver {
 public:
 
-	TIM_DRIVER(int timer_num, double f, timer_mode mode, int channel = 1) : timer_num_(timer_num), f_usr_(f), mode_(mode), channel_(channel) {
+	TIM_Driver(int timer_num, double f, timer_mode mode, int channel = 1) : timer_num_(timer_num), f_usr_(f), mode_(mode), channel_(channel) {
 
 		switch(timer_num) {
 			case 1: {
@@ -178,7 +178,7 @@ public:
 		}
 		init();
 	}
-	~TIM_DRIVER(void) {}
+	~TIM_Driver(void) {}
 
 	void init(void) {
 

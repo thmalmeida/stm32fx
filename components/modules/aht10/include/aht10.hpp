@@ -1,15 +1,13 @@
-#ifndef __AHT10_HPP__
-#define __AHT10_HPP__
+#ifndef AHT10_HPP__
+#define AHT10_HPP__
 
-#include "i2c_master.hpp"
+#include "i2c_driver.hpp"
 #include "stm32_log.h"
 #include "delay.hpp"
 
 #include <string.h>
 
-/*
-*	Command address
-*/
+/* Command address */
 
 /* list of I2C addresses */
 #define AHT10_ADDR						0x38	// device address
@@ -71,7 +69,7 @@ enum class aht10_mode {
 class aht10 {
 	public:
 	
-	aht10(I2C_Master *i2c);
+	aht10(I2C_Driver *i2c);
 
 	void init(aht10_mode mode = aht10_mode::NORMAL_MODE);	
 	bool probe(void);
@@ -88,7 +86,7 @@ class aht10 {
 	
 	private:
 
-	I2C_Master *i2c_;
+	I2C_Driver *i2c_;
 	uint8_t status_byte_, data_raw_[6], first_init_ = 1;
 };
 

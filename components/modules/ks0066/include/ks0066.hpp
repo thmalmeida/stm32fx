@@ -1,7 +1,7 @@
-#ifndef KS0066_H__
-#define KS0066_H__
+#ifndef KS0066_HPP__
+#define KS0066_HPP__
 
-#include "gpio_driver.h"
+#include "gpio_driver.hpp"
 #include "delay.hpp"
 
 /* KS0066/ST7066U(5C) controller for LCD. 
@@ -44,8 +44,8 @@ enum class op_t {
 #define KS0066_DISPLAY_CONTROL		0x08		// 0b000001DCB, D=0, display off, D=1, display on; C=0, cursor off, C=1, cursor on;
 #define KS0066_CGRAM_ADDR_SET		0x40		// 0  1 A5 A4 A3 A2 A1 A0 (6-bit address)
 #define KS0066_DDRAM_ADDR_SET		0x80		// 1 A6 A5 A4 A3 A2 A1 A0 (7-bits address)
-#define KS0066_FIRST_LINE_ADDR		0x00		//
-#define KS0066_SECOND_LINE_ADDR		0x40		//
+#define KS0066_FIRST_LINE_ADDR		0x00
+#define KS0066_SECOND_LINE_ADDR		0x40
 
 #define KS0066_EN_PULSE_WIDTH		2			// enable pulse width [us]. Must be more than 450 ns;
 #define KS0066_EN_RISE_FALL_TIME	2			// time to enable pulse rise/fall [us];
@@ -53,15 +53,6 @@ enum class op_t {
 #define KS0066_DDRAM_SET_TIME		40
 
 #define KS0066_DEBUG				1
-
-/*
-* 0b00011NFX		N = 0, 1 line mode, N = 1, 2;
-* 0b00001DCB		
-* 0b00000001		
-* 0010				FS
-* 0010
-* NFxx
-*/
 
 class KS0066 {
 public:
@@ -301,7 +292,7 @@ private:
 	int pin_en_, pin_rs_, pin_rw_;			// control pins
 	int pin_d4_, pin_d5_, pin_d6_, pin_d7_;	// data pins
 
-	GPIO_DRIVER pin_[7];					// rs, rw, en, d4, d5, d6 and d7
+	GPIO_Driver pin_[7];					// rs, rw, en, d4, d5, d6 and d7
 };
 
 #endif

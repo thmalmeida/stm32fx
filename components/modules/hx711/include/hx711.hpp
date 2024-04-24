@@ -1,7 +1,7 @@
-#ifndef __HX711_H__
-#define __HX711_H__
+#ifndef HX711_HPP__
+#define HX711_HPP__
 
-#include "gpio_driver.h"
+#include "gpio_driver.hpp"
 
 /* This files is used to control the HX711 module
 * 
@@ -82,7 +82,7 @@ public:
 
 private:
 
-	GPIO_DRIVER pin_[2];
+	GPIO_Driver pin_[2];
 
 	void pin_sck_(int status) {
 		pin_[1].write(status);

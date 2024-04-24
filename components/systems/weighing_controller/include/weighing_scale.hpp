@@ -1,9 +1,14 @@
-#ifndef __WEIGHING_SCALE_H__
-#define __WEIGHING_SCALE_H__
+/* 
+* writed by thmalmeida on 20240424
+*/
 
-#include <load_cell.h>
+#ifndef WEIGHING_SCALE_HPP__
+#define WEIGHING_SCALE_HPP__
 
-/* This class defines the controller of weighing scale. It uses each load cell as an object with it's parameters.
+#include "load_cell.hpp"
+
+/*
+* This class defines the controller of weighing scale. It uses each load cell as an object with it's parameters.
 * 
 * Features:
 * Get weight from each load cell 
@@ -18,6 +23,7 @@
 * P3:  401.14 kg
 * P4:  360.24 kg
 * Pt: 1522.65 kg
+*
 */
 
 #define DEBUG_WEIGHING_SCALE 1
@@ -37,17 +43,17 @@
 // #define pin_led		2
 // #define pin_beep	8
 
-class WEIGHING_SCALE {
+class Weighing_Scale {
 public:
 
-	WEIGHING_SCALE(void) : load_cell_{{PIN_DATA_1, PIN_SCK_1}} {
+	Weighing_Scale(void) : load_cell_{{PIN_DATA_1, PIN_SCK_1}} {
 		init();
 	}
 
-	// WEIGHING_SCALE(void) : load_cell_{{PIN_DATA_1, PIN_SCK_1}, {PIN_DATA_2, PIN_SCK_2}, {PIN_DATA_3, PIN_SCK_3}, {PIN_DATA_4, PIN_SCK_4}} {
+	// Weighing_Scale(void) : load_cell_{{PIN_DATA_1, PIN_SCK_1}, {PIN_DATA_2, PIN_SCK_2}, {PIN_DATA_3, PIN_SCK_3}, {PIN_DATA_4, PIN_SCK_4}} {
 	// 	init();
 	// }
-	// WEIGHING_SCALE(int pin_data_1, int pin_sck_1,
+	// Weighing_Scale(int pin_data_1, int pin_sck_1,
 	// 				int pin_data_2, int pin_sck_2,
 	// 				int pin_data_3, int pin_sck_3,
 	// 				int pin_data_4, int pin_sck_4) :
@@ -61,7 +67,8 @@ public:
 
 	void init(void) {
 
-		// Load cell sensor parameters definition
+		/* ---- Load cell sensor parameters ---- */
+		
 		// mV/V signal response;
 		A_[0] = 1.0000;			// 1kg load bar (small load cell sensor)
 		// A_[0] = 2.9997;			// s1
@@ -87,11 +94,11 @@ public:
 			load_cell_[i].Kp(Kp_[i]);
 		}
 
-		#ifdef DEBUG_WEIGHING_SCALE
+		#ifdef DEBUG_Weighing_Scale
 		printf("Weighing scale init\n");
 		#endif
 
-		#ifdef DEBUG_WEIGHING_SCALE
+		#ifdef DEBUG_Weighing_Scale
 		printf("Weighing scale: tare process\n");
 		#endif
 		delay_ms(1000);
@@ -128,7 +135,7 @@ public:
 	}
 private:
 
-	LOAD_CELL load_cell_[N_SENSORS_];
+	Load_Cell load_cell_[N_SENSORS_];
 
 	/* Load cell parameters */
 	double A_[4], Kp_[4];
@@ -136,4 +143,4 @@ private:
 
 };
 
-#endif //__WEIGHING_SCALE_H__
+#endif //__Weighing_Scale_HPP__
