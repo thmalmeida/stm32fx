@@ -101,7 +101,7 @@ void i2c_init(uint32_t addr1, uint32_t freq) {
 		printf("Error I2C init!\n");
 		Error_Handler();
 	} else {
-		printf("I2C initialized with addr 0x%02x\n", addr1);
+		printf("I2C initialized with addr 0x%02lx\n", addr1);
 	}
 
 	i2c_enable_interrupt();

@@ -24,7 +24,7 @@ public:
 	* @param pin_sck clock output to hx711 module
 	*
 	*/
-	Load_Cell(int pin_data, int pin_sck) : hx711_{pin_data, pin_sck} {
+	Load_Cell(int pin_data, int pin_sck, int id) : hx711_{pin_data, pin_sck, id} {
 
 	}
 

@@ -2,12 +2,20 @@
 #define __TEST_FUNCTIONS_HPP__
 
 #include "system_main.h"		// stm32f103 includes
-// includes test functions (aht10 sensor..)
-// #include "i2c_master.hpp"
+
+
+// sensors
 #include "aht10.hpp"
-// #include "gpio.hpp"
+// #include "ahtx0.hpp"
+// #include "bmp180.hpp"
+// #include "bmp280.hpp"
+
 #include "tim.h"
 #include "tim_driver.hpp"
+
+// displays
+#include "lcd.hpp"              // lcd character
+#include "ssd1306.hpp"          // OLED display
 
 // includes for pcy8575
 #include "pcy8575.hpp"
@@ -19,9 +27,6 @@
 #include "reset_reason.hpp"
 
 #include "delay.hpp"
-
-// lcd character
-#include "lcd.hpp"
 
 // For weighing scale system only
 #include "weighing_scale.hpp"
@@ -45,9 +50,11 @@ void test_adc_stream(void);
 void test_adc_stream_reg(void);
 void test_gpio(void);
 void test_bkp(void);
+void test_i2c(void);
 void test_lcd(void);
 void test_pjb20(void);
 void test_pwm(void);
+void test_ssd1306(void);
 void test_time(void);
 void test_timer_counter(void);
 void test_timer_interrupt(void);

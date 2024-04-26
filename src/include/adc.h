@@ -27,6 +27,7 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "system_main.h"
+#include <stdio.h>
 
 #define ADC_BUFLEN 200
 

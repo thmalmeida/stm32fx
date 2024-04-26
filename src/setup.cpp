@@ -1,4 +1,4 @@
-#include "test_functions.hpp"
+#include "setup.hpp"
 
 void i2c_slave_pcy8575(void) {
 	// Extender machine. Composed init of Timer 3 initialized with 1 Hz on interrupt mode. tim3_flag_ ISR variable;
@@ -603,12 +603,11 @@ void test_adc_stream_reg(void) {
 }
 void test_aht10(void) {
 	
-	I2C_Driver i2c;
-	i2c.init(I2C_NORMAL_SPEED_HZ);
+	I2C_Driver i2c(2);
 
-	i2c.deinit();
-	delay_ms(100);
-	i2c.init(I2C_NORMAL_SPEED_HZ);
+	printf("probe list\n");
+	i2c.probe_list();
+	printf("probe list done\n");
 	
 	aht10 sensor0(&i2c);
 	sensor0.init(aht10_mode::NORMAL_MODE);
@@ -622,7 +621,6 @@ void test_aht10(void) {
 		// AHT10 test sensor
 		if(sensor0.probe())
 		{
-			// printf("Sensor found!\n");
 			sensor0.trig_meas();
 			// sensor0.print_raw_data();
 			printf("Count: %d, Humidity: %.2f %%, Temperature: %.2f C\n", count++, sensor0.get_humidity(), sensor0.get_temperature());
@@ -633,10 +631,10 @@ void test_aht10(void) {
 		else {
 			i2c.deinit();
 			delay_ms(100);
-			i2c.init(I2C_NORMAL_SPEED_HZ);
+			i2c.init();
 		}
 		// HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-		delay_ms(5000);
+		delay_ms(10000);
 	}
 }
 void test_bkp(void) {
@@ -649,6 +647,21 @@ void test_bkp(void) {
 
 	while(1) {
 
+	}
+}
+void test_i2c(void) {
+	// instantiate and initialize using port I2C2 (PB10 and PB11);
+	I2C_Driver i2c1(2);
+
+	printf("probe_find addr: 0x%02x\n", i2c1.probe_find());
+	printf("probe list start\n");
+	i2c1.probe_list();
+
+	int count = 0;
+	while (1) {
+		printf("%d I2C probe:%d\n", count++, i2c1.probe(0x38));
+		// printf("I2C %d - probe addr 0x39:%d\n", count++, i2c1.probe(0x39));
+		delay_ms(1000);
 	}
 }
 void test_lcd(void) {
@@ -745,6 +758,30 @@ void test_pwm(void) {
 		// pin.toggle();
 		// printf("TIM3_CH1\n");
 		printf("TIM2_CH3\n");
+		delay_ms(1000);
+	}
+}
+void test_ssd1306(void) {
+	I2C_Driver i2c(2);
+	SSD1306 d0(&i2c);
+
+	char str[4];
+	sprintf(str, "%d", 8);
+	d0.clear();
+	d0.print_Arial24x32(0, 0, str);
+
+	int count = 0;
+	uint8_t i = 0;
+	while(1) {
+
+		if(i < 64) {
+			// d0.draw_pixel(i, i*2);
+			i++;
+		}
+		else {
+			i=0;
+		}
+		printf("%2d\n", count++);
 		delay_ms(1000);
 	}
 }
@@ -863,8 +900,8 @@ void test_timer_counter(void) {
 }
 void test_gpio(void) {
 
-	GPIO_Driver pin[2]{{4,1}, {5,1}};
-	GPIO_Driver pin0(1,1);
+	// GPIO_Driver pin[2]{{4,1}, {5,1}};
+	GPIO_Driver pin0(14,1);
 	// TPI->ACPR = HAL_RCC_GetHCLKFreq() / 2000000 - 1;
 
 	printf("GPIO test!\n");
@@ -936,20 +973,30 @@ void test_gpio(void) {
 }
 
 void test_lcd_aht10_pwm(void) {
+
+	// Control the LCD backlight
 	TIM_Driver pwm(2, 500, timer_mode::pwm_output, 2);
-	pwm.duty(5);
+	pwm.duty(90);
 
+	// show results
+	LCD_Driver lcd0;
+	char str0[10];
+	sprintf(str0, "Benjamin1");
+	lcd0.print(str0, 0, 0);
+	delay_ms(1000);
+
+	// interface with sensors
 	I2C_Driver i2c;
-	i2c.init(I2C_NORMAL_SPEED_HZ);
+	i2c.init();
 
-	i2c.deinit();
-	delay_ms(100);
-	i2c.init(I2C_NORMAL_SPEED_HZ);
+	// i2c.deinit();
+	// delay_ms(100);
+	// i2c.init();
+
+	i2c.probe_list();
 	
 	aht10 sensor0(&i2c);
 	sensor0.init(aht10_mode::NORMAL_MODE);
-
-	LCD_Driver lcd;
 
 	GPIO_Driver led0(1, 1);
 
@@ -967,10 +1014,10 @@ void test_lcd_aht10_pwm(void) {
 			// sprintf(str, "H:%.1f %% T:%.1f C\n", static_cast<int>(sensor0.get_humidity()), static_cast<int>(sensor0.get_temperature()));
 			sprintf(str, "T:%.1f%cC H:%.1f%%", sensor0.get_temperature(), 0xdf, sensor0.get_humidity());
 			printf("%s\n", str);
-			lcd.print(str, 0, 0);
+			lcd0.print(str, 0, 0);
 
 			sprintf(str, "%lu", count++);
-			lcd.print(str, 1, 0);
+			lcd0.print(str, 1, 0);
 
 			led0.write(0);
 			delay_ms(500);
@@ -979,7 +1026,8 @@ void test_lcd_aht10_pwm(void) {
 		else {
 			i2c.deinit();
 			delay_ms(100);
-			i2c.init(I2C_NORMAL_SPEED_HZ);
+			i2c.reset();
+			i2c.init();
 		}
 		// HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 		delay_ms(4500);

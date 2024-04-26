@@ -91,7 +91,7 @@ void adc_read_SR_reg(void) {
 	AWD_bit = (ADC_SR_reg >> 0) & 1;
 }
 void adc_print_SR_reg(void) {
-	printf("ADC_SR1- 0x%08x STRT:%u JSTRT:%u JEOC:%u EOC:%u AWD:%u\n",
+	printf("ADC_SR1- 0x%08lx STRT:%u JSTRT:%u JEOC:%u EOC:%u AWD:%u\n",
 		ADC_SR_reg, STRT_bit, JSTRT_bit, JEOC_bit, EOC_bit, AWD_bit);
 }
 void adc_read_CR1_reg(void) {
@@ -107,7 +107,7 @@ void adc_read_CR1_reg(void) {
 	EOCIE_bit = (ADC_CR1_reg >> 5) & 1;
 }
 void adc_print_CR1_reg(void) {
-	printf("ADC_CR1-0x%08x AWDE:%u JAWDE:%u DUALMOD:0x%02x DISCNUM:0x%02x DISCEN:%u SCAN:%u EOCIE:%u\n",
+	printf("ADC_CR1-0x%08lx AWDE:%u JAWDE:%u DUALMOD:0x%02x DISCNUM:0x%02x DISCEN:%u SCAN:%u EOCIE:%u\n",
 		ADC_CR1_reg, AWDE_bit, JAWDE_bit, DUALMOD_bits, DISCNUM_bits, DISCEN_bit, SCAN_bit, EOCIE_bit);
 }
 void adc_read_CR2_reg(void) {
@@ -126,7 +126,7 @@ void adc_read_CR2_reg(void) {
 	ADON_bit = (ADC_CR2_reg >> 0) & 1;
 }
 void adc_print_CR2_reg(void) {
-	printf("ADC_CR2-0x%08x TSVREFE:%u SWSTART:%u EXTTRIG:%u EXTSEL:0x%02x ALIGN:%u DMA:%u RSTCAL:%u CAL:%u CONT:%u ADON:%u\n",
+	printf("ADC_CR2-0x%08lx TSVREFE:%u SWSTART:%u EXTTRIG:%u EXTSEL:0x%02x ALIGN:%u DMA:%u RSTCAL:%u CAL:%u CONT:%u ADON:%u\n",
 		ADC_CR1_reg, TSVREFE_bit, SWSTART_bit, EXTTRIG_bit, EXTSEL_bits, ALIGN_bit, DMA_bit, RSTCAL_bit, CAL_bit, CONT_bit, ADON_bit);
 }
 void adc_read_SQR1_reg(void) {
@@ -206,13 +206,13 @@ void dma1_read_CPAR_reg(void) {
 	// DMA1_Channel1->CPAR = (uint32_t)(&(ADC1->DR));
 }
 void dma1_print_CPAR_reg(void) {
-	printf("CPAR peripheral addr: 0x%08x\n", DMA1_CPAR_reg);
+	printf("CPAR peripheral addr: 0x%08lx\n", DMA1_CPAR_reg);
 }
 void dma1_read_CMAR_reg(void) {
 	DMA1_CMAR_reg = DMA1_Channel1->CMAR;
 }
 void dma1_print_CMAR_reg(void) {
-	printf("CMAR memory addr: 0x%08x\n", DMA1_CMAR_reg);
+	printf("CMAR memory addr: 0x%08lx\n", DMA1_CMAR_reg);
 }
 
 void adc_set_CR2_EXTSEL_bits(uint8_t value) {
@@ -548,7 +548,7 @@ void adc_dma_init(void) {
 
 	// Set peripheral source address
 	DMA1_Channel1->CPAR = (uint32_t)(&(ADC1->DR));
-	printf("CPAR addr: 0x%08x\n", DMA1_Channel1->CPAR);
+	printf("CPAR addr: 0x%08lx\n", DMA1_Channel1->CPAR);
 
 	// Enable DMA channel after edit;
 	DMA1_Channel1->CCR |= (1<<0);

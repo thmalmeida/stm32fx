@@ -105,7 +105,7 @@ void aht10::trig_meas(void) {
 	delay_ms(75);
 
 	// Read only after write. There are six bytes to read
-	i2c_->read_only(AHT10_ADDR, &data_raw_[0], 6);
+	i2c_->read(AHT10_ADDR, &data_raw_[0], 6);
 
 	// refresh status byte
 	status_byte_ = data_raw_[0];

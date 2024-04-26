@@ -28,6 +28,7 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f1xx_hal.h"
+#include "stm32_log.h"
 
 /* Exported functions prototypes ---------------------------------------------*/
 void SystemClock_Config_8MHz_HSE(void);

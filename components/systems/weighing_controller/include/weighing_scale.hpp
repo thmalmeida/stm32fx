@@ -6,6 +6,7 @@
 #define WEIGHING_SCALE_HPP__
 
 #include "load_cell.hpp"
+#include "lcd.hpp"
 
 /*
 * This class defines the controller of weighing scale. It uses each load cell as an object with it's parameters.
@@ -29,16 +30,16 @@
 #define DEBUG_WEIGHING_SCALE 1
 
 /* Load cell pins definition */
-#define PIN_DATA_1	27
-#define PIN_SCK_1	28
-#define PIN_DATA_2	31
-#define PIN_SCK_2	32
-#define PIN_DATA_3	24
-#define PIN_SCK_3	23
-#define PIN_DATA_4	22
-#define PIN_SCK_4	21
+#define PIN_DATA_1	5
+#define PIN_SCK_1	6
+#define PIN_DATA_2	7
+#define PIN_SCK_2	8
+#define PIN_DATA_3	9
+#define PIN_SCK_3	10
+#define PIN_DATA_4	11
+#define PIN_SCK_4	12
 
-#define N_SENSORS_	1
+#define N_SENSORS_	4
 // #define pin_tare	32
 // #define pin_led		2
 // #define pin_beep	8
@@ -46,7 +47,7 @@
 class Weighing_Scale {
 public:
 
-	Weighing_Scale(void) : load_cell_{{PIN_DATA_1, PIN_SCK_1}} {
+	Weighing_Scale(void) : load_cell_{{PIN_DATA_1, PIN_SCK_1, 1}, {PIN_DATA_2, PIN_SCK_2, 2}, {PIN_DATA_3, PIN_SCK_3, 3}, {PIN_DATA_4, PIN_SCK_4, 4}} {
 		init();
 	}
 
@@ -68,22 +69,21 @@ public:
 	void init(void) {
 
 		/* ---- Load cell sensor parameters ---- */
-		
 		// mV/V signal response;
-		A_[0] = 1.0000;			// 1kg load bar (small load cell sensor)
-		// A_[0] = 2.9997;			// s1
+		// A_[0] = 1.0000;			// 1kg load bar (small load cell sensor)
+		A_[0] = 2.9997;			// s1
 		A_[1] = 3.0000;			// s2
 		A_[2] = 3.0017;			// s3
 		A_[3] = 3.0012;			// s4
 
-		Kp_[0] = 10*1.3629;		// proportional constant of small 1kg load bar sensor
-		// Kp_[0] = 1.0872;
+		// Kp_[0] = 10*1.3629;		// proportional constant of small 1kg load bar sensor
+		Kp_[0] = 1.0872;
 		Kp_[1] = 1.6200;			// YZC-320 tested on 20170816 with 3.0mV/V and Kc = 1.6985;
 		Kp_[2] = 1.0872;			//10.33%
 		Kp_[3] = 1.0872;
 
-		offset_[0] = 0;	// s0 small sensor;
-		// offset_[0] = 11500;	// s1
+		// offset_[0] = 0;	// s0 small sensor;
+		offset_[0] = 11500;	// s1
 		offset_[1] = 5000;	// s2
 		offset_[2] = 11500; // s3
 		offset_[3] = 11500;	// s4
@@ -105,12 +105,21 @@ public:
 		for(int i=0; i<N_SENSORS_;i++) {
 			load_cell_[i].tare();
 		}
-
-
 	}
 	void run(void) {
 		// Get weight and print to lcd
-		printf("W:%.2f kg, RAW:%lu\n", static_cast<double>(weight()/1000.0), raw());
+		char str[16];
+		// For mini load cell
+		// sprintf(str, "W:%.0f kg, RAW:%lu\n", static_cast<double>(weight()/1000.0), raw());
+		// For cattle weight system with 4 load cells
+		for(int i=0; i<N_SENSORS_; i++) {
+			printf("P%d:%d ", i+1, load_cell_[i].weight_kg());
+		}
+
+
+		sprintf(str, " P:%d kg, RAW:%lu\n", weight(), raw());
+		printf(str);
+		lcd.print(str, 0, 0);
 	}
 	void test(void) {
 
@@ -118,6 +127,9 @@ public:
 	uint32_t raw(void) {
 		return load_cell_[0].read_hx711();
 	}
+	/* @brief Sum of all weight from load cell
+	*  @return total weight in kg
+	*/
 	int weight(void) {
 		int P = 0;
 		// Do the weights sum
@@ -136,6 +148,8 @@ public:
 private:
 
 	Load_Cell load_cell_[N_SENSORS_];
+
+	LCD_Driver lcd;							// For print purpose only
 
 	/* Load cell parameters */
 	double A_[4], Kp_[4];

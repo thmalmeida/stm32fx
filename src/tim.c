@@ -206,7 +206,7 @@ void tim2_init(void) {
 void tim2_pwm_init(uint32_t freq) {
 	uint32_t gu32_ticks = (HAL_RCC_GetHCLKFreq() / 1000000);
 
-	printf("freq: %d\n", HAL_RCC_GetHCLKFreq());
+	printf("freq: %ld\n", HAL_RCC_GetHCLKFreq());
 
 	TIM_ClockConfigTypeDef sClockSourceConfig = {0};
 	TIM_MasterConfigTypeDef sMasterConfig = {0};

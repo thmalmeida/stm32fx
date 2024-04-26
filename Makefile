@@ -24,9 +24,10 @@ TARGET = stm32fx
 # debug build?
 DEBUG = 1
 # optimization
+# Og - ?
 # Os - Performs optimizations to reduce the code size at the expense of a possible increase in execution time. This option aims for a balanced code size reduction and fast performance.
 # Oz - Optimizes for smaller code size.
-OPT = -Oz
+OPT = -Og
 
 #######################################
 # paths
@@ -34,17 +35,22 @@ OPT = -Oz
 # Build path
 BUILD_DIR = build
 
-SRC_DIR = src
-DRIVER_DIR = Drivers/STM32F1xx_HAL_Driver/Src
+# mine code
 INC_DIR = src/include
+SRC_DIR = src
+
+# stm32 firmware from st cube mx
+DRIVER_DIR = Drivers/STM32F1xx_HAL_Driver/Src
 
 ######################################
 # source
 ######################################
 # C sources
-# $(SRC_DIR)/usart.c
-
+# $(SRC_DIR)/syscalls.c \
+# $(SRC_DIR)/sysmem.c \
+#
 C_SOURCES =  \
+$(SRC_DIR)/sysmem.c \
 $(SRC_DIR)/system_main.c \
 $(SRC_DIR)/adc.c \
 $(SRC_DIR)/i2c.c \
@@ -54,19 +60,19 @@ $(SRC_DIR)/stm32_log.c \
 $(SRC_DIR)/stm32f1xx_hal_msp.c \
 $(SRC_DIR)/stm32f1xx_it.c \
 $(SRC_DIR)/system_stm32f1xx.c \
-$(DRIVER_DIR)/stm32f1xx_hal_adc.c \
-$(DRIVER_DIR)/stm32f1xx_hal_i2c.c \
 $(DRIVER_DIR)/stm32f1xx_hal.c \
+$(DRIVER_DIR)/stm32f1xx_hal_adc.c \
+$(DRIVER_DIR)/stm32f1xx_hal_cortex.c \
+$(DRIVER_DIR)/stm32f1xx_hal_dma.c \
+$(DRIVER_DIR)/stm32f1xx_hal_exti.c \
+$(DRIVER_DIR)/stm32f1xx_hal_gpio.c \
+$(DRIVER_DIR)/stm32f1xx_hal_i2c.c \
+$(DRIVER_DIR)/stm32f1xx_hal_iwdg.c \
+$(DRIVER_DIR)/stm32f1xx_hal_pwr.c \
 $(DRIVER_DIR)/stm32f1xx_hal_rcc.c \
 $(DRIVER_DIR)/stm32f1xx_hal_rcc_ex.c \
-$(DRIVER_DIR)/stm32f1xx_hal_gpio.c \
-$(DRIVER_DIR)/stm32f1xx_hal_cortex.c \
-$(DRIVER_DIR)/stm32f1xx_hal_pwr.c \
-$(DRIVER_DIR)/stm32f1xx_hal_exti.c \
 $(DRIVER_DIR)/stm32f1xx_hal_tim.c \
-$(DRIVER_DIR)/stm32f1xx_hal_iwdg.c \
-$(DRIVER_DIR)/stm32f1xx_hal_tim_ex.c \
-$(DRIVER_DIR)/stm32f1xx_hal_dma.c
+$(DRIVER_DIR)/stm32f1xx_hal_tim_ex.c
 
 # $(DRIVER_DIR)/stm32f1xx_hal_gpio_ex.c \
 # $(DRIVER_DIR)/stm32f1xx_hal_flash.c \
@@ -83,7 +89,7 @@ CXX_SOURCES2=$(shell find -L $(SRC_DIR) -name '*.cpp')
 # CPP sources
 CXX_SOURCES = \
 $(SRC_DIR)/main.cpp \
-$(SRC_DIR)/test_functions.cpp \
+$(SRC_DIR)/setup.cpp \
 components/helper/delay.cpp \
 components/math/dsp.cpp \
 components/modules/pcy8575/pcy8575.cpp \
@@ -92,6 +98,7 @@ components/modules/aht10/aht10.cpp \
 components/modules/ks0066/ks0066.cpp \
 components/modules/lcd/lcd.cpp \
 components/modules/hx711/hx711.cpp \
+components/modules/ssd1306/ssd1306.cpp \
 components/peripherals/gpio/gpio_driver.cpp \
 components/peripherals/backup/backup.cpp \
 components/peripherals/backup/reset_reason.cpp \
@@ -185,6 +192,7 @@ CXX_INCLUDES = \
 -Icomponents/modules/ks0066/include \
 -Icomponents/modules/lcd/include \
 -Icomponents/modules/pcy8575/include \
+-Icomponents/modules/ssd1306/include \
 -Icomponents/peripherals/adc/include \
 -Icomponents/peripherals/backup/include \
 -Icomponents/peripherals/gpio/include \
@@ -200,8 +208,9 @@ CXX_INCLUDES = \
 #-flto: Enables Link Time Optimization (LTO), which enables the linker to make additional optimizations across multiple source files.
 # Reference: https://developer.arm.com/documentation/100748/0612/writing-optimized-code/optimizing-for-code-size-or-performance
 # Reference: https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html
-C_EXTRAFLAGS = -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -ffreestanding -fno-move-loop-invariants -Wall -Wextra -g3 -flto
-CXX_EXTRAFLAGS = -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -ffreestanding -fno-move-loop-invariants -Wall -Wextra -g3 -flto
+# -ffreestanding remove from all C and C++ to work cmath - 2 Language Standards Supported by GCC at https://gcc.gnu.org/onlinedocs/gcc/Standards.html
+C_EXTRAFLAGS = -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -fno-move-loop-invariants -Wall -Wextra -g3 -flto
+CXX_EXTRAFLAGS = -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -fno-move-loop-invariants -Wall -Wextra -g3 -flto
 
 C_EXTRAFLAGS2 = -std=c99 -Wno-unused-parameter -Wno-conversion -Wno-sign-conversion -Wno-bad-function-cast -Wno-unused-variable -Wno-implicit-function-declaration #-std=gnu11
 CXX_EXTRAFLAGS2 = -std=c++17 -fabi-version=0 -fno-exceptions -fno-rtti -fno-use-cxa-atexit -fno-threadsafe-statics #-std=gnu++11
@@ -303,9 +312,9 @@ flash: all
 # --trace=20000		,  -tXX, --trace=XX      Specify the trace frequency in Hz
 #
 monitor: flash
-	st-trace --clock=72
+	st-trace -v --clock=72m
 monitor2:
-	st-trace --clock=72
+	st-trace -v --clock=72m
 
 size:
 	$(SZ) $(BUILD_DIR)/$(TARGET).hex
