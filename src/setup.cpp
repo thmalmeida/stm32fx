@@ -79,12 +79,15 @@ void weighing_scale(void) {
 	I2C_Driver i2c(2);
 	Weighing_Scale ws(&i2c);
 
-	double Tp = 0.25;
+	double Tp = 0.500;	// time period [s]
 	TIM_Driver timer0(2, 1/Tp, timer_mode::timer_interrupt);
 
 	while(1) {
+
+		ws.run();
+
 		if(timer0.isr_flag()) {
-			ws.run();
+			ws.update();
 		}
 	}
 }
@@ -768,31 +771,29 @@ void test_ssd1306(void) {
 	I2C_Driver i2c(2);
 	SSD1306 d0(&i2c);
 
-	char str[4];
-	
 	d0.clear();
-	
-	// sprintf(str, "Hello!");
-	// d0.print(str, 0, 0);
-
-	// sprintf(str, "%d", 8);
-	// d0.print_Arial24x32(str, 0, 0);
-	// delay_ms(1000);
 
 	int count = 0;
-	uint8_t i = 0;
+	char str[4];
+	// d0.print(str, 0, 0);
+	// d0.print_Arial24x32(str, 0, 0);
+	
+	// uint8_t i = 0;
 	while(1) {
-
-		if(i < 64) {
-			sprintf(str, "c:%d", count++);
-			d0.print(str, 0, 24);
-			// d0.draw_pixel(i, i*2);
-			i++;
-		}
-		else {
-			i=0;
-		}
-		printf("%2d\n", count);
+		sprintf(str, "%4d", count++);
+		printf(str);
+		d0.print_Arial24x32_Numbers(str, 0, 0);
+		// d0.print_Arial24x32_Numbers(str, 24*4, 0);
+		// d0.print_Arial16x24(str, 0, 0);
+		// if(i < 64) {
+		// 	sprintf(str, "c:%d", count++);
+		// 	d0.print(str, 0, 24);
+		// 	// d0.draw_pixel(i, i*2);
+		// 	i++;
+		// }
+		// else {
+		// 	i=0;
+		// }
 		delay_ms(1000);
 	}
 }

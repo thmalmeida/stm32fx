@@ -53,37 +53,8 @@ public:
 	}
 	
 	void init(void) {
-		/* ---- Load cell sensor parameters ---- */
-		// mV/V signal response;
-		A_[0] = 1.0000;			// 1kg load bar (small load cell sensor)
-		// A_[0] = 2.9997;			// s1
-		A_[1] = 3.0000;			// s2
-		A_[2] = 3.0017;			// s3
-		A_[3] = 3.0012;			// s4
 
-		// Kp_[0] = 10*1.3629;		// proportional constant of small 1kg load bar sensor
-		Kp_[0] = 1.0872;
-		Kp_[1] = 1.6200;			// YZC-320 tested on 20170816 with 3.0mV/V and Kc = 1.6985;
-		Kp_[2] = 1.0872;			//10.33%
-		Kp_[3] = 1.0872;
-
-		for(int i=0; i<N_SENSORS_; i++) {
-			A_[i] = A_[0];
-			Kp_[i] = 10*1.3629;
-		}
-
-		// offset_[0] = 0;	// s0 small sensor;
-		offset_[0] = 11500;	// s1
-		offset_[1] = 5000;	// s2
-		offset_[2] = 11500; // s3
-		offset_[3] = 11500;	// s4
-
-		for(int i=0; i<N_SENSORS_; i++) {
-			load_cell_[i].offset(offset_[i]);
-			load_cell_[i].A(A_[i]);
-			load_cell_[i].Kp(Kp_[i]);
-		}
-
+		/* ---- print debug welcome mesages ---- */
 		#ifdef DEBUG_Weighing_Scale
 		printf("Weighing scale init\n");
 		#endif
@@ -91,34 +62,78 @@ public:
 		#ifdef DEBUG_Weighing_Scale
 		printf("Weighing scale: tare process\n");
 		#endif
+
+		/* ---- output set: Clear lcd and set led indicator to low level ---- */
 		d0.clear();
-		// set indicator as 0;
 		indicator_(0);
 
-		printf("Weighing Scale System\n");
-		delay_ms(500);
+		// little wait before start setup parameters
+		delay_ms(1000);
+
+		/* ---- Load cell sensor parameters ---- */
+		
+		// mV/V signal response;
+		// A_[0] = 1.0000;			// 1kg load bar (small load cell sensor)
+		A_[0] = 2.9997;			// s1
+		A_[1] = 3.0000;			// s2
+		A_[2] = 3.0017;			// s3
+		A_[3] = 3.0012;			// s4
+
+		// Proportional constant. Specific for each load cell. Must calibrate before use and this is inerent to the part
+		// Kp_[0] = 10*1.3629;		// proportional constant of small 1kg load bar sensor
+		Kp_[0] = 1.0872;
+		Kp_[1] = 1.6200;			// YZC-320 tested on 20170816 with 3.0mV/V and Kc = 1.6985;
+		Kp_[2] = 1.0872;			//10.33%
+		Kp_[3] = 1.0872;
+
+		// Test small sensor on all 4 HX711
+		// for(int i=0; i<N_SENSORS_; i++) {
+		// 	A_[i] = A_[0];
+		// 	Kp_[i] = 10*1.3629;
+		// }
+
+		// Offset to tare to 0 kg on init;
+		// offset_[0] = 0;	// s0 small sensor;
+		offset_[0] = 11500;	// s1
+		offset_[1] = 5000;	// s2
+		offset_[2] = 11500; // s3
+		offset_[3] = 11500;	// s4
+
+		// Setup load cell parameters
+		for(int i=0; i<N_SENSORS_; i++) {
+			load_cell_[i].A(A_[i]);
+			load_cell_[i].Kp(Kp_[i]);
+			load_cell_[i].offset(offset_[i]);
+		}
+
 	}
 	void run(void) {
-		// Get weight and print to d0
-		char str[16];
-		// For mini load cell
-		// sprintf(str, "W:%.0f kg, RAW:%lu\n", static_cast<double>(weight()/1000.0), raw());
-
 		if(tare_request()) {
 			tare();
 			d0.clear();
 			indicator_(1);
+			while(tare_request());
 			delay_ms(1000);
 			indicator_(0);
 		}
+	}
+	void update(void) {
+		// Get weight and print to d0
+		// For mini load cell
+		// sprintf(str, "W:%.0f kg, RAW:%lu\n", static_cast<double>(weight()/1000.0), raw());
+		char str[10];
+		sprintf(str, "%5d",  weight());
+		printf(str);
+		d0.print_Arial24x32_Numbers(str, 0, 0);
+		// d0.print_Arial16x24("kg", 96, 24);
 
 		// For cattle weight system with 4 load cells
 		printf("\e[1;1H\e[2J\n");
-		sprintf(str, "P:%8.d kg", weight()/1000);
+		sprintf(str, "P:%5d kg", weight());
 		printf(str);
 		printf("\n");
-		d0.print(str, 0, 0);
-		// d0.print_Arial16x24(str, 0, 0);
+		// d0.print(str, 0, 0);
+		// d0.print_Arial16x24_Numbers(str, 0, 0);
 
 		for(int i=0; i<N_SENSORS_; i++) {
 			sprintf(str, "P%d:%8.d kg", i, load_cell_[i].weight_kg()/1000);
@@ -137,7 +152,7 @@ public:
 		int P = 0;
 		// Do the weights sum
 		for(int i=0; i<N_SENSORS_; i++) {
-			P +=load_cell_[i].weight_kg();
+			P +=load_cell_[i].weight_kg()/1000;
 		}
 		return P;
 	}

@@ -200,7 +200,7 @@ void SSD1306::print_Arial16x24(const char* s, uint8_t x, uint8_t y) {
 	// Arial16x24 font
 	int k = 0;
 	while(*s) {
-		print_Arial16x24(x + 16*k, y, *s);
+		print_Arial16x24(*s, x + 16*k, y);
 		s++;
 		k++;
 	}
@@ -222,9 +222,10 @@ void SSD1306::print_Arial16x24(char c, uint8_t x, uint8_t y) {
 			data[i] = Arial16x24[offset + ((i-1)*n_rows + (j+1))];
 		}
 
-		// 1 4 7 10 13 ... (16 bytes length)
-		// 2 5 8 11 14 ...
-		// 3 6 9 12 15 ...
+		// Bytes write sequence (16 bytes length at column * 3 bytes row (3 * 8 bits = 24 bits) = 48 bytes).
+		// 1 4 7 10 13 ... 43 46
+		// 2 5 8 11 14 ... 44 47
+		// 3 6 9 12 15 ... 45 48
 
 		position(x, 8*j+y);
 		i2c_->write(SSD1306_ADDR, &data[0], sizeof(data));
@@ -272,11 +273,51 @@ void SSD1306::print_Arial24x32(const char *s, uint8_t x, uint8_t y) {
 	// Arial24x32 font
 	int k = 0;
 	while(*s) {
-		print_Arial24x32(x + 24*k, y, *s);
+		print_Arial24x32(*s, x + 24*k, y);
 		s++;
 		k++;
 	}
 }
+void SSD1306::print_Arial24x32_Numbers(char c, uint8_t x, uint8_t y) {
+	// Arial24x32 font
+	// Each character has 121 bytes (exclude the first one)
+	int n_bytes = 97;
+	int n_cols = 24;
+	int n_rows = 4;
+
+	int offset = n_bytes*(static_cast<int>(c)-32-16);
+
+	uint8_t data[n_cols+1];
+	data[0] = static_cast<uint8_t>(ssd1306_ctrl_byte::data_array); 
+
+	for(int j=0; j<n_rows; j++) {
+		for(int i=1; i<n_cols+1; i++) {
+			if(c == ' ') {
+				data[i] = 0x00;
+			} else {
+				data[i] = Arial24x32_Numbers[offset + ((i-1)*n_rows + (j+1))];
+			}
+		}
+
+		// 01 05 09 13 17 ... (16 bytes length)
+		// 02 06 10 14 18 ...
+		// 03 07 11 15 19 ...
+		// 04 08 12 16 20
+
+		position(x, 8*j+y);
+		i2c_->write(SSD1306_ADDR, &data[0], sizeof(data));
+	}
+}
+void SSD1306::print_Arial24x32_Numbers(const char *s, uint8_t x, uint8_t y) {
+	// Arial24x32 font
+	int k = 0;
+	while(*s) {
+		print_Arial24x32_Numbers(*s, x + 24*k, y);
+		s++;
+		k++;
+	}
+}
+
 
 // 1. Fundamental Command Table
 void SSD1306::set_contrast_(uint8_t value) {

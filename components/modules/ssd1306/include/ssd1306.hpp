@@ -19,7 +19,7 @@
 
 /* Command address */
 #define SSD1306_ADDR_default				0x3C	// device default address - 0b 0011 1100 - 0x3C
-#define SSD1304_SA0_bit						0		// depends of D/C pin. By hardware.
+#define SSD1304_SA0_bit						0		// depends of D/C pin. Set by hardware.
 
 #define SSD1306_ADDR						(SSD1306_ADDR_default 	| SSD1304_SA0_bit) //  - 0b 0011 110[SA0=0] or 0b 0011 110[SA0=1]
 
@@ -122,8 +122,8 @@ enum class ssd1306_addr_mode {
 enum class ssd1306_ctrl_byte {
 	cmd_array = 0x00,		// Command Stream		Co = 0; D/C = 0, 0b0000 0000
 	data_array = 0x40		// data stream			Co = 0; D/C = 1, 0b0100 0000
-	// cmd_byte = 0x80,		// Single Command byte  Co = 1; D/C = 0, 0b1000 0000
-	// data_byte = 0xC0		// Single Data Byte		Co = 1; D/C = 1, 0b1100 0000
+	// cmd_byte = 0x80,		// Single Command byte  Co = 1; D/C = 0, 0b1000 0000 ????
+	// data_byte = 0xC0		// Single Data Byte		Co = 1; D/C = 1, 0b1100 0000 ????
 };
 
 // VcomH deselect levels
@@ -160,6 +160,10 @@ public:
 
 	void print_Arial24x32(char c, uint8_t x, uint8_t y);
 	void print_Arial24x32(const char *s, uint8_t x, uint8_t y);
+
+	// Numbers print only. bare metal low RAM
+	void print_Arial24x32_Numbers(char c, uint8_t x, uint8_t y);
+	void print_Arial24x32_Numbers(const char *s, uint8_t x, uint8_t y);
 
 	// draw tools
 	void draw_pixel(uint8_t x, uint8_t y);
@@ -249,12 +253,11 @@ private:
 	*/
 	void charge_pump_en_(uint8_t a2);
 
-	uint8_t buffer[1024];			// 128*64 / 8 bytes for display RAM;
-
-	ssd1306_addr_mode addr_mode_;
+	ssd1306_addr_mode addr_mode_;		// address mode
+	// uint8_t buffer[1024];				// 128*64 pixels / 8 bits = 1024 bytes to fill display RAM;
+	// uint8_t x_, y_;						// memory position in pixel mode 128x64 (x, y)
 
 	I2C_Driver *i2c_;
-	uint8_t status_byte_, data_raw_[6], first_init_ = 1;
 };
 
 #endif
