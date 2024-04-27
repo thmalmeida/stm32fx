@@ -150,20 +150,20 @@ public:
 
 	// Character print functions
 	void print(char c);
-	void print(uint8_t x, uint8_t y, char c);
+	void print(char c, uint8_t x, uint8_t y);
 	
 	void print(const char *s);
-	void print(uint8_t x, uint8_t y, const char *s);
+	void print(const char *s, uint8_t x, uint8_t y);
 
-	void print_Arial16x24(uint8_t x, uint8_t line, char c);
-	void print_Arial16x24(uint8_t x, uint8_t line, const char* s);
+	void print_Arial16x24(char c, uint8_t x, uint8_t y);
+	void print_Arial16x24(const char* s, uint8_t x, uint8_t y);
 
-	void print_Arial24x32(uint8_t x, uint8_t y, char c);
-	void print_Arial24x32(uint8_t x, uint8_t y, const char *s);
+	void print_Arial24x32(char c, uint8_t x, uint8_t y);
+	void print_Arial24x32(const char *s, uint8_t x, uint8_t y);
 
 	// draw tools
 	void draw_pixel(uint8_t x, uint8_t y);
-	void draw_point(uint8_t x, uint8_t y, uint8_t size);
+	void draw_point(uint8_t size, uint8_t x, uint8_t y);
 
 private:
 	// 1. Fundamental commands

@@ -76,13 +76,16 @@ void i2c_slave_pcy8575_orig(void) {
 
 void weighing_scale(void) {
 
-	Weighing_Scale ws;
+	I2C_Driver i2c(2);
+	Weighing_Scale ws(&i2c);
 
-	printf("Teste\n");
+	double Tp = 0.25;
+	TIM_Driver timer0(2, 1/Tp, timer_mode::timer_interrupt);
 
 	while(1) {
-		ws.run();
-		delay_ms(200);
+		if(timer0.isr_flag()) {
+			ws.run();
+		}
 	}
 }
 
@@ -766,22 +769,30 @@ void test_ssd1306(void) {
 	SSD1306 d0(&i2c);
 
 	char str[4];
-	sprintf(str, "%d", 8);
+	
 	d0.clear();
-	d0.print_Arial24x32(0, 0, str);
+	
+	// sprintf(str, "Hello!");
+	// d0.print(str, 0, 0);
+
+	// sprintf(str, "%d", 8);
+	// d0.print_Arial24x32(str, 0, 0);
+	// delay_ms(1000);
 
 	int count = 0;
 	uint8_t i = 0;
 	while(1) {
 
 		if(i < 64) {
+			sprintf(str, "c:%d", count++);
+			d0.print(str, 0, 24);
 			// d0.draw_pixel(i, i*2);
 			i++;
 		}
 		else {
 			i=0;
 		}
-		printf("%2d\n", count++);
+		printf("%2d\n", count);
 		delay_ms(1000);
 	}
 }

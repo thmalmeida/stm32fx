@@ -192,20 +192,20 @@ void SSD1306::print(const char *s) {
 		s++;
 	}
 }
-void SSD1306::print(uint8_t x, uint8_t y, const char *s) {
+void SSD1306::print(const char *s, uint8_t x, uint8_t y) {
 	position(x, y);
 	print(s);
 }
-void SSD1306::print_Arial16x24(uint8_t x, uint8_t line, const char* s) {
+void SSD1306::print_Arial16x24(const char* s, uint8_t x, uint8_t y) {
 	// Arial16x24 font
 	int k = 0;
 	while(*s) {
-		print_Arial16x24(x + 16*k, line, *s);
+		print_Arial16x24(x + 16*k, y, *s);
 		s++;
 		k++;
 	}
 }
-void SSD1306::print_Arial16x24(uint8_t x, uint8_t y, char c) {
+void SSD1306::print_Arial16x24(char c, uint8_t x, uint8_t y) {
 	// Arial16x24 font
 	// Each character has 49 bytes (exclude the first one)
 	int n_bytes = 49;
@@ -242,7 +242,7 @@ void SSD1306::print_Arial16x24(uint8_t x, uint8_t y, char c) {
 	printf("\n");
 	#endif
 }
-void SSD1306::print_Arial24x32(uint8_t x, uint8_t y, char c) {
+void SSD1306::print_Arial24x32(char c, uint8_t x, uint8_t y) {
 	// Arial24x32 font
 	// Each character has 121 bytes (exclude the first one)
 	int n_bytes = 97;
@@ -268,7 +268,7 @@ void SSD1306::print_Arial24x32(uint8_t x, uint8_t y, char c) {
 		i2c_->write(SSD1306_ADDR, &data[0], sizeof(data));
 	}
 }
-void SSD1306::print_Arial24x32(uint8_t x, uint8_t y, const char *s) {
+void SSD1306::print_Arial24x32(const char *s, uint8_t x, uint8_t y) {
 	// Arial24x32 font
 	int k = 0;
 	while(*s) {

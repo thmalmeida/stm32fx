@@ -17,7 +17,7 @@ int main(void)
 
 
 	/* 2- Weighing Scale System */
-	// weighing_scale();
+	weighing_scale();
 
 
 	/* 3- Test functions */
@@ -34,7 +34,7 @@ int main(void)
 	// test_timer_pwm();
 	// test_pjb20();
 	// test_aht10();
-	test_ssd1306();
+	// test_ssd1306();
 	// test_i2c();
 	// test_bkp();
 	// test_pwm();
