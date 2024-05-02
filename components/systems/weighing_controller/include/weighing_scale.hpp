@@ -8,6 +8,8 @@
 #include "load_cell.hpp"
 // #include "lcd.hpp"
 #include "ssd1306.hpp"
+
+#define VERSION 100			// v1.0.0
 /*
 * This class defines the controller of weighing scale. It uses each load cell as an object with it's parameters.
 * 

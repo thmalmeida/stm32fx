@@ -986,52 +986,46 @@ void test_gpio(void) {
 
 void test_lcd_aht10_pwm(void) {
 
-	// Control the LCD backlight
-	TIM_Driver pwm(2, 500, timer_mode::pwm_output, 2);
-	pwm.duty(90);
+	// Control the LCD backlight - channel 2, f = 500 Hz, pwm mode (using PA2, see TIM_Driver docs)
+	TIM_Driver pwm(2, 60, timer_mode::pwm_output, 2);
+
+	// set duty cycle to 90 %
+	pwm.duty(30);
 
 	// show results
-	LCD_Driver lcd0;
-	char str0[10];
-	sprintf(str0, "Benjamin1");
-	lcd0.print(str0, 0, 0);
-	delay_ms(1000);
+	LCD_Driver lcd0(27, 28, 29, 30, 31, 32);
 
-	// interface with sensors
-	I2C_Driver i2c;
-	i2c.init();
+	// For fetch data indicator only
+	GPIO_Driver led0(1, 1);
 
-	// i2c.deinit();
-	// delay_ms(100);
-	// i2c.init();
+	// I2C for interface with sensors using port PB10 and PB11
+	I2C_Driver i2c(2);
+	// i2c.probe_list();
 
-	i2c.probe_list();
-	
+	// Statement of AHT10 sensor
 	aht10 sensor0(&i2c);
 	sensor0.init(aht10_mode::NORMAL_MODE);
 
-	GPIO_Driver led0(1, 1);
-
 	uint32_t count = 0;
-	char str[16];
+	char str[80];
 
 	while(1) {
 		// AHT10 test sensor
 		if(sensor0.probe())
 		{
-			// printf("Sensor found!\n");
+			led0.write(0);
+
 			sensor0.trig_meas();
-			// sensor0.print_raw_data();
-			// printf("Count: %d, Humidity: %.2f %%, Temperature: %.2f C\n", count++, sensor0.get_humidity(), sensor0.get_temperature());
-			// sprintf(str, "H:%.1f %% T:%.1f C\n", static_cast<int>(sensor0.get_humidity()), static_cast<int>(sensor0.get_temperature()));
-			sprintf(str, "T:%.1f%cC H:%.1f%%", sensor0.get_temperature(), 0xdf, sensor0.get_humidity());
+			
+			sprintf(str, "T:%.1f°C, H:%.1f %%, %5lu", sensor0.get_temperature(), sensor0.get_humidity(), count);
 			printf("%s\n", str);
+
+			sprintf(str, "T %.1f%cC                                H %.1f %%", sensor0.get_temperature(), 0xdf, sensor0.get_humidity());
 			lcd0.print(str, 0, 0);
 
-			sprintf(str, "%lu", count++);
-			lcd0.print(str, 1, 0);
+			sprintf(str, "%6lu", count++);
+			lcd0.print(str, 1, 10);
 
-			led0.write(0);
 			delay_ms(500);
 			led0.write(1);
 		}
@@ -1041,8 +1035,7 @@ void test_lcd_aht10_pwm(void) {
 			i2c.reset();
 			i2c.init();
 		}
-		// HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-		delay_ms(4500);
+		delay_ms(9500);
 	}
 }
 

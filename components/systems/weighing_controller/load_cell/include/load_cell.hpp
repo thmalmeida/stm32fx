@@ -37,6 +37,9 @@ public:
 	uint32_t read_hx711() {
 		return hx711_.read();
 	}
+	/* @brief return the weight in kg x 1000
+	*
+	*/
 	int weight_kg(void) {
 
 		signal = read_hx711();									// Read the ADC channel from HX711 module;

@@ -17,7 +17,7 @@ int main(void)
 
 
 	/* 2- Weighing Scale System */
-	weighing_scale();
+	// weighing_scale();
 
 
 	/* 3- Test functions */
@@ -39,7 +39,7 @@ int main(void)
 	// test_bkp();
 	// test_pwm();
 	// test_time();
-	// test_lcd_aht10_pwm();
+	test_lcd_aht10_pwm();
 	
     return 0;
 }

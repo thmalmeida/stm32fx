@@ -58,11 +58,14 @@ public:
 		#endif
 	}
 	uint32_t read(void) {
+		// value to store the 24 bit sample
 		uint32_t value = 0;
 
 		// set pin data to 1 and wait pin data go low after set sck to 0;
 		pin_data_(1);
-		pin_sck_(0);
+
+		// sck pin should be low while wait hx711 go ready with data pin go down
+		pin_sck_(0);		
 
 		int fault = 200;	// wait 200 ms before return error
 		while(pin_data_()) {
@@ -97,6 +100,7 @@ public:
 		// XOR operatinon on 24 th bit recommended by datasheet
 		// value ^= 0x800000;
 
+		// 25th pulse at PD_SCK input will pull DOUT pin back to high (Input A - Gain: 128)
 		pin_sck_(1);
 		delay_us(HX711_TIME_DELAY_PROTOCOL);
 

@@ -6,6 +6,9 @@
 extern int __io_putchar(int ch) __attribute__((weak));
 extern int __io_getchar(void) __attribute__((weak));
 
+// Needs segger host link to read works 20240502
+// volatile int32_t ITM_RxBuffer=ITM_RXBUFFER_EMPTY; // Initialize as EMPTY
+
 char *__env[1] = { 0 };
 char **environ = __env;
 
@@ -67,8 +70,13 @@ int _open(char *path, int flags, ...) {
 	return -1;
 }
 int _read(int file, char* ptr, int len) {
-	// HAL_StatusTypeDef hstatus;
+    // for (int DataIdx = 0; DataIdx < len; DataIdx++) {
+    //     *ptr++ = ITM_ReceiveChar();
+    // }
+	return len;
 
+	// using UART??
+	// HAL_StatusTypeDef hstatus;
 	// if (fd == STDIN_FILENO) {
 	// hstatus = HAL_UART_Receive(gHuart, (uint8_t *) ptr, 1, HAL_MAX_DELAY);
 	// if (hstatus == HAL_OK)
@@ -77,7 +85,6 @@ int _read(int file, char* ptr, int len) {
 	// return EIO;
 	// }
 	// errno = EBADF;
-	return -1;
 }
 int _times(struct tms *buf) {
 	(void)buf;
