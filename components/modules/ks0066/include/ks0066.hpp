@@ -4,6 +4,8 @@
 #include "gpio_driver.hpp"
 #include "delay.hpp"
 
+/* by thmalmeida@gmail.com on 20240315 */
+
 /* KS0066/ST7066U(5C) controller for LCD. 
 * It uses 4-bit bus and 8-bit bus are selected by the DL bit in the instruction register.
 * DR - Data Register (8-bit)
@@ -35,6 +37,15 @@ enum class op_t {
 	write = 0,
 	read
 };
+/* Read/Write pin 
+*	0 - Disable pin_rw and is write to lcd only
+*	1 - Enable pin_rw and is able to read from or write to lcd
+*/
+enum class rw_pin_t {
+	disable = 0,
+	enable
+};
+
 
 // Instruction for KS0066/ST0065U/ST0066C - Function Set (FS)
 #define KS0066_CLEAR_DISPLAY		0x01
@@ -52,10 +63,14 @@ enum class op_t {
 #define KS0066_DATA_HOLD_TIME		40			// data hold time after pulse enable go low [us];
 #define KS0066_DDRAM_SET_TIME		40
 
+// #define KS0066_PIN_RW			1			// comment this line if PIN_RW is not used and is always grounded
+
 #define KS0066_DEBUG				1
 
 class KS0066 {
 public:
+
+	#ifdef KS0066_PIN_RW
 	KS0066(int pin_rs, int pin_rw, int pin_en, int pin_d4, int pin_d5, int pin_d6, int pin_d7) : pin_{{pin_rs, 1}, {pin_rw, 1}, {pin_en, 1}, {pin_d4, 1}, {pin_d5, 1}, {pin_d6, 1}, {pin_d7, 1}} {
 		pin_en_ = pin_en;
 		pin_rs_ = pin_rs;
@@ -65,6 +80,16 @@ public:
 		pin_d5_ = pin_d5;
 		pin_d4_ = pin_d4;
 	}
+	#else
+	KS0066(int pin_rs, int pin_en, int pin_d4, int pin_d5, int pin_d6, int pin_d7) : pin_{{pin_rs, 1}, {pin_en, 1}, {pin_d4, 1}, {pin_d5, 1}, {pin_d6, 1}, {pin_d7, 1}} {
+		pin_en_ = pin_en;
+		pin_rs_ = pin_rs;
+		pin_d7_ = pin_d7;
+		pin_d6_ = pin_d6;
+		pin_d5_ = pin_d5;
+		pin_d4_ = pin_d4;
+	}	
+	#endif
 	~KS0066(void) {}
 
 	void init(uint8_t columns, uint8_t lines) {
@@ -104,31 +129,6 @@ public:
 		printf("KS0066 entry mode set\n");
 		#endif		
 	}
-	void init2(void) {
-
-		rs_(reg_t::ir);
-		rw_(op_t::write);
-
-		write_nibble_(0x03);
-		delay_ms(5);
-
-		write_nibble_(0x03);
-		delay_ms(5);
-
-		write_nibble_(0x03);
-		delay_us(150);
-
-		write_nibble_(0x02);
-
-		write_byte_(0x20 | 0x00 | 0x08);	// 0b0010-1000
-
-		write_byte_(0x08 | 0x04);			// 0b0000-1100
-
-		write_byte_(0x01);					// 0b0000-0001
-
-		write_byte_(0x04 | 0x02);			// 0b0000-0110
-
-	}
 	// void test_pins(void) {
 	// 	while(1) {
 	// 		rs_(reg_t::dr);
@@ -158,7 +158,9 @@ public:
 	*/
 	void set_4bit(uint8_t n, uint8_t f) {
 		rs_(reg_t::ir);
+		#ifdef KS0066_PIN_RW
 		rw_(op_t::write);
+		#endif
 
 		uint8_t fs = KS0066_FUNCTION_SET;
 		fs |= (n<<3) | (f<<1);
@@ -176,28 +178,44 @@ public:
 		fs |= ((d << 2) | (c<<1) | (b<<0));
 
 		rs_(reg_t::ir);
+		#ifdef KS0066_PIN_RW
 		rw_(op_t::write);
+		#endif
 		write_byte_(fs);
 	}
 	void clear_display(void) {
 		rs_(reg_t::ir);
+		#ifdef KS0066_PIN_RW
 		rw_(op_t::write);
+		#endif
 		write_byte_(KS0066_CLEAR_DISPLAY);
 		en_pulse_();
 	}
 	void return_home(void) {
 		rs_(reg_t::ir);
+		#ifdef KS0066_PIN_RW
 		rw_(op_t::write);
+		#endif
 		write_byte_(KS0066_RETURN_HOME);
 	}
+	#ifdef KS0066_PIN_RW
+	// not implemented yet
+	char read(int line, int column) {
+		return 'A';
+	}
+	#endif
 	void write(char c) {
 		rs_(reg_t::dr);
+		#ifdef KS0066_PIN_RW
 		rw_(op_t::write);
+		#endif
 		write_byte_(c);
 	}
 	void print(char *str) {
 		rs_(reg_t::dr);
+		#ifdef KS0066_PIN_RW
 		rw_(op_t::write);
+		#endif
 
 		while(*str) {
 			write_byte_(*str);
@@ -214,7 +232,9 @@ public:
 		fs |= ((d << 1) | (s<<0));		// 0b0000-01 I/D S
 
 		rs_(reg_t::ir);
+		#ifdef KS0066_PIN_RW
 		rw_(op_t::write);
+		#endif
 		write_byte_(fs);
 	}
 	/* @brief set cursor position
@@ -225,7 +245,9 @@ public:
 		uint8_t line_addr = l*KS0066_SECOND_LINE_ADDR;
 
 		rs_(reg_t::ir);
+		#ifdef KS0066_PIN_RW
 		rw_(op_t::write);
+		#endif
 		write_byte_(KS0066_DDRAM_ADDR_SET | line_addr | c);
 		delay_us(KS0066_DDRAM_SET_TIME);
 	}
@@ -246,11 +268,13 @@ private:
 		write_nibble_(cmd>>4);
 		write_nibble_(cmd);
 	}
+	#ifdef KS0066_PIN_RW
 	int busy_flag_(void) {
 		rs_(reg_t::ir);
 		rw_(op_t::read);
 		return d7_();
 	}
+	#endif
 	void en_pulse_(void) {
 		en_(0);
 		delay_us(KS0066_EN_RISE_FALL_TIME);
@@ -262,37 +286,99 @@ private:
 	void rs_(reg_t reg) {
 		pin_[0].write(static_cast<int>(reg));
 	}
+	#ifdef KS0066_PIN_RW
 	void rw_(op_t op) {
 		pin_[1].write(static_cast<int>(op));
 	}
+	#endif
 	void en_(int state) {
+		#ifdef KS0066_PIN_RW
 		pin_[2].write(state);
+		#else
+		pin_[1].write(state);
+		#endif
 	}
 	void d4_(int state) {
+		#ifdef KS0066_PIN_RW
 		pin_[3].write(state);
+		#else
+		pin_[2].write(state);
+		#endif
 	}
 	void d5_(int state) {
+		#ifdef KS0066_PIN_RW
 		pin_[4].write(state);
+		#else
+		pin_[3].write(state);
+		#endif
 	}
 	void d6_(int state) {
+		#ifdef KS0066_PIN_RW
 		pin_[5].write(state);
+		#else
+		pin_[4].write(state);
+		#endif
 	}
 	void d7_(int state) {
+		#ifdef KS0066_PIN_RW
 		pin_[6].write(state);
+		#else
+		pin_[5].write(state);
+		#endif
 	}
+	#ifdef KS0066_PIN_RW
 	int d7_(void) {
 		pin_[6].mode(0);
 		int value = pin_[6].read();
 		pin_[6].mode(1);
+		
 		return value;
 	}
+	#endif
 
 	uint8_t columns_, lines_;
 
-	int pin_en_, pin_rs_, pin_rw_;			// control pins
 	int pin_d4_, pin_d5_, pin_d6_, pin_d7_;	// data pins
+	int pin_en_, pin_rs_;					// control pins
+	#ifdef KS0066_PIN_RW
+	int pin_rw_;							// rw control pin
 
 	GPIO_Driver pin_[7];					// rs, rw, en, d4, d5, d6 and d7
+	#else
+
+	GPIO_Driver pin_[6];					// rs, en, d4, d5, d6 and d7
+	#endif
 };
 
 #endif
+
+
+
+
+	// void init2(void) {
+
+	// 	rs_(reg_t::ir);
+	// 		#ifdef KS0066_PIN_RW
+		// rw_(op_t::write);
+		// #endif
+
+	// 	write_nibble_(0x03);
+	// 	delay_ms(5);
+
+	// 	write_nibble_(0x03);
+	// 	delay_ms(5);
+
+	// 	write_nibble_(0x03);
+	// 	delay_us(150);
+
+	// 	write_nibble_(0x02);
+
+	// 	write_byte_(0x20 | 0x00 | 0x08);	// 0b0010-1000
+
+	// 	write_byte_(0x08 | 0x04);			// 0b0000-1100
+
+	// 	write_byte_(0x01);					// 0b0000-0001
+
+	// 	write_byte_(0x04 | 0x02);			// 0b0000-0110
+
+	// }
