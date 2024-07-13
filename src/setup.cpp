@@ -8,7 +8,6 @@ void i2c_slave_pcy8575(void) {
 		extender0.run();
 	}
 }
-
 void i2c_slave_pcy8575_adc(void) {
 
 	// ---- ADC signal parameters
@@ -16,7 +15,7 @@ void i2c_slave_pcy8575_adc(void) {
 	// 2- another reason to use adc0 class outside pcy8575 is to keep adc_array_raw vector allocated.
 	// 
 	// Sampling parameters for STM32F103C8T6 device
-	float F_clk = 48000000;							// Main clock system [Hz]
+	float F_clk = 72000000;							// Main clock system [Hz]
 	float div_1 = 1;								// Advanced High-performance Bus (AHB) prescale;
 	float div_2 = 2;								// Advanced Peripheral Bus (APB2) prescale;
 	float div_3 = 8;								// ADC prescale
@@ -55,7 +54,7 @@ void i2c_slave_pcy8575_adc(void) {
 		extender0.run();
 	}
 }
-void i2c_slave_pcy8575_orig(void) {
+void i2c_slave_pcy8575_debug(void) {
 	pcy8575 extender0;
 	extender0.init();
 

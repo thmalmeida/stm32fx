@@ -1,18 +1,18 @@
 #ifndef _PCY8575_HPP__
 #define _PCY8575_HPP__
 
-#include "i2c.h"
-// #include "tim.h"						
 #include "gpio_driver.hpp"
-#include "stm32_log.h"
-#include "backup.hpp"
-#include "reset_reason.hpp"
-#include "tim_driver.hpp"	// needs for module uptime. TIM3 update every 1 second.
-#include "iwdg.h"
 #include "adc_driver.hpp"
+#include "i2c.h"
 
 #include "delay.hpp"
 #include "dsp.hpp"
+
+#include "tim_driver.hpp"	// needs for module uptime. TIM3 update every 1 second.
+#include "stm32_log.h"
+#include "reset_reason.hpp"
+#include "backup.hpp"
+#include "iwdg.h"
 
 /* list of I2C addresses */
 #define PCY8575_ADDR			0x53	// device address: 0b0010 0011 >> 0b0001 0001 = 0x11
@@ -39,6 +39,7 @@
 
 
 #define PCY8575_DEBUG_PRINT		1
+// #define PCY8575_DEBUG_PRINT_ADC 1
 
 /* PCY8575 protocol will works always in a slave mode. 
 The master uC has the control over the SCL clock.
@@ -121,17 +122,23 @@ public:
 					timer_(3, 1, timer_mode::timer_interrupt),
 					adc0(adc_mode::stream) {
 		
+		#ifdef PCY8575_DEBUG_PRINT
+		// Welcome message
+		printf("\n----- PCY8575 initializing... -----\n");
+		#endif
+
 		// Standard init parameters;
 		init();
-
-		// adc peripheral config;
-		adc_init();
 	}
 
 	~pcy8575(void) {}
 
 	// pcy8575 standard functions
 	void init(void) {
+
+		// ADC peripheral drive config and initialize
+		adc_init();
+
 		// I2C slave initialization
 		i2c_init(PCY8575_ADDR, PCY8575_NORMAL_SPEED);
 
@@ -172,7 +179,7 @@ public:
 			switch (reg_addr_) {
 				case PCY8575_REG_PROBE: { // PROBE ok
 					#ifdef PCY8575_DEBUG_PRINT
-					printf("opcode:0x%02x probe\n", reg_addr_);
+					printf("opcode:0x%02x probe0\n", reg_addr_);
 					for(int i=0; i<i2c_data_rx_size; i++) {
 						printf("i2c_data_rx[%d]: 0x%02x\n", i, i2c_data_rx[i]);
 					}
@@ -326,8 +333,6 @@ public:
 	void run(void) {
 		handle_message();			// handle message fsm
 
-		// print_samples();
-
 		// 1 second flag
 		if(timer_.isr_flag()) {
 			if(config_ & 0x0001) {
@@ -428,7 +433,7 @@ public:
 			delay_ms(1);
 		}
 
-		#ifdef PCY8575_DEBUG_PRINT
+		#ifdef PCY8575_DEBUG_PRINT_ADC
 		printf("Count: %lu\n", count);
 		#endif
 		// Convert digital ADC raw array to iL(t) signal;
@@ -456,7 +461,7 @@ public:
 	void process(void) {
 		// if(output_ & 0xFFFF) {
 			irms_ = irms();
-			#ifdef PCY8575_DEBUG_PRINT
+			#ifdef PCY8575_DEBUG_PRINT_ADC
 			print_samples();
 			printf("irms: %u\n\n", irms_);
 			#endif
@@ -468,11 +473,9 @@ public:
 	// void convert_16_to_8(uint16_t* src, uint8_t* dest, int src_len) {
 
 	// }
-	#ifdef PCY8575_DEBUG_PRINT
+	#ifdef PCY8575_DEBUG_PRINT_ADC
 	void print_samples(void) {
-
 		// if(adc0.stream_ready()) {
-		
 			printf("stream_data_p: ");
 			for(auto i=0; i<adc0.stream_length(); i++) {
 				printf("%u, ", adc_array16_raw_[i]);
@@ -480,7 +483,7 @@ public:
 			printf("\n");
 		// }
 
-				// for(int i=0; i<adc0.stream_length()*2; i+=2) {
+		// for(int i=0; i<adc0.stream_length()*2; i+=2) {
 		// 	adc_array8_raw_[i] = 0x00FF & adc_array16_raw_[i];	// low byte first
 		// 	adc_array8_raw_[i+1] = adc_array16_raw_[i] >> 8;				// high byte
 		// }

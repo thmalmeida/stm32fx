@@ -4,7 +4,11 @@
 #include "gpio_driver.hpp"
 #include "delay.hpp"
 
-/* by thmalmeida@gmail.com on 20240315 */
+/* by thmalmeida@gmail.com on 20240315
+* last modified:
+* 20240501
+*
+*/
 
 /* KS0066/ST7066U(5C) controller for LCD. 
 * It uses 4-bit bus and 8-bit bus are selected by the DL bit in the instruction register.

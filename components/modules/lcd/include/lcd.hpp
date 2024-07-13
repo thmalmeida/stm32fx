@@ -4,6 +4,11 @@
 #include "gpio_driver.hpp"
 #include "ks0066.hpp"
 
+/*	writed by thmalmeida
+ *	last modified:
+ *	20240502
+*/
+
 #define PIN_D7			32
 #define PIN_D6			31
 #define PIN_D5			30

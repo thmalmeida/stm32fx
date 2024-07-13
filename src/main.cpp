@@ -13,7 +13,8 @@ int main(void)
 
 
 	/* 1- I2C to gpio main code. It works with Acionna0 */
-	// i2c_slave_pcy8575();
+	i2c_slave_pcy8575();
+	// i2c_slave_pcy8575_debug();
 
 
 	/* 2- Weighing Scale System */
@@ -39,7 +40,7 @@ int main(void)
 	// test_bkp();
 	// test_pwm();
 	// test_time();
-	test_lcd_aht10_pwm();
+	// test_lcd_aht10_pwm();
 	
     return 0;
 }
